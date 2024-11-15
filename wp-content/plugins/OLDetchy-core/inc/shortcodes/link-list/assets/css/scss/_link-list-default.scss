@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Link List shortcode styles
+   ========================================================================== */
+
+.qodef-link-list {
+	
+	.qodef-link-items {
+		@include qodefRelativeLayout();
+		
+		.qodef-m-item {
+			padding-bottom: 18px;
+		}
+		
+		.qodef-m-link-name {
+			position: relative;
+			@include qodefHeadingStyle(h6);
+			
+			&:after {
+				@include qodefUnderline(-2px);
+			}
+			
+			&:hover {
+				&:after {
+					@include qodefUnderlineHover();
+				}
+			}
+			
+			&.qodef-link-active {
+				
+				&:before {
+					content: "*";
+					position: absolute;
+					color: red;
+					top: 1px;
+					right: -6px;
+				}
+			}
+		}
+	}
+	
+	&.qodef-skin--light {
+		
+		.qodef-link-items {
+			
+			.qodef-m-link-name {
+				color: $background-color;
+			}
+		}
+	}
+}
+
+
+/* ==========================================================================
+   Link List shortcode styles
+   ========================================================================== */

@@ -1,0 +1,217 @@
+/* ==========================================================================
+   WooCommerce Side Area Cart styles
+   ========================================================================== */
+
+$content-width: 360px;
+$content-padding: 100px 50px 74px; // 74 is action button height + 20
+$side-padding: 0 50px;
+
+.qodef-woo-side-area-cart {
+	position: relative;
+	display: inline-block;
+	vertical-align: top;
+	height: 100%;
+	padding: 0 10px;
+	
+	.qodef-m-inner {
+		@include qodefRelativeLayout();
+		height: 100%;
+	}
+	
+	.qodef-m-opener {
+		position: relative;
+		display: flex;
+		align-items: center;
+		height: 100%;
+		color: #000;
+		font-size: 13px;
+		font-weight: 700;
+		line-height: 26px;
+		letter-spacing: .03em;
+		text-transform: uppercase;
+
+		&:after {
+			@include qodefUnderline(4px);
+		}
+
+		&:hover {
+			&:after {
+				@include qodefUnderlineHover();
+			}
+		}
+
+		.qodef-header--light & {
+			color: #fff;
+		}
+
+		.qodef-header--dark & {
+			color: #000;
+		}
+	}
+	
+	.qodef-m-content {
+		position: fixed;
+		top: 0;
+		right: -$content-width;
+		height: 100vh;
+		width: $content-width;
+		display: flex;
+		flex-direction: column;
+		padding: $content-padding;
+		background-color: $heading-color;
+		color: $background-color;
+		overflow: hidden;
+		visibility: hidden;
+		z-index: 9999;
+		transition: $sliding-area-transition;
+		
+		.admin-bar & {
+			top: 32px;
+			height: calc(100vh - 32px);
+		}
+	}
+	
+	.qodef-m-close {
+		position: absolute;
+		top: 30px;
+		right: 30px;
+		display: block;
+		font-size: 34px;
+		color: $background-color;
+		z-index: 1000;
+
+		&:hover {
+			color: $background-color;
+		}
+	}
+	
+	.qodef-m-items {
+		@include qodefRelativeLayout();
+	}
+	
+	.qodef-m-item {
+		position: relative;
+		display: flex;
+		align-items: center;
+		margin-top: 17px;
+		padding-bottom: 17px;
+		border-bottom: 1px solid #262626;
+		
+		&:first-child {
+			margin-top: 0;
+		}
+	}
+	
+	.qodef-e-image {
+		flex-shrink: 0;
+		width: 72px;
+		height: 68px;
+		margin-right: 20px;
+		
+		a, img {
+			display: block;
+		}
+	}
+	
+	.qodef-e-content {
+		@include qodefRelativeLayout();
+		padding-right: 20px;
+	}
+	
+	.qodef-e-title {
+		margin: 0;
+
+		a {
+			color: $background-color;
+		}
+	}
+	
+	.qodef-e-price {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 400;
+		color: rgba($background-color, .75);
+	}
+	
+	.qodef-e-quantity {
+		margin: 3px 0 0;
+	}
+	
+	.qodef-e-remove {
+		position: absolute;
+		top: -11px;
+		right: 0;
+		font-size: 17px;
+		line-height: 1;
+		color: rgba($background-color, .5);
+
+		&:hover {
+			color: $background-color;
+		}
+	}
+	
+	.qodef-m-order-details {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: 22px;
+
+		> * {
+			margin: 0;
+			color: $background-color;
+		}
+
+		.qodef-m-order-amount {
+			font-weight: 400;
+		}
+	}
+	
+	.qodef-m-action {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		padding: $side-padding;
+	}
+	
+	.qodef-m-checkout-link {
+		@include qodefButtonsStyle();
+
+		&:hover {
+			@include qodefButtonFilledLightColor();
+		}
+	}
+
+	.qodef-m-cart-link {
+		@include qodefButtonsStyle(small, filled-light);
+
+		&:hover {
+			@include qodefButtonFilledColor();
+		}
+	}
+
+	.qodef-m-checkout-link,
+	.qodef-m-cart-link {
+		padding: 7px 23px 5px;
+		font-size: 12px;
+	}
+	
+	&.qodef--opened {
+		
+		.qodef-m-content {
+			right: 0;
+			visibility: visible;
+		}
+	}
+}
+
+.qodef-woo-side-area-cart-cover {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: calc(100% - #{$content-width});
+	height: 100vh;
+	overflow: hidden;
+	z-index: 1002;
+}

@@ -1,0 +1,1087 @@
+object(Automattic\WooCommerce\Admin\Overrides\Order)#33360 (18) {
+  ["id":protected]=>
+  int(1517)
+  ["data":protected]=>
+  array(33) {
+    ["parent_id"]=>
+    int(0)
+    ["status"]=>
+    string(10) "processing"
+    ["currency"]=>
+    string(3) "EUR"
+    ["version"]=>
+    string(5) "8.5.2"
+    ["prices_include_tax"]=>
+    bool(false)
+    ["date_created"]=>
+    object(WC_DateTime)#33435 (4) {
+      ["utc_offset":protected]=>
+      int(0)
+      ["date"]=>
+      string(26) "2024-02-14 14:17:37.000000"
+      ["timezone_type"]=>
+      int(3)
+      ["timezone"]=>
+      string(13) "Europe/Madrid"
+    }
+    ["date_modified"]=>
+    object(WC_DateTime)#33431 (4) {
+      ["utc_offset":protected]=>
+      int(0)
+      ["date"]=>
+      string(26) "2024-02-14 14:17:37.000000"
+      ["timezone_type"]=>
+      int(3)
+      ["timezone"]=>
+      string(13) "Europe/Madrid"
+    }
+    ["discount_total"]=>
+    string(1) "0"
+    ["discount_tax"]=>
+    string(1) "0"
+    ["shipping_total"]=>
+    string(1) "0"
+    ["shipping_tax"]=>
+    string(1) "0"
+    ["cart_tax"]=>
+    string(1) "0"
+    ["total"]=>
+    string(4) "0.00"
+    ["total_tax"]=>
+    string(1) "0"
+    ["customer_id"]=>
+    int(3)
+    ["order_key"]=>
+    string(22) "wc_order_aGWCBcrxJ0nZ5"
+    ["billing"]=>
+    array(11) {
+      ["first_name"]=>
+      string(6) "nombre"
+      ["last_name"]=>
+      string(9) "apellidos"
+      ["company"]=>
+      string(14) "nombre empresa"
+      ["address_1"]=>
+      string(14) "Calle larga 21"
+      ["address_2"]=>
+      string(10) "direccion2"
+      ["city"]=>
+      string(9) "poblacion"
+      ["state"]=>
+      string(2) "SA"
+      ["postcode"]=>
+      string(5) "37185"
+      ["country"]=>
+      string(2) "ES"
+      ["email"]=>
+      string(14) "carlos@dipe.es"
+      ["phone"]=>
+      string(9) "666666666"
+    }
+    ["shipping"]=>
+    array(10) {
+      ["first_name"]=>
+      string(0) ""
+      ["last_name"]=>
+      string(0) ""
+      ["company"]=>
+      string(0) ""
+      ["address_1"]=>
+      string(0) ""
+      ["address_2"]=>
+      string(0) ""
+      ["city"]=>
+      string(0) ""
+      ["state"]=>
+      string(0) ""
+      ["postcode"]=>
+      string(0) ""
+      ["country"]=>
+      string(0) ""
+      ["phone"]=>
+      string(0) ""
+    }
+    ["payment_method"]=>
+    string(0) ""
+    ["payment_method_title"]=>
+    string(0) ""
+    ["transaction_id"]=>
+    string(0) ""
+    ["customer_ip_address"]=>
+    string(13) "139.47.50.188"
+    ["customer_user_agent"]=>
+    string(111) "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+    ["created_via"]=>
+    string(8) "checkout"
+    ["customer_note"]=>
+    string(0) ""
+    ["date_completed"]=>
+    NULL
+    ["date_paid"]=>
+    object(WC_DateTime)#33438 (4) {
+      ["utc_offset":protected]=>
+      int(0)
+      ["date"]=>
+      string(26) "2024-02-14 14:17:37.000000"
+      ["timezone_type"]=>
+      int(3)
+      ["timezone"]=>
+      string(13) "Europe/Madrid"
+    }
+    ["cart_hash"]=>
+    string(32) "128c08179ec6015687e36570e4a7af9d"
+    ["order_stock_reduced"]=>
+    bool(true)
+    ["download_permissions_granted"]=>
+    bool(true)
+    ["new_order_email_sent"]=>
+    bool(true)
+    ["recorded_sales"]=>
+    bool(true)
+    ["recorded_coupon_usage_counts"]=>
+    bool(true)
+  }
+  ["changes":protected]=>
+  array(0) {
+  }
+  ["object_read":protected]=>
+  bool(true)
+  ["object_type":protected]=>
+  string(5) "order"
+  ["extra_data":protected]=>
+  array(0) {
+  }
+  ["default_data":protected]=>
+  array(33) {
+    ["parent_id"]=>
+    int(0)
+    ["status"]=>
+    string(0) ""
+    ["currency"]=>
+    string(0) ""
+    ["version"]=>
+    string(0) ""
+    ["prices_include_tax"]=>
+    bool(false)
+    ["date_created"]=>
+    NULL
+    ["date_modified"]=>
+    NULL
+    ["discount_total"]=>
+    int(0)
+    ["discount_tax"]=>
+    int(0)
+    ["shipping_total"]=>
+    int(0)
+    ["shipping_tax"]=>
+    int(0)
+    ["cart_tax"]=>
+    int(0)
+    ["total"]=>
+    int(0)
+    ["total_tax"]=>
+    int(0)
+    ["customer_id"]=>
+    int(0)
+    ["order_key"]=>
+    string(0) ""
+    ["billing"]=>
+    array(11) {
+      ["first_name"]=>
+      string(0) ""
+      ["last_name"]=>
+      string(0) ""
+      ["company"]=>
+      string(0) ""
+      ["address_1"]=>
+      string(0) ""
+      ["address_2"]=>
+      string(0) ""
+      ["city"]=>
+      string(0) ""
+      ["state"]=>
+      string(0) ""
+      ["postcode"]=>
+      string(0) ""
+      ["country"]=>
+      string(0) ""
+      ["email"]=>
+      string(0) ""
+      ["phone"]=>
+      string(0) ""
+    }
+    ["shipping"]=>
+    array(10) {
+      ["first_name"]=>
+      string(0) ""
+      ["last_name"]=>
+      string(0) ""
+      ["company"]=>
+      string(0) ""
+      ["address_1"]=>
+      string(0) ""
+      ["address_2"]=>
+      string(0) ""
+      ["city"]=>
+      string(0) ""
+      ["state"]=>
+      string(0) ""
+      ["postcode"]=>
+      string(0) ""
+      ["country"]=>
+      string(0) ""
+      ["phone"]=>
+      string(0) ""
+    }
+    ["payment_method"]=>
+    string(0) ""
+    ["payment_method_title"]=>
+    string(0) ""
+    ["transaction_id"]=>
+    string(0) ""
+    ["customer_ip_address"]=>
+    string(0) ""
+    ["customer_user_agent"]=>
+    string(0) ""
+    ["created_via"]=>
+    string(0) ""
+    ["customer_note"]=>
+    string(0) ""
+    ["date_completed"]=>
+    NULL
+    ["date_paid"]=>
+    NULL
+    ["cart_hash"]=>
+    string(0) ""
+    ["order_stock_reduced"]=>
+    bool(false)
+    ["download_permissions_granted"]=>
+    bool(false)
+    ["new_order_email_sent"]=>
+    bool(false)
+    ["recorded_sales"]=>
+    bool(false)
+    ["recorded_coupon_usage_counts"]=>
+    bool(false)
+  }
+  ["data_store":protected]=>
+  object(WC_Data_Store)#33434 (4) {
+    ["instance":"WC_Data_Store":private]=>
+    object(WC_Order_Data_Store_CPT)#33440 (5) {
+      ["meta_type":protected]=>
+      string(4) "post"
+      ["object_id_field_for_meta":protected]=>
+      string(0) ""
+      ["internal_meta_keys":protected]=>
+      array(70) {
+        [0]=>
+        string(10) "_parent_id"
+        [1]=>
+        string(7) "_status"
+        [2]=>
+        string(9) "_currency"
+        [3]=>
+        string(8) "_version"
+        [4]=>
+        string(19) "_prices_include_tax"
+        [5]=>
+        string(13) "_date_created"
+        [6]=>
+        string(14) "_date_modified"
+        [7]=>
+        string(15) "_discount_total"
+        [8]=>
+        string(13) "_discount_tax"
+        [9]=>
+        string(15) "_shipping_total"
+        [10]=>
+        string(13) "_shipping_tax"
+        [11]=>
+        string(9) "_cart_tax"
+        [12]=>
+        string(6) "_total"
+        [13]=>
+        string(10) "_total_tax"
+        [14]=>
+        string(12) "_customer_id"
+        [15]=>
+        string(10) "_order_key"
+        [16]=>
+        string(8) "_billing"
+        [17]=>
+        string(9) "_shipping"
+        [18]=>
+        string(15) "_payment_method"
+        [19]=>
+        string(21) "_payment_method_title"
+        [20]=>
+        string(15) "_transaction_id"
+        [21]=>
+        string(20) "_customer_ip_address"
+        [22]=>
+        string(20) "_customer_user_agent"
+        [23]=>
+        string(12) "_created_via"
+        [24]=>
+        string(14) "_customer_note"
+        [25]=>
+        string(15) "_date_completed"
+        [26]=>
+        string(10) "_date_paid"
+        [27]=>
+        string(10) "_cart_hash"
+        [28]=>
+        string(20) "_order_stock_reduced"
+        [29]=>
+        string(29) "_download_permissions_granted"
+        [30]=>
+        string(21) "_new_order_email_sent"
+        [31]=>
+        string(15) "_recorded_sales"
+        [32]=>
+        string(29) "_recorded_coupon_usage_counts"
+        [33]=>
+        string(14) "_customer_user"
+        [35]=>
+        string(15) "_order_currency"
+        [36]=>
+        string(19) "_billing_first_name"
+        [37]=>
+        string(18) "_billing_last_name"
+        [38]=>
+        string(16) "_billing_company"
+        [39]=>
+        string(18) "_billing_address_1"
+        [40]=>
+        string(18) "_billing_address_2"
+        [41]=>
+        string(13) "_billing_city"
+        [42]=>
+        string(14) "_billing_state"
+        [43]=>
+        string(17) "_billing_postcode"
+        [44]=>
+        string(16) "_billing_country"
+        [45]=>
+        string(14) "_billing_email"
+        [46]=>
+        string(14) "_billing_phone"
+        [47]=>
+        string(20) "_shipping_first_name"
+        [48]=>
+        string(19) "_shipping_last_name"
+        [49]=>
+        string(17) "_shipping_company"
+        [50]=>
+        string(19) "_shipping_address_1"
+        [51]=>
+        string(19) "_shipping_address_2"
+        [52]=>
+        string(14) "_shipping_city"
+        [53]=>
+        string(15) "_shipping_state"
+        [54]=>
+        string(18) "_shipping_postcode"
+        [55]=>
+        string(17) "_shipping_country"
+        [56]=>
+        string(15) "_shipping_phone"
+        [57]=>
+        string(15) "_completed_date"
+        [58]=>
+        string(10) "_paid_date"
+        [59]=>
+        string(10) "_edit_lock"
+        [60]=>
+        string(10) "_edit_last"
+        [61]=>
+        string(14) "_cart_discount"
+        [62]=>
+        string(18) "_cart_discount_tax"
+        [63]=>
+        string(15) "_order_shipping"
+        [64]=>
+        string(19) "_order_shipping_tax"
+        [65]=>
+        string(10) "_order_tax"
+        [66]=>
+        string(12) "_order_total"
+        [73]=>
+        string(14) "_order_version"
+        [77]=>
+        string(15) "_payment_tokens"
+        [78]=>
+        string(22) "_billing_address_index"
+        [79]=>
+        string(23) "_shipping_address_index"
+      }
+      ["must_exist_meta_keys":protected]=>
+      array(0) {
+      }
+      ["internal_data_store_key_getters":protected]=>
+      array(5) {
+        ["_download_permissions_granted"]=>
+        string(28) "download_permissions_granted"
+        ["_recorded_sales"]=>
+        string(14) "recorded_sales"
+        ["_recorded_coupon_usage_counts"]=>
+        string(28) "recorded_coupon_usage_counts"
+        ["_order_stock_reduced"]=>
+        string(19) "order_stock_reduced"
+        ["_new_order_email_sent"]=>
+        string(20) "new_order_email_sent"
+      }
+    }
+    ["stores":"WC_Data_Store":private]=>
+    array(38) {
+      ["coupon"]=>
+      string(24) "WC_Coupon_Data_Store_CPT"
+      ["customer"]=>
+      string(22) "WC_Customer_Data_Store"
+      ["customer-download"]=>
+      string(31) "WC_Customer_Download_Data_Store"
+      ["customer-download-log"]=>
+      string(35) "WC_Customer_Download_Log_Data_Store"
+      ["customer-session"]=>
+      string(30) "WC_Customer_Data_Store_Session"
+      ["order"]=>
+      string(23) "WC_Order_Data_Store_CPT"
+      ["order-refund"]=>
+      string(30) "WC_Order_Refund_Data_Store_CPT"
+      ["order-item"]=>
+      string(24) "WC_Order_Item_Data_Store"
+      ["order-item-coupon"]=>
+      string(31) "WC_Order_Item_Coupon_Data_Store"
+      ["order-item-fee"]=>
+      string(28) "WC_Order_Item_Fee_Data_Store"
+      ["order-item-product"]=>
+      string(32) "WC_Order_Item_Product_Data_Store"
+      ["order-item-shipping"]=>
+      string(33) "WC_Order_Item_Shipping_Data_Store"
+      ["order-item-tax"]=>
+      string(28) "WC_Order_Item_Tax_Data_Store"
+      ["payment-token"]=>
+      string(27) "WC_Payment_Token_Data_Store"
+      ["product"]=>
+      string(25) "WC_Product_Data_Store_CPT"
+      ["product-grouped"]=>
+      string(33) "WC_Product_Grouped_Data_Store_CPT"
+      ["product-variable"]=>
+      string(34) "WC_Product_Variable_Data_Store_CPT"
+      ["product-variation"]=>
+      string(35) "WC_Product_Variation_Data_Store_CPT"
+      ["shipping-zone"]=>
+      string(27) "WC_Shipping_Zone_Data_Store"
+      ["webhook"]=>
+      string(21) "WC_Webhook_Data_Store"
+      ["report-revenue-stats"]=>
+      string(63) "Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore"
+      ["report-orders"]=>
+      string(57) "Automattic\WooCommerce\Admin\API\Reports\Orders\DataStore"
+      ["report-orders-stats"]=>
+      string(63) "Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore"
+      ["report-products"]=>
+      string(59) "Automattic\WooCommerce\Admin\API\Reports\Products\DataStore"
+      ["report-variations"]=>
+      string(61) "Automattic\WooCommerce\Admin\API\Reports\Variations\DataStore"
+      ["report-products-stats"]=>
+      string(65) "Automattic\WooCommerce\Admin\API\Reports\Products\Stats\DataStore"
+      ["report-variations-stats"]=>
+      string(67) "Automattic\WooCommerce\Admin\API\Reports\Variations\Stats\DataStore"
+      ["report-categories"]=>
+      string(61) "Automattic\WooCommerce\Admin\API\Reports\Categories\DataStore"
+      ["report-taxes"]=>
+      string(56) "Automattic\WooCommerce\Admin\API\Reports\Taxes\DataStore"
+      ["report-taxes-stats"]=>
+      string(62) "Automattic\WooCommerce\Admin\API\Reports\Taxes\Stats\DataStore"
+      ["report-coupons"]=>
+      string(58) "Automattic\WooCommerce\Admin\API\Reports\Coupons\DataStore"
+      ["report-coupons-stats"]=>
+      string(64) "Automattic\WooCommerce\Admin\API\Reports\Coupons\Stats\DataStore"
+      ["report-downloads"]=>
+      string(60) "Automattic\WooCommerce\Admin\API\Reports\Downloads\DataStore"
+      ["report-downloads-stats"]=>
+      string(66) "Automattic\WooCommerce\Admin\API\Reports\Downloads\Stats\DataStore"
+      ["admin-note"]=>
+      string(44) "Automattic\WooCommerce\Admin\Notes\DataStore"
+      ["report-customers"]=>
+      string(60) "Automattic\WooCommerce\Admin\API\Reports\Customers\DataStore"
+      ["report-customers-stats"]=>
+      string(66) "Automattic\WooCommerce\Admin\API\Reports\Customers\Stats\DataStore"
+      ["report-stock-stats"]=>
+      string(62) "Automattic\WooCommerce\Admin\API\Reports\Stock\Stats\DataStore"
+    }
+    ["current_class_name":"WC_Data_Store":private]=>
+    string(23) "WC_Order_Data_Store_CPT"
+    ["object_type":"WC_Data_Store":private]=>
+    string(5) "order"
+  }
+  ["cache_group":protected]=>
+  string(6) "orders"
+  ["meta_data":protected]=>
+  array(10) {
+    [0]=>
+    object(WC_Meta_Data)#33439 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12767)
+        ["key"]=>
+        string(13) "is_vat_exempt"
+        ["value"]=>
+        string(2) "no"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12767)
+        ["key"]=>
+        string(13) "is_vat_exempt"
+        ["value"]=>
+        string(2) "no"
+      }
+    }
+    [1]=>
+    object(WC_Meta_Data)#33462 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12768)
+        ["key"]=>
+        string(33) "_wc_order_attribution_source_type"
+        ["value"]=>
+        string(6) "typein"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12768)
+        ["key"]=>
+        string(33) "_wc_order_attribution_source_type"
+        ["value"]=>
+        string(6) "typein"
+      }
+    }
+    [2]=>
+    object(WC_Meta_Data)#33463 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12769)
+        ["key"]=>
+        string(30) "_wc_order_attribution_referrer"
+        ["value"]=>
+        string(53) "https://masquelibros.servidordepruebas.net/productos/"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12769)
+        ["key"]=>
+        string(30) "_wc_order_attribution_referrer"
+        ["value"]=>
+        string(53) "https://masquelibros.servidordepruebas.net/productos/"
+      }
+    }
+    [3]=>
+    object(WC_Meta_Data)#33443 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12770)
+        ["key"]=>
+        string(32) "_wc_order_attribution_utm_source"
+        ["value"]=>
+        string(8) "(direct)"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12770)
+        ["key"]=>
+        string(32) "_wc_order_attribution_utm_source"
+        ["value"]=>
+        string(8) "(direct)"
+      }
+    }
+    [4]=>
+    object(WC_Meta_Data)#33450 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12771)
+        ["key"]=>
+        string(35) "_wc_order_attribution_session_entry"
+        ["value"]=>
+        string(53) "https://masquelibros.servidordepruebas.net/productos/"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12771)
+        ["key"]=>
+        string(35) "_wc_order_attribution_session_entry"
+        ["value"]=>
+        string(53) "https://masquelibros.servidordepruebas.net/productos/"
+      }
+    }
+    [5]=>
+    object(WC_Meta_Data)#33446 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12772)
+        ["key"]=>
+        string(40) "_wc_order_attribution_session_start_time"
+        ["value"]=>
+        string(19) "2024-02-14 06:58:48"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12772)
+        ["key"]=>
+        string(40) "_wc_order_attribution_session_start_time"
+        ["value"]=>
+        string(19) "2024-02-14 06:58:48"
+      }
+    }
+    [6]=>
+    object(WC_Meta_Data)#33447 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12773)
+        ["key"]=>
+        string(35) "_wc_order_attribution_session_pages"
+        ["value"]=>
+        string(1) "8"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12773)
+        ["key"]=>
+        string(35) "_wc_order_attribution_session_pages"
+        ["value"]=>
+        string(1) "8"
+      }
+    }
+    [7]=>
+    object(WC_Meta_Data)#33442 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12774)
+        ["key"]=>
+        string(35) "_wc_order_attribution_session_count"
+        ["value"]=>
+        string(1) "1"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12774)
+        ["key"]=>
+        string(35) "_wc_order_attribution_session_count"
+        ["value"]=>
+        string(1) "1"
+      }
+    }
+    [8]=>
+    object(WC_Meta_Data)#33445 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12775)
+        ["key"]=>
+        string(32) "_wc_order_attribution_user_agent"
+        ["value"]=>
+        string(111) "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12775)
+        ["key"]=>
+        string(32) "_wc_order_attribution_user_agent"
+        ["value"]=>
+        string(111) "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+      }
+    }
+    [9]=>
+    object(WC_Meta_Data)#33444 (2) {
+      ["current_data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12776)
+        ["key"]=>
+        string(33) "_wc_order_attribution_device_type"
+        ["value"]=>
+        string(7) "Desktop"
+      }
+      ["data":protected]=>
+      array(3) {
+        ["id"]=>
+        int(12776)
+        ["key"]=>
+        string(33) "_wc_order_attribution_device_type"
+        ["value"]=>
+        string(7) "Desktop"
+      }
+    }
+  }
+  ["legacy_datastore_props":protected]=>
+  array(5) {
+    [0]=>
+    string(15) "_recorded_sales"
+    [1]=>
+    string(29) "_recorded_coupon_usage_counts"
+    [2]=>
+    string(29) "_download_permissions_granted"
+    [3]=>
+    string(20) "_order_stock_reduced"
+    [4]=>
+    string(21) "_new_order_email_sent"
+  }
+  ["items":protected]=>
+  array(0) {
+  }
+  ["items_to_delete":protected]=>
+  array(0) {
+  }
+  ["data_store_name":protected]=>
+  string(5) "order"
+  ["status_transition":protected]=>
+  bool(false)
+  ["refunds"]=>
+  NULL
+  ["refunded_line_items":protected]=>
+  NULL
+  ["customer_id"]=>
+  NULL
+}
+<br><br>object(WP_User)#33441 (8) {
+  ["data"]=>
+  object(stdClass)#33436 (10) {
+    ["ID"]=>
+    string(1) "3"
+    ["user_login"]=>
+    string(6) "carlos"
+    ["user_pass"]=>
+    string(34) "$P$BHFNty0u29DNItnqwBV3TzNNDMs7OV0"
+    ["user_nicename"]=>
+    string(6) "carlos"
+    ["user_email"]=>
+    string(14) "carlos@dipe.es"
+    ["user_url"]=>
+    string(0) ""
+    ["user_registered"]=>
+    string(19) "2024-02-12 08:31:28"
+    ["user_activation_key"]=>
+    string(0) ""
+    ["user_status"]=>
+    string(1) "0"
+    ["display_name"]=>
+    string(6) "carlos"
+  }
+  ["ID"]=>
+  int(3)
+  ["caps"]=>
+  array(1) {
+    ["customer"]=>
+    bool(true)
+  }
+  ["cap_key"]=>
+  string(15) "wp_capabilities"
+  ["roles"]=>
+  array(1) {
+    [0]=>
+    string(8) "customer"
+  }
+  ["allcaps"]=>
+  array(2) {
+    ["read"]=>
+    bool(true)
+    ["customer"]=>
+    bool(true)
+  }
+  ["filter"]=>
+  NULL
+  ["site_id":"WP_User":private]=>
+  int(1)
+}
+
+
+
+array(1) {
+  [7]=>
+  object(WC_Order_Item_Product)#33573 (12) {
+    ["id":protected]=>
+    int(7)
+    ["data":protected]=>
+    array(11) {
+      ["order_id"]=>
+      int(1520)
+      ["name"]=>
+      string(41) "Prueba Producto Integración - Horizontal"
+      ["product_id"]=>
+      int(1450)
+      ["variation_id"]=>
+      int(1473)
+      ["quantity"]=>
+      int(1)
+      ["tax_class"]=>
+      string(0) ""
+      ["subtotal"]=>
+      string(1) "0"
+      ["subtotal_tax"]=>
+      string(1) "0"
+      ["total"]=>
+      string(1) "0"
+      ["total_tax"]=>
+      string(1) "0"
+      ["taxes"]=>
+      array(2) {
+        ["total"]=>
+        array(0) {
+        }
+        ["subtotal"]=>
+        array(0) {
+        }
+      }
+    }
+    ["changes":protected]=>
+    array(0) {
+    }
+    ["object_read":protected]=>
+    bool(true)
+    ["object_type":protected]=>
+    string(10) "order_item"
+    ["extra_data":protected]=>
+    array(9) {
+      ["product_id"]=>
+      int(0)
+      ["variation_id"]=>
+      int(0)
+      ["quantity"]=>
+      int(1)
+      ["tax_class"]=>
+      string(0) ""
+      ["subtotal"]=>
+      int(0)
+      ["subtotal_tax"]=>
+      int(0)
+      ["total"]=>
+      int(0)
+      ["total_tax"]=>
+      int(0)
+      ["taxes"]=>
+      array(2) {
+        ["subtotal"]=>
+        array(0) {
+        }
+        ["total"]=>
+        array(0) {
+        }
+      }
+    }
+    ["default_data":protected]=>
+    array(11) {
+      ["order_id"]=>
+      int(0)
+      ["name"]=>
+      string(0) ""
+      ["product_id"]=>
+      int(0)
+      ["variation_id"]=>
+      int(0)
+      ["quantity"]=>
+      int(1)
+      ["tax_class"]=>
+      string(0) ""
+      ["subtotal"]=>
+      int(0)
+      ["subtotal_tax"]=>
+      int(0)
+      ["total"]=>
+      int(0)
+      ["total_tax"]=>
+      int(0)
+      ["taxes"]=>
+      array(2) {
+        ["subtotal"]=>
+        array(0) {
+        }
+        ["total"]=>
+        array(0) {
+        }
+      }
+    }
+    ["data_store":protected]=>
+    object(WC_Data_Store)#33571 (4) {
+      ["instance":"WC_Data_Store":private]=>
+      object(WC_Order_Item_Product_Data_Store)#33542 (4) {
+        ["meta_type":protected]=>
+        string(10) "order_item"
+        ["object_id_field_for_meta":protected]=>
+        string(13) "order_item_id"
+        ["internal_meta_keys":protected]=>
+        array(17) {
+          [0]=>
+          string(9) "_order_id"
+          [1]=>
+          string(5) "_name"
+          [2]=>
+          string(11) "_product_id"
+          [3]=>
+          string(13) "_variation_id"
+          [4]=>
+          string(9) "_quantity"
+          [5]=>
+          string(10) "_tax_class"
+          [6]=>
+          string(9) "_subtotal"
+          [7]=>
+          string(13) "_subtotal_tax"
+          [8]=>
+          string(6) "_total"
+          [9]=>
+          string(10) "_total_tax"
+          [10]=>
+          string(6) "_taxes"
+          [13]=>
+          string(4) "_qty"
+          [15]=>
+          string(14) "_line_subtotal"
+          [16]=>
+          string(18) "_line_subtotal_tax"
+          [17]=>
+          string(11) "_line_total"
+          [18]=>
+          string(9) "_line_tax"
+          [19]=>
+          string(14) "_line_tax_data"
+        }
+        ["must_exist_meta_keys":protected]=>
+        array(0) {
+        }
+      }
+      ["stores":"WC_Data_Store":private]=>
+      array(38) {
+        ["coupon"]=>
+        string(24) "WC_Coupon_Data_Store_CPT"
+        ["customer"]=>
+        string(22) "WC_Customer_Data_Store"
+        ["customer-download"]=>
+        string(31) "WC_Customer_Download_Data_Store"
+        ["customer-download-log"]=>
+        string(35) "WC_Customer_Download_Log_Data_Store"
+        ["customer-session"]=>
+        string(30) "WC_Customer_Data_Store_Session"
+        ["order"]=>
+        string(23) "WC_Order_Data_Store_CPT"
+        ["order-refund"]=>
+        string(30) "WC_Order_Refund_Data_Store_CPT"
+        ["order-item"]=>
+        string(24) "WC_Order_Item_Data_Store"
+        ["order-item-coupon"]=>
+        string(31) "WC_Order_Item_Coupon_Data_Store"
+        ["order-item-fee"]=>
+        string(28) "WC_Order_Item_Fee_Data_Store"
+        ["order-item-product"]=>
+        string(32) "WC_Order_Item_Product_Data_Store"
+        ["order-item-shipping"]=>
+        string(33) "WC_Order_Item_Shipping_Data_Store"
+        ["order-item-tax"]=>
+        string(28) "WC_Order_Item_Tax_Data_Store"
+        ["payment-token"]=>
+        string(27) "WC_Payment_Token_Data_Store"
+        ["product"]=>
+        string(25) "WC_Product_Data_Store_CPT"
+        ["product-grouped"]=>
+        string(33) "WC_Product_Grouped_Data_Store_CPT"
+        ["product-variable"]=>
+        string(34) "WC_Product_Variable_Data_Store_CPT"
+        ["product-variation"]=>
+        string(35) "WC_Product_Variation_Data_Store_CPT"
+        ["shipping-zone"]=>
+        string(27) "WC_Shipping_Zone_Data_Store"
+        ["webhook"]=>
+        string(21) "WC_Webhook_Data_Store"
+        ["report-revenue-stats"]=>
+        string(63) "Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore"
+        ["report-orders"]=>
+        string(57) "Automattic\WooCommerce\Admin\API\Reports\Orders\DataStore"
+        ["report-orders-stats"]=>
+        string(63) "Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore"
+        ["report-products"]=>
+        string(59) "Automattic\WooCommerce\Admin\API\Reports\Products\DataStore"
+        ["report-variations"]=>
+        string(61) "Automattic\WooCommerce\Admin\API\Reports\Variations\DataStore"
+        ["report-products-stats"]=>
+        string(65) "Automattic\WooCommerce\Admin\API\Reports\Products\Stats\DataStore"
+        ["report-variations-stats"]=>
+        string(67) "Automattic\WooCommerce\Admin\API\Reports\Variations\Stats\DataStore"
+        ["report-categories"]=>
+        string(61) "Automattic\WooCommerce\Admin\API\Reports\Categories\DataStore"
+        ["report-taxes"]=>
+        string(56) "Automattic\WooCommerce\Admin\API\Reports\Taxes\DataStore"
+        ["report-taxes-stats"]=>
+        string(62) "Automattic\WooCommerce\Admin\API\Reports\Taxes\Stats\DataStore"
+        ["report-coupons"]=>
+        string(58) "Automattic\WooCommerce\Admin\API\Reports\Coupons\DataStore"
+        ["report-coupons-stats"]=>
+        string(64) "Automattic\WooCommerce\Admin\API\Reports\Coupons\Stats\DataStore"
+        ["report-downloads"]=>
+        string(60) "Automattic\WooCommerce\Admin\API\Reports\Downloads\DataStore"
+        ["report-downloads-stats"]=>
+        string(66) "Automattic\WooCommerce\Admin\API\Reports\Downloads\Stats\DataStore"
+        ["admin-note"]=>
+        string(44) "Automattic\WooCommerce\Admin\Notes\DataStore"
+        ["report-customers"]=>
+        string(60) "Automattic\WooCommerce\Admin\API\Reports\Customers\DataStore"
+        ["report-customers-stats"]=>
+        string(66) "Automattic\WooCommerce\Admin\API\Reports\Customers\Stats\DataStore"
+        ["report-stock-stats"]=>
+        string(62) "Automattic\WooCommerce\Admin\API\Reports\Stock\Stats\DataStore"
+      }
+      ["current_class_name":"WC_Data_Store":private]=>
+      string(32) "WC_Order_Item_Product_Data_Store"
+      ["object_type":"WC_Data_Store":private]=>
+      string(18) "order-item-product"
+    }
+    ["cache_group":protected]=>
+    string(11) "order-items"
+    ["meta_data":protected]=>
+    array(1) {
+      [0]=>
+      object(WC_Meta_Data)#33565 (2) {
+        ["current_data":protected]=>
+        array(3) {
+          ["id"]=>
+          int(70)
+          ["key"]=>
+          string(11) "orientacion"
+          ["value"]=>
+          string(10) "Horizontal"
+        }
+        ["data":protected]=>
+        array(3) {
+          ["id"]=>
+          int(70)
+          ["key"]=>
+          string(11) "orientacion"
+          ["value"]=>
+          string(10) "Horizontal"
+        }
+      }
+    }
+    ["legacy_datastore_props":protected]=>
+    array(0) {
+    }
+    ["meta_type":protected]=>
+    string(10) "order_item"
+  }
+}
+<p>Ha habido un error crítico en esta web.</p><p><a href="https://wordpress.org/documentation/article/faq-troubleshooting/">Aprende más sobre el diagnóstico de WordPress.</a></p>

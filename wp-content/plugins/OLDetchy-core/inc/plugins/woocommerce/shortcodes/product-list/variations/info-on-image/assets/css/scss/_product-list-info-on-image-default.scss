@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Product List Info on Image styles
+   ========================================================================== */
+
+.qodef-woo-product-list {
+	
+	&.qodef-item-layout--info-on-image {
+		
+		.qodef-woo-product-inner {
+			overflow: hidden;
+			
+			&:hover {
+				.qodef-woo-product-image-inner {
+					
+					.qodef-woo-product-image-inner-2 {
+						&:before {
+							clip-path: inset(8px);
+							transition-delay: .15s;
+						}
+					}
+					
+					.qodef-woo-product-button-holder {
+						@include qodefContentFormBottomHover(.14s);
+						
+						.qodef-wave-btn-holder {
+							vertical-align: bottom;
+						}
+					}
+				}
+			}
+			
+			.qodef-woo-product-button-holder {
+				@include qodefContentFormBottom();
+			}
+		
+		
+		.qodef-woo-product-image-inner {
+				padding: 8px;
+
+				.qodef-woo-product-image-inner-2 {
+					background-color: #fff;
+
+					&:before {
+						content: '';
+						position: absolute;
+						top: -8px;
+						left: -8px;
+						width: calc(100% + 16px);
+						height: calc(100% + 16px);
+						background-color: #fff;
+						clip-path: inset(-1px);
+						transition: .5s cubic-bezier(0.14, 0.93, 0.16, 1.22);
+					}
+				}
+			}
+
+			.price {
+				margin-bottom: 6px !important;
+			}
+
+			.qodef-woo-product-categories {
+				margin-top: 3px;
+			}
+
+			.added_to_cart,
+			.button {
+				margin-top: 20px !important; // to override default list selector with id
+			}
+		}
+	}
+}

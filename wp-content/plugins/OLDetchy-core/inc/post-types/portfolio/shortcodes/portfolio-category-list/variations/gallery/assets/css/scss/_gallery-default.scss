@@ -1,0 +1,42 @@
+/* ==========================================================================
+   Portfolio Category List shortcode variation style - begin
+   ========================================================================== */
+
+.qodef-portfolio-category-list {
+	
+	&.qodef-layout--gallery {
+		
+		.qodef-e-inner {
+			
+			&:hover {
+				
+				.qodef-e-content {
+					opacity: 1;
+				}
+			}
+		}
+		
+		.qodef-e-content {
+			position: absolute;
+            top: 8px;
+            left: 8px;
+            width: calc(100% - 16px);
+            height: calc(100% - 16px);
+			background-color: #fff;
+			opacity: 0;
+			transition: $opacity-transition;
+		}
+
+		.qodef-e-title {
+			position: absolute;
+			bottom: 0;
+            left: 50%;
+            width: auto;
+            margin: 0;
+            padding: 12px 41px;
+			color: $heading-color;
+            background-color: $main-color;
+            transform: translateX(-50%);
+		}
+	}
+}

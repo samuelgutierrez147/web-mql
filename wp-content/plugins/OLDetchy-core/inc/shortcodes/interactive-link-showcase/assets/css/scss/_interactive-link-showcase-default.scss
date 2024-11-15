@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Interactive Link Showcase shortcode styles
+   ========================================================================== */
+
+.qodef-interactive-link-showcase {
+	@include qodefRelativeLayout();
+	height: 100vh;
+	visibility: hidden;
+	
+	.admin-bar & {
+		height: calc(100vh - 32px);
+	}
+	
+	.qodef-m-image {
+		@include qodefAbsoluteLayout();
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+		opacity: 0;
+		transition: opacity .0s .45s;
+		
+		&.qodef--active {
+			opacity: 1;
+			z-index: 5;
+			transition: opacity .4s cubic-bezier(0.215, 0.61, 0.355, 1);
+		}
+		
+		img {
+			display: none;
+		}
+	}
+	
+	.qodef-m-items {
+		display: flex;
+		align-items: center;
+		z-index: 10;
+	}
+	
+	.qodef-m-item {
+		position: relative;
+		display: inline-block;
+		vertical-align: top;
+		width: auto;
+		padding: 0 6px 5px;
+		margin: 13px 0;
+		@include qodefHeadingStyle(h2, false);
+		transition: $color-transition, $background-color-transition;
+		
+		.qodef-e-title {
+			position: relative;
+			display: block;
+			z-index: 2;
+		}
+		
+		&.qodef--active {
+			color: #fff;
+			background-color: $heading-color;
+		}
+	}
+	
+	&.qodef--init {
+		visibility: visible;
+	}
+	
+	&.qodef-skin--light {
+		
+		.qodef-m-item {
+			color: #fff;
+			
+			&.qodef--active {
+				color: $heading-color;
+				background-color: #fff;
+			}
+		}
+	}
+}

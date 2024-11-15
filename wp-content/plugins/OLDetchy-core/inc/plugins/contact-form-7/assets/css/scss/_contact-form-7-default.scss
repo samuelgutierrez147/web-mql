@@ -1,0 +1,67 @@
+/* ==========================================================================
+   #Custom forms cf7
+   ========================================================================== */
+
+.wpcf7 {
+	
+	.qodef-contact-form-main {
+		
+		@include qodefScreenSize768 {
+			
+			.qodef-grid-item {
+				width: 100% !important;
+			}
+		}
+	}
+
+	.qodef-custom-search-form {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		.qodef-search-field-holder {
+			width: 100%;
+			margin-right: 40px;
+
+			input {
+				border: none;
+				background-color: $text-color-second;
+			}
+		}
+
+		@include qodefScreenSize480 {
+			flex-direction: column;
+
+			.qodef-search-field-holder,
+			.qodef-submit-holder {
+				text-align: center;
+
+				* {
+					text-align: inherit;
+				}
+			}
+
+			.qodef-search-field-holder {
+				margin-right: 0;
+			}
+
+			.qodef-submit-holder {
+				width: 100%;
+				margin-top: 10px;
+
+				.wpcf7-submit {
+					width: 100%;
+				}
+			}
+		}
+	}
+
+	.wpcf7-validation-errors,
+	.wpcf7-acceptance-missing,
+	.wpcf7-spam-blocked,
+	.wpcf7-aborted,
+	.wpcf7-mail-sent-ok,
+	.wpcf7-mail-sent-ng {
+		margin-top: 15px !important;
+	}
+}

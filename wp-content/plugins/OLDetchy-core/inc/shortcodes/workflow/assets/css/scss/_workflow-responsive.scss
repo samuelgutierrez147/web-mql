@@ -1,0 +1,75 @@
+/* ==========================================================================
+   Workflow shortcode responsive style - begin
+   ========================================================================== */
+
+.qodef-workflow {
+	
+	@include qodefScreenSize1440 {
+		.qodef-e-workflow-item {
+			
+			&:nth-child(even) {
+				
+				.qodef-e-workflow-item-inner {
+					transform: none;
+				}
+			}
+			
+			&:nth-child(odd) {
+				
+				.qodef-e-workflow-item-inner {
+					transform: none;
+				}
+			}
+		}
+		
+		.qodef-e-workflow-item-inner {
+			
+			&:after {
+				width: 50%;
+			}
+		}
+	}
+	
+	@include qodefScreenSize1280 {
+		
+		.qodef-e-workflow-item-inner {
+			
+			&:after {
+				width: 20%;
+			}
+		}
+	}
+	
+	@include qodefScreenSize1024 {
+		display: flex;
+		justify-content: space-evenly;
+		
+		.qodef-e-workflow-image {
+			display: none;
+		}
+		
+		.qodef-e-workflow-item {
+			margin-bottom: 30px;
+		}
+		
+		.qodef-e-workflow-item-inner {
+			
+			&:after {
+				width: 0;
+			}
+		}
+	}
+	
+	@include qodefScreenSize680 {
+		flex-direction: column;
+		
+		.qodef-e-workflow-item {
+			justify-content: center !important;
+			text-align: center !important;
+		}
+	}
+}
+
+/* ==========================================================================
+   Workflow shortcode responsive style - end
+   ========================================================================== */

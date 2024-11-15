@@ -1,0 +1,250 @@
+/* ==========================================================================
+   WooCommerce DropDown Cart styles
+   ========================================================================== */
+
+$wp-widgets-area-map: (
+		'#qodef-page-sidebar': (
+				text-color: null,
+				link-color: null,
+				link-hover-color: null
+		),
+		'#qodef-top-area': (
+				text-color: $text-color,
+				link-color: $text-color,
+				link-hover-color: $main-color,
+		)
+);
+
+.widget_etchy_core_woo_dropdown_cart {
+	height: 100%;
+}
+
+.qodef-woo-dropdown-cart {
+	position: relative;
+	display: inline-block;
+	vertical-align: top;
+	height: 100%;
+	padding: 0 10px;
+	
+	.qodef-m-inner {
+		@include qodefRelativeLayout();
+		height: 100%;
+		display: flex;
+		align-items: center;
+	}
+	
+	.qodef-m-opener {
+		position: relative;
+		color: #000;
+		font-size: 13px;
+		font-weight: 700;
+		line-height: 26px;
+		letter-spacing: .03em;
+		text-transform: uppercase;
+		
+		&:after {
+			@include qodefUnderline(4px);
+		}
+		
+		&:hover {
+			&:after {
+				@include qodefUnderlineHover();
+			}
+		}
+
+		.qodef-header--light & {
+			color: #fff;
+		}
+
+		.qodef-header--dark & {
+			color: #000;
+		}
+	}
+	
+	.qodef-m-dropdown {
+		position: absolute;
+		top: 100%;
+		left: auto;
+		right: 0;
+		text-align: left;
+		max-height: 0;
+		overflow: hidden;
+		transition: .3s;
+	}
+	
+	.qodef-m-dropdown-inner {
+		position: relative;
+		display: inline-block;
+		vertical-align: top;
+		width: 300px;
+		padding: 25px;
+		background-color: $heading-color;
+		color: $background-color;
+	}
+	
+	.qodef-woo-dropdown-items {
+		@include qodefRelativeLayout();
+		
+		@each $key, $values in $wp-widgets-area-map {
+			
+			#{$key} & {
+				@if (map-get($values, 'text-color') != null) {
+					color: map-get($values, 'text-color');
+				}
+				
+				@if (map-get($values, 'link-color') != null) {
+					a {
+						color: map-get($values, 'link-color');
+						
+						@if (map-get($values, 'link-hover-color') != null) {
+							&:hover {
+								color: map-get($values, 'link-hover-color');
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	.qodef-woo-dropdown-item {
+		position: relative;
+		display: flex;
+		align-items: center;
+		margin-top: 17px;
+		padding-bottom: 17px;
+		border-bottom: 1px solid #262626;
+		
+		&:first-child {
+			margin-top: 0;
+		}
+	}
+	
+	.qodef-e-image {
+		flex-shrink: 0;
+		width: 72px;
+		height: 68px;
+		margin-right: 20px;
+		
+		a, img {
+			display: block;
+		}
+	}
+	
+	.qodef-e-content {
+		@include qodefRelativeLayout();
+		padding-right: 20px;
+	}
+	
+	.qodef-e-title {
+		margin: 0;
+		
+		a {
+			color: $background-color;
+		}
+	}
+	
+	.qodef-e-price {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 400;
+		color: rgba($background-color, .75);
+	}
+	
+	.qodef-e-quantity {
+		margin: 3px 0 0;
+	}
+	
+	.qodef-e-remove {
+		position: absolute;
+		top: -11px;
+		right: 0;
+		font-size: 17px;
+		line-height: 1;
+		color: rgba($background-color, .5);
+		
+		&:hover {
+			color: $background-color;
+		}
+	}
+	
+	.qodef-m-order-details {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: 22px;
+		
+		> * {
+			margin: 0;
+			color: $background-color;
+		}
+		
+		.qodef-m-order-amount {
+			font-weight: 400;
+		}
+		
+		@each $key, $values in $wp-widgets-area-map {
+			
+			#{$key} & {
+				@if (map-get($values, 'text-color') != null) {
+					color: map-get($values, 'text-color');
+				}
+			}
+		}
+	}
+	
+	.qodef-m-action {
+		@include qodefRelativeLayout();
+		display: flex;
+		justify-content: space-between;
+		margin-top: 22px;
+	}
+	
+	.qodef-m-checkout-link {
+		@include qodefButtonsStyle(small);
+	}
+	
+	.qodef-m-cart-link {
+		@include qodefButtonsStyle(small, filled-light);
+
+		&:hover {
+			@include qodefButtonFilledLightColor();
+		}
+	}
+	.qodef-m-cart-link {
+		.qodef-btn-masked {
+			color: $heading-color!important;
+			background-color: #fff!important;
+		}
+	}
+	
+	.qodef-m-checkout-link {
+		.qodef-btn-masked {
+			color: #fff!important;
+			background-color: #171717!important;
+			width: calc(100% + 4px)!important;
+		}
+	}
+	
+
+	.qodef-m-checkout-link,
+	.qodef-m-cart-link {
+		padding: 7px 23px 5px;
+		font-size: 12px;
+	}
+	
+	
+	.touchevents & {
+		cursor: pointer;
+	}
+	
+	&:hover {
+		
+		.qodef-m-dropdown {
+			max-height: 100vh;
+			pointer-events: auto;
+			transition: .4s cubic-bezier(.66,.14,.58,1) .1s;
+		}
+	}
+}

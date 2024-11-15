@@ -1,0 +1,1 @@
+<a class="qodef-mobile-header-opener" href="#"><?php echo qode_framework_icons()->get_specific_icon_from_pack( 'menu', 'font-awesome' ); ?></a>

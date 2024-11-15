@@ -1,0 +1,166 @@
+.qodef-team-list {
+	
+	&.qodef-item-layout--info-below {
+
+		.qodef-e-inner {
+
+			&:hover {
+
+				.qodef-e-content-hover {
+					@include qodefContentFormBottomHover();
+				}
+			}
+		}
+
+		.qodef-e-image {
+			position: relative;
+			overflow: hidden;
+		}
+
+		.qodef-e-content-hover {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			display: flex;
+			justify-content: center;
+			align-items: flex-end;
+			@include qodefContentFormBottom();
+			
+			.qodef-browser--firefox & {
+				margin-top: 1px;
+			}
+
+			.qodef-team-member-social-icons {
+				padding: 10px 36px 9px;
+				font-size: 13px;
+				font-weight: 700;
+				letter-spacing: .03em;
+				color: $heading-color;
+	            background-color: $main-color;
+
+				a {
+					margin-right: 8px;
+
+					span {
+						position: relative;
+
+						&:after {
+							content: '.';
+						}
+						
+						&:before {
+							@include qodefUnderline(-2px);
+						}
+					}
+
+					&:last-child {
+						margin-right: 0;
+					}
+
+					&:hover {
+						color: $heading-color;
+						
+						span:before {
+							@include qodefUnderlineHover();
+						}
+					}
+				}
+			}
+		}
+
+		.qodef-e-content {
+			margin: 26px 0 0;
+		}
+
+		.qodef-e-role {
+			font-size: 14px;
+			color: $category-color;
+		}
+	}
+
+	&.qodef-layout--masonry {
+
+		&.qodef-layout--predefined {
+
+			&.qodef-responsive--predefined {
+
+				@media only screen and (min-width: $screen-size-681) {
+
+					&.qodef-col-num--2,
+					&.qodef-col-num--3,
+					&.qodef-col-num--4,
+					&.qodef-col-num--5,
+					&.qodef-col-num--6 {
+
+						.qodef-grid-inner {
+
+							.qodef-grid-item {
+
+								&:nth-of-type(3) {
+									padding-top: 63px;
+								}
+
+								&:nth-of-type(4) {
+									padding-top: 126px;
+								}
+							}
+						}
+					}
+				}
+
+				@media only screen and (min-width: $screen-size-1025) {
+
+					&.qodef-col-num--4,
+					&.qodef-col-num--5,
+					&.qodef-col-num--6 {
+
+						.qodef-grid-inner {
+
+							.qodef-grid-item {
+
+								&:nth-of-type(6) {
+									padding-top: 63px;
+								}
+							}
+						}
+					}
+				}
+
+				@media only screen and (min-width: $screen-size-1367) {
+
+					&.qodef-col-num--5,
+					&.qodef-col-num--6 {
+
+						.qodef-grid-inner {
+
+							.qodef-grid-item {
+
+								&:nth-of-type(7) {
+									padding-top: 126px;
+								}
+							}
+						}
+					}
+				}
+
+				&.qodef-gutter--huge > .qodef-grid-inner > .qodef-grid-item {
+					margin: 0 0 60px;
+
+					@include qodefScreenSize1440 {
+						margin: 0 0 50px;
+					}
+				}
+			}
+		}
+	}
+
+	&.qodef-swiper-container {
+		padding-bottom: 41px;
+
+		.swiper-pagination-bullets {
+			bottom: 0 !important;
+		}
+	}
+}

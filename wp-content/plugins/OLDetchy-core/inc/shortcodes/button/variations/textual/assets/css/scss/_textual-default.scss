@@ -1,0 +1,40 @@
+.qodef-button {
+    
+    &.qodef-layout--textual {
+        padding: 0 !important;
+        font-size: 13px;
+        color: $heading-color;
+        background-color: transparent;
+        border: 0;
+        
+        .qodef-m-text {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        &.qodef-skin--light {
+            color: #fff;
+        }
+    
+        @include qodefButtonUnderline();
+        
+        &:hover {
+            @include qodefButtonUnderlineHover();
+        }
+        
+        &.qodef-layout--custom {
+            padding-left: 26px !important;
+            
+            &:after {
+                width: 15px;
+            }
+            
+            &:hover {
+                
+                &:after {
+                    width: 100%;
+                }
+            }
+        }
+    }
+}

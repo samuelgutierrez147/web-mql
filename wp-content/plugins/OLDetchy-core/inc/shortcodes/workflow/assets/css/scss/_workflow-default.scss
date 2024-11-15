@@ -1,0 +1,77 @@
+/* ==========================================================================
+   Workflow shortcode style - begin
+   ========================================================================== */
+
+.qodef-workflow {
+	@include qodefRelativeLayout();
+	
+	.qodef-e-workflow-image {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+	}
+	
+	.qodef-e-workflow-item {
+		display: flex;
+		margin-bottom: -37px;
+		
+		&:nth-child(even) {
+			justify-content: flex-start;
+			text-align: right;
+			
+			.qodef-e-workflow-item-inner {
+				transform: translateX(34%);
+				
+				&:after {
+					left: calc(100% + 30px);
+				}
+			}
+		}
+		
+		&:nth-child(odd) {
+			justify-content: flex-end;
+			text-align: left;
+			
+			.qodef-e-workflow-item-inner {
+				transform: translateX(-34%);
+				
+				&:after {
+					right: calc(100% + 30px);
+				}
+			}
+		}
+	}
+	
+	.qodef-e-workflow-item-inner {
+		position: relative;
+		max-width: 260px;
+		
+		&:after {
+			content: '';
+			position: absolute;
+			top: 70px;
+			height: 1px;
+			width: 100%;
+			max-width: 200px;
+			display: block;
+			background: $main-color;
+		}
+	}
+	
+	.qodef-e-subtitle {
+		margin: 0;
+		font-size: 15px;
+		font-style: italic;
+		color: $main-color;
+	}
+	
+	.qodef-e-title {
+		margin: 3px 0 0;
+		letter-spacing: .1em;
+	}
+}
+
+/* ==========================================================================
+   Workflow shortcode style - end
+   ========================================================================== */

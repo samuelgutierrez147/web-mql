@@ -1,0 +1,111 @@
+/* ==========================================================================
+   Section Title shortcode responsive styles
+   ========================================================================== */
+
+.qodef-outline-text {
+	
+	@include qodefScreenSize1600 {
+		.qodef-m-title {
+			font-size: 170px;
+
+			@at-root .qodef-layout--predefined#{&} {
+				font-size: 400px;
+			}
+		}
+		
+		.qodef-svg-dots {
+			.qodef-svg-dots-outer {
+				transform: translateX(-7%) translateY(-9%);
+			}
+		}
+	}
+	
+	@include qodefScreenSize1440 {
+		.qodef-m-title {
+			font-size: 133px;
+
+			@at-root .qodef-layout--predefined#{&} {
+				font-size: 290px;
+			}
+		}
+	}
+	
+	@include qodefScreenSize1366 {
+		.qodef-m-title {
+
+			@at-root .qodef-layout--predefined#{&} {
+				font-size: 282px;
+			}
+		}
+	}
+	
+	@include qodefScreenSize1280 {
+		.qodef-m-title {
+			font-size: 124px;
+
+			@at-root .qodef-layout--predefined#{&} {
+				font-size: 262px;
+			}
+		}
+	}
+	
+	@include qodefScreenSize1024 {
+		
+		.qodef-m-title {
+			font-size: 100px;
+
+			@at-root .qodef-layout--predefined#{&} {
+				font-size: 220px;
+			}
+		}
+		
+		&.qodef-title-break--disabled {
+			
+			.qodef-m-title {
+				
+				br {
+					display: none;
+				}
+			}
+		}
+		
+		.qodef-svg-dots {
+			g {
+				transform: scale(.65);
+			}
+		}
+		
+	}
+	
+	@include qodefScreenSize768 {
+		.qodef-m-title {
+			font-size: 75px;
+
+			@at-root .qodef-layout--predefined#{&} {
+				font-size: 210px;
+			}
+		}
+		
+		.qodef-svg-dots {
+			.qodef-svg-dots-outer {
+				transform: scale(.5) translateY(-10%);
+			}
+		}
+	}
+	
+	@include qodefScreenSize480 {
+		.qodef-m-title {
+			font-size: 31px;
+
+			@at-root .qodef-layout--predefined#{&} {
+				font-size: 85px;
+			}
+		}
+		
+		.qodef-svg-dots {
+			.qodef-svg-dots-outer {
+				transform: scale(.25) translateX(-13%) translateY(-27%);
+			}
+		}
+	}
+}

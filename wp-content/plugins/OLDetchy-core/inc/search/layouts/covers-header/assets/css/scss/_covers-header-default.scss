@@ -1,0 +1,123 @@
+/* ==========================================================================
+# Search covers header - start
+========================================================================== */
+
+@keyframes cover_search_fade_out {
+	0% {
+		opacity: 1;
+		visibility: visible;
+		z-index: 100;
+	}
+	100% {
+		opacity: 0;
+		visibility: hidden;
+		z-index: 0;
+	}
+}
+
+@keyframes cover_search_fade_in {
+	0% {
+		opacity: 0;
+		visibility: hidden;
+		z-index: 100;
+	}
+	100% {
+		opacity: 1;
+		visibility: visible;
+		z-index: 100;
+	}
+}
+
+.qodef-search-cover-form {
+	@include qodefAbsoluteLayout();
+	visibility: hidden;
+	opacity: 0;
+	background-color: #fff;
+	z-index: -1;
+	transition: opacity 0.3s ease;
+	
+	.qodef-m-inner {
+		display: flex;
+		height: 100%;
+		width: 100%;
+		align-items: center;
+		justify-content: space-between;
+		padding: $full-width-side-padding;
+
+		.qodef--boxed & {
+			padding-left: $boxed-grid-padding-size;
+			padding-right: $boxed-grid-padding-size;
+
+			@include qodefScreenSize1024 {
+				padding-left: $boxed-mobile-grid-padding-size;
+				padding-right: $boxed-mobile-grid-padding-size;
+			}
+
+			@include qodefScreenSize680 {
+				padding-left: $boxed-small-mobile-grid-padding-size;
+				padding-right: $boxed-small-mobile-grid-padding-size;
+			}
+		}
+	}
+	
+	.qodef-m-form-field {
+		padding: 0;
+		margin-bottom: 0;
+		font-size: 13px;
+		font-weight: 700;
+		text-transform: uppercase;
+		color: $heading-color;
+		background-color: transparent;
+		border: 0;
+		border-radius: 0;
+		outline-offset: 0;
+		
+		&:focus {
+			color: $heading-color;
+		}
+		
+		@include qodefPlaceholder {
+			color: inherit;
+		}
+	}
+	
+	.qodef-m-close {
+		flex-shrink: 0;
+		
+		&.qodef-source--icon-pack {
+			font-size: 25px;
+		}
+	}
+	
+	.qodef-covers-search--fadeout & {
+		animation: cover_search_fade_out .3s ease both;
+	}
+	
+	.qodef-covers-search--fadein & {
+		animation: cover_search_fade_in .3s ease both;
+	}
+	
+	.qodef-header--sticky-display #qodef-page-header > & {
+		display: none;
+	}
+
+	.qodef-opener-icon {
+
+		&.qodef-m-close {
+
+			&.qodef-source--icon-pack,
+			&.qodef-source--svg-path,
+			&.qodef-source--predefined {
+				color: $heading-color !important;
+
+				&:hover {
+					color: $heading-color !important;
+				}
+			}
+		}
+	}
+}
+
+/* ==========================================================================
+# Search covers header - end
+========================================================================== */

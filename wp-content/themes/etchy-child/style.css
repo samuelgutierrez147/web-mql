@@ -1,0 +1,591 @@
+/*
+Theme Name: Etchy Child
+Theme URI: https://etchy.qodeinteractive.com
+Description: A child theme of Etchy
+Author: Elated Themes
+Author URI: https://qodeinteractive.com
+Version: 1.0.0
+Text Domain: etchy
+Template: etchy
+*/
+
+html, body{
+ overflow-x: hidden !important;
+}
+
+body{
+ overflow-y: hidden !important;
+}
+
+/* CSS ACCESIBILIDAD */
+
+h1, h2, h3, h4, h5, h6, span, p, li, .h1, .h2, .h3, .h4, .h5, .h6, .span, .p, .a, .elementor-slide-heading, .elementor-slide-description{
+	background-color: #00000001 !important;
+}
+
+.no-visible{
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0px !important;
+    display: block;
+    width: 0px !important;
+    padding: 0px !important;
+}
+
+.elementor-button.elementor-slide-button.elementor-size-sm{
+	color:black !important;
+	background-color:white !important;
+}
+
+::selection {
+  background: black !important;
+  color: white !important;
+}
+
+/* CSS HEADER */
+
+.top-header-list .elementor-icon-list-item.elementor-inline-item a:hover{
+	color:#FFED00 !important;
+}
+
+/* CSS CONTACTO */
+
+.label-formulario{
+	font-family: "Red Hat Display", Sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 400;
+	color:black;
+}
+
+input[type=email], input[type=number], input[type=password], input[type=search], input[type=tel], input[type=text], input[type=url]{
+	font-family: "Red Hat Display", Sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 400;
+	color:black;
+	margin-top:0px !important;
+	margin-bottom:5px !important;
+	border-bottom: 1px solid #E2E2E2;
+}
+
+textarea{
+	font-family: "Red Hat Display", Sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 400;
+	color:black;
+	margin-top:0px !important;
+	margin-bottom:5px !important;
+	border: 1px solid #E2E2E2;
+	line-height:10px !important;
+}
+
+.wpcf7-list-item{
+	margin-left:0px;
+	margin-top:10px;
+	margin-bottom:10px;
+}
+
+.wpcf7-list-item-label{
+	font-family: "Red Hat Display", Sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 400;
+	color:black;
+}
+
+.wpcf7-list-item-label a{
+	font-family: "Red Hat Display", Sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 400;
+	color:black;
+}
+
+.wpcf7-list-item-label a:hover{
+	font-family: "Red Hat Display", Sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 400;
+	color:#FFED00;
+}
+
+.wpcf7-form-control.wpcf7-submit.qodef-button.qodef-size--normal.qodef-type--filled.qodef-btn-wave-hover.qodef-m{
+	color:black !important;
+	border:1px solid black !important;
+	background-color:white !important;
+}
+
+.wpcf7-form-control.wpcf7-submit.qodef-button.qodef-size--normal.qodef-type--filled.qodef-btn-wave-hover.qodef-m:hover{
+	color:white !important;
+	border:1px solid black !important;
+	background-color:black !important;
+}
+
+button[type=submit].qodef-btn-wave-hover .qodef-btn-masked{
+	display:none !important;
+}
+/* CSS HOME */
+
+.elementor-position-left .elementor-image-box-img {
+    margin-top: 25px !important;
+}
+
+.elementor-accordion-item{
+	border-top:1px solid #E2E2E2 !important;
+	border-bottom:1px solid #E2E2E2 !important;
+	border-left:0px !important;
+	border-right:0px !important;
+}
+
+.elementor-accordion-item .elementor-tab-title{
+	padding-top:25px !important;
+	padding-bottom:25px !important;
+}
+
+.elementor-tab-title.elementor-active{
+	background-color:#FFED00 !important;
+}
+
+.nuevo-servicio{
+	font-family: "Red Hat Display", Sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+	color:#009EE0;
+}
+
+/* CSS COOKIES */
+
+button.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show:after { 
+	font-family: "Font Awesome 5 Free"; 
+	font-weight: 900; content: "\f564"; 
+	vertical-align: middle; 
+	margin-left: 1px; 
+	color: black; 
+	font-size: 25px !important; 
+} 
+
+button.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show::after {
+	display:inline-block !important;
+} 
+
+.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show { 
+	font-size:0px; 
+	right:0 !important; 
+	height:50px !important; 
+	border-radius:12px 0 0 0 !important; 
+	bottom:0 !important; 
+} 
+
+#cmplz-document { 
+	max-width:100%; width:100%; 
+} 
+#cmplz-document a { 
+	color:black; 
+} 
+#cmplz-document a:hover { 
+	color:black; 
+} 
+#cmplz-document p, #cmplz-document li, #cmplz-manage-consent-container.cmplz-manage-consent-container .cmplz-categories { 
+	font-family:"Red Hat Display"; font-size:16px; font-weight:400; color:black !important; 
+} 
+#cmplz-document h2 { 
+	font-family:"Red Hat Display"; font-size:22px; font-weight:700; color:black !important; 
+} 
+#cmplz-document h3 { 
+	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important; 
+} 
+#cmplz-document h4 { 
+	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important; 
+}
+#cmplz-document h5 { 
+	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important; 
+} 
+#cmplz-document h6 { 
+	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important; 
+}
+
+.gt_switcher-popup.glink.nturl.notranslate{
+    display: inline-block;
+    text-align: center;
+    width: 100% !important;
+    color:white !important;
+}
+
+.gt_white_content .gt_languages .glink span{
+	color:black !important;
+	font-size:15px !important;
+}
+
+
+.ytp-gradient-top{
+	background-color:black !important;
+	padding-bottom:15px !important;
+}
+
+.elementor-slideshow__footer.elementor-lightbox-prevent-close{
+	display:none !important;
+}
+
+
+/* CSS MI CUENTA */
+
+.elementor-widget-woocommerce-checkout-page a, .elementor-widget-woocommerce-my-account a{
+	color:#000000 !important;
+	font-weight:700;
+}
+
+.woocommerce p, .woocommerce h1, .woocommerce h2, .woocommerce h3, .woocommerce h4, .woocommerce h5, .woocommerce h6, .woocommerce span, .woocommerce div, .woocommerce th, .woocommerce td, .woocommerce a{
+		    font-family: "Red Hat Display", Sans-serif !important;
+}
+
+.woocommerce-MyAccount-navigation-link{
+	padding:0px !important;
+}
+
+.woocommerce-MyAccount-navigation-link a{
+	padding-top:20px !important;
+    padding-bottom:20px !important;
+}
+
+.button.qodef-btn-wave-hover:hover{
+	border: 1px solid black !important;
+    color:black  !important;
+}
+
+.woocommerce-account .button.qodef-btn-wave-hover .qodef-btn-masked{
+	display:none !important;
+}
+
+.woocommerce-page div.woocommerce .col2-set{
+	justify-content: space-evenly;
+}
+
+.e-checkout__column.e-checkout__column-start .col2-set{
+	display: block !important;
+}
+
+.woocommerce-page div.woocommerce .col2-set>*{
+	max-width:100% !important;
+	width:100%;
+}
+
+.elementor-widget-woocommerce-my-account .e-my-account-tab:not(.e-my-account-tab__dashboard--custom) .woocommerce-address-fields .button, .elementor-widget-woocommerce-my-account .e-my-account-tab:not(.e-my-account-tab__dashboard--custom) .woocommerce-EditAccountForm .button{
+	background: #FFED00 !important;
+    color:black !important;
+}
+
+.elementor-widget-woocommerce-my-account .e-my-account-tab:not(.e-my-account-tab__dashboard--custom) .woocommerce .login .button:hover, .elementor-widget-woocommerce-my-account .e-my-account-tab:not(.e-my-account-tab__dashboard--custom) .woocommerce .register .button:hover, .elementor-widget-woocommerce-my-account .e-my-account-tab:not(.e-my-account-tab__dashboard--custom) .woocommerce .woocommerce-ResetPassword .button:hover{
+	background: black !important;
+    color:white !important;
+}
+
+.woocommerce-account .button, .elementor-widget-woocommerce-checkout-page .woocommerce-checkout #payment #place_order{
+	background: #FFED00 !important;
+    color:black !important;
+}
+
+#orientacion {
+    width:100% !important;
+}
+
+.woocommerce-notices-wrapper{
+	display:none !important;
+}
+
+.product-total, .cart-subtotal, .order-total, th.product-name, .woocommerce-notices-wrapper{
+	display:none !important;
+}
+
+.woocommerce-input-wrapper, .form-row.form-row-first, .form-row.form-row-last{
+	width:100%;
+    max-width:100%;
+}
+
+.woocommerce-input-wrapper input{
+	width:100%;
+    max-width:100%;
+}
+
+.woocommerce-input-wrapper select{
+	width:100%;
+    max-width:100%;
+}
+
+.elementor-widget-woocommerce-checkout-page .woocommerce-checkout .form-row-first, .elementor-widget-woocommerce-checkout-page .woocommerce-checkout .form-row-last{
+	width:100% !important;
+}
+
+body .select2-container--default .select2-dropdown{
+    background-color: #fafafa !important;
+}
+
+#wapo-total-price-table{
+	display:none;
+}
+
+.qodef-wave-btn-holder{
+	padding-top:5% !important;
+}
+
+.addon-header h3{
+	color: #000000;
+    	font-family: "Red Hat Display", Sans-serif;
+    	font-size: 20px;
+    	font-weight: 700;
+	letter-spacing:2px;
+    	text-transform: uppercase;
+}
+
+#yith-wapo-3{
+	background-color:#F6F6F6;
+	margin-top: 2%;
+    	margin-bottom: 5%;
+}
+
+div.label-container-display img{
+	object-fit:cover !important;
+}
+
+#boton-ficha-producto button.single_add_to_cart_button.button.alt.qodef-btn-wave-hover{
+	font-family: "Red Hat Display", Sans-serif;
+    	font-size: 16px;
+    	font-weight: 700;
+    	fill: #000000;
+   	color: #000000;
+    	background-color: #FFED00;
+	width:100%;
+}
+
+#boton-ficha-producto button.single_add_to_cart_button.button.alt.qodef-btn-wave-hover:hover{
+	font-family: "Red Hat Display", Sans-serif;
+    	font-size: 16px;
+    	font-weight: 700;
+    	fill: #000000;
+   	color: #ffffff !important;
+    	background-color: #000000;
+	width:100%;
+}
+
+#yith-wapo-option-15-0.selected, #yith-wapo-option-16-0.selected, #yith-wapo-option-17-0.selected, #yith-wapo-option-18-0.selected, #yith-wapo-option-19-0.selected, #yith-wapo-option-20-0.selected, #yith-wapo-option-21-0.selected, #yith-wapo-option-22-0.selected, #yith-wapo-option-23-0.selected, #yith-wapo-option-71-0.selected{
+	background: black;
+   	color: white;
+}
+
+@media(max-width:767px){
+	.elementor-swiper-button.elementor-swiper-button-prev, .elementor-swiper-button.elementor-swiper-button-next{
+    	display:none !important;
+    }
+    
+    
+}
+
+.yith-wapo-option.selection-single .label_container .label.position-above .inside{
+	visibility:hidden !important;
+	height:0px;
+}
+
+#yith-wapo-block-1 .required{
+	visibility:hidden !important;
+	height:0px;
+}
+
+.yith-wapo-option-value option:first-child {
+  display: none;
+}
+
+.post-password-form{
+	text-align:center !important;
+	padding:10% !important;
+}
+
+.yith-wapo-addon-type-text .yith-wapo-option .label .option-container{
+	height:0px;
+}
+
+svg.qodef-btn-wave--svg, svg.qodef-btn-wave--svg-initial{
+	height:0px !important;
+}
+
+#yith-wapo-option-975-0 .no-visible, #yith-wapo-option-975-1 .no-visible, #yith-wapo-option-977-0 .option-container, #yith-wapo-option-978-0 .option-container, #yith-wapo-option-980-0 .no-visible, #yith-wapo-option-980-1 .no-visible, #yith-wapo-option-980-2 .no-visible, #yith-wapo-option-980-3 .no-visible{
+	display:none !important;
+}
+
+#yith-wapo-option-975-0 .input-number.quantity, #yith-wapo-option-975-1 .input-number.quantity, #yith-wapo-option-977-0 .input-number.quantity, #yith-wapo-option-978-0 .input-number.quantity, #yith-wapo-option-980-0 .input-number.quantity, #yith-wapo-option-980-1 .input-number.quantity,  #yith-wapo-option-980-2 .input-number.quantity, #yith-wapo-option-980-3 .input-number.quantity{
+	display:block !important;
+}
+
+#yith-wapo-addon-32 .yith-wapo-option.selection-single .label_container .label.position-above .inside, #yith-wapo-addon-38 .yith-wapo-option.selection-single .label_container .label.position-above .inside, #yith-wapo-addon-25 .yith-wapo-option.selection-single .label_container .label.position-above .inside, #yith-wapo-addon-43 .yith-wapo-option.selection-single .label_container .label.position-above .inside, #yith-wapo-addon-48 .yith-wapo-option.selection-single .label_container .label.position-above .inside, #yith-wapo-addon-54 .yith-wapo-option.selection-single .label_container .label.position-above .inside, #yith-wapo-addon-61 .yith-wapo-option.selection-single .label_container .label.position-above .inside, #yith-wapo-addon-64 .yith-wapo-option.selection-single .label_container .label.position-above .inside{
+	visibility:visible !important;
+	height:auto !important;
+}
+
+#yith-wapo-addon-980 .addon-header .wapo-addon-title, #yith-wapo-addon-982 .addon-header .wapo-addon-title, #yith-wapo-addon-76 .addon-header .wapo-addon-title {
+	padding-bottom:3%;
+	padding-top:5%;
+}
+
+#yith-wapo-addon-92 .addon-header .wapo-addon-title {
+	padding-top:5%;
+}
+
+#yith-wapo-addon-982 .option-container, #yith-wapo-addon-76 .option-container, #yith-wapo-addon-980 .option-container, #yith-wapo-addon-982 .option-container {
+	padding-bottom:3%;
+}
+
+
+.error-yith-obligatorio{
+	color: rgb(175, 35, 35) !important;
+}
+
+.error-yith-obligatorio-caja{
+	border-radius: 5px;
+    border: 2px solid rgb(175, 35, 35) !important;
+}
+
+#yith-wapo-addon-17 .addon-header, #yith-wapo-addon-18 .addon-header, #yith-wapo-addon-23 .addon-header, #yith-wapo-addon-71 .addon-header{
+	display:none;
+}
+
+#yith-wapo-984, #yith-wapo-985, #yith-wapo-986, #yith-wapo-987, #yith-wapo-988{
+	margin-bottom:50px;
+}
+
+#yith-wapo-addon-984 .addon-header, #yith-wapo-addon-985 .addon-header, #yith-wapo-addon-986 .addon-header, #yith-wapo-addon-987 .addon-header, #yith-wapo-addon-988 .addon-header{
+	display:none;
+}
+
+.yith-wapo-block .yith-wapo-addon.yith-wapo-addon-type-label .yith-wapo-option div.label .label-container-display, .yith-wapo-block .yith-wapo-addon.yith-wapo-addon-type-label .label_container{
+	height:auto !important;
+}
+
+.shop_table.woocommerce-checkout-review-order-table tbody .product-name{
+	font-size:0px;
+}
+
+.shop_table.woocommerce-checkout-review-order-table tbody .product-name .variation dt{
+	text-transform:uppercase;
+	font-weight:700;
+	padding-bottom:5px;
+	padding-top:10px;
+}
+
+.shop_table.woocommerce-checkout-review-order-table tbody .product-name .variation dd, .shop_table.woocommerce-checkout-review-order-table tbody .product-name .variation dd div{
+	text-transform:uppercase;
+}
+
+.boton-guardar {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #FFED00; /* Color de fondo del botón */
+    color: black; /* Color del texto */
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cambio de cursor al pasar sobre el elemento */
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+	display:none;
+	width:35%;
+	margin-top:20px;
+}
+
+.boton-guardar:hover {
+    background-color: black; /* Color de fondo al pasar el cursor sobre el botón */
+	color:white;
+}
+
+#yith-wapo-addon-990, #yith-wapo-addon-990 p, #yith-wapo-addon-991, #yith-wapo-addon-991 p, #yith-wapo-addon-992, #yith-wapo-addon-992 p, #yith-wapo-addon-993, #yith-wapo-addon-993 p, #yith-wapo-addon-994, #yith-wapo-addon-994 p, #yith-wapo-addon-995, #yith-wapo-addon-995 p, #yith-wapo-addon-996, #yith-wapo-addon-996 p, #yith-wapo-addon-997, #yith-wapo-addon-997 p, #yith-wapo-addon-998, #yith-wapo-addon-998 p, #yith-wapo-addon-999, #yith-wapo-addon-999 p{
+	padding:0px;
+	margin:0px;
+}
+
+#yith-wapo-option-15-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-16-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-17-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-18-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-19-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-20-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-21-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-22-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-23-0 > div > div > div.label-container-display > div > div.label_price,
+#yith-wapo-option-71-0 > div > div > div.label-container-display > div > div.label_price {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+}
+
+#yith-wapo-option-15-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-16-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-17-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-18-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-19-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-20-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-21-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-22-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-23-0 > div > div > div.label-container-display:after,
+#yith-wapo-option-71-0 > div > div > div.label-container-display:after{
+    display: none !important;
+}
+
+.checkbox {
+    position: relative;
+    display: inline-block;/* Ajustar según el diseño */
+    cursor: pointer;
+    height: 15px;
+    width: 15px;
+	left:-15px;
+	background:white;
+    border: 1px solid;
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+.checkbox:after {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: #03BFAC;
+    color: white;
+	font-weight: 900;
+    font-size: 10px;
+	pointer-events: auto;
+}
+
+.checkbox[data-checked="true"]:after {
+    content: "✓";
+}
+
+
+select.yith-wapo-option-value{
+	background-color:white !important;
+	border:1px solid black;
+	color:black;
+	border-radius:5px;
+	padding-right:20px;
+}
+
+.hidden-labels {
+    display: none !important;
+}
+
+.selected {
+    transition: none; /* Desactiva cualquier animación o transición */
+}
+
+#yith-wapo-addon-30 .label_price label, #yith-wapo-addon-36 .label_price label, #yith-wapo-addon-68 .label_price label {
+	display:none !important;
+}
+
+.opcion-no-visible {
+    display: none !important;
+}
+
+#yith-wapo-addon-1001,#yith-wapo-addon-1002{
+	height:0px;
+	display:block;
+	visibility:hidden;
+	margin-top:0px;
+}
+
+#yith-wapo-addon-16 .addon-header,#yith-wapo-option-8-0 .option-container{
+	height:0px !important;
+}

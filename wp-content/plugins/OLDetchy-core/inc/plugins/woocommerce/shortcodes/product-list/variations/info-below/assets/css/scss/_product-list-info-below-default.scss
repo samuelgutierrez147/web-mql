@@ -1,0 +1,31 @@
+/* ==========================================================================
+   Product List Info on Image styles
+   ========================================================================== */
+
+.qodef-woo-product-list {
+	&.qodef-item-layout--info-below {
+		
+		.qodef-woo-product-inner {
+			
+			.qodef-woo-product-image {
+				overflow: hidden;
+			}
+			
+			.qodef-woo-product-button-holder {
+				@include qodefContentFormBottom();
+				
+				.qodef-wave-btn-holder {
+					vertical-align: bottom;
+				}
+			}
+			
+			&:hover {
+				.qodef-woo-product-image-inner {
+					.qodef-woo-product-button-holder {
+						@include qodefContentFormBottomHover();
+					}
+				}
+			}
+		}
+	}
+}

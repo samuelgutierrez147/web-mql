@@ -1,0 +1,17 @@
+# Ignorar archivos de caché y temporales
+/wp-content/cache/
+/wp-content/uploads/
+/wp-content/upgrade/
+/wp-content/tmp/
+
+# Ignorar archivos y carpetas de WordPress que no deberían versionarse
+/wp-admin/
+/wp-includes/
+readme.html
+license.txt
+wp-config.php
+
+# Archivos del sistema
+.htaccess
+.DS_Store
+Thumbs.db

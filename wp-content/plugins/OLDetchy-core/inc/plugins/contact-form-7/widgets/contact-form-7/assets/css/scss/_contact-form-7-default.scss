@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Contact Form 7 widget styles
+   ========================================================================== */
+
+.qodef-contact-form-7 {
+	@include qodefRelativeLayout();
+	
+	.ajax-loader {
+		position: absolute;
+		right: -10px;
+	}
+}
+
+.wpcf7 {
+
+	.qodef-subscribe-form {
+		position: relative;
+		
+		.wpcf7-form-control-wrap {
+			
+			input {
+				margin: 0;
+				padding: 6px 1px;
+			}
+		}
+		
+		.qodef-subscribe-icon {
+			position: absolute;
+			top: 0;
+			right: 0;
+			padding: 1px 21px 0;
+			background-color: transparent;
+			
+			&:hover {
+				background-color: transparent;
+				color: inherit;
+			}
+			
+			&:after {
+				content: "\f1d8";
+				font-family: 'Font Awesome 5 Free';
+				position: absolute;
+				font-size: 20px;
+				font-weight: 400;
+			}
+		}
+
+		&.qodef-narrow {
+			width: 82%;
+		}
+
+		&.qodef-form-light,
+		&.qodef-form-white {
+			
+			.wpcf7-form-control-wrap {
+				
+				input {
+					border-bottom: 1px solid $background-color;
+
+					&:focus {
+						color: $background-color;
+					}
+				}
+			
+				#qodef-page-footer & input {
+					border-width: 0 0 1px 0;
+				}
+			}
+			
+			.qodef-subscribe-icon {
+				color: $background-color;
+			}
+		}
+
+		&.qodef-form-light {
+
+			.wpcf7-form-control-wrap {
+
+				input {
+					color: #b6b6b6;
+				}
+			}
+		}
+
+		&.qodef-form-white {
+
+			.wpcf7-form-control-wrap {
+
+				input {
+					color: rgba($background-color, .85);
+				}
+			}
+		}
+	}
+	
+	div {
+		
+		&.wpcf7-validation-errors,
+		&.wpcf7-acceptance-missing,
+		&.wpcf7-spam-blocked,
+		&.wpcf7-aborted,
+		&.wpcf7-mail-sent-ok,
+		&.wpcf7-mail-sent-ng {
+			border: 2px solid $main-color;
+			margin: 0;
+		}
+	}
+}

@@ -1,0 +1,260 @@
+/* ==========================================================================
+   Cards Gallery shortcode style - begin
+   ========================================================================== */
+
+.qodef-cards-gallery {
+	@include qodefRelativeLayout();
+	padding: 10px 0;
+
+	@include qodefScreenSize680 {
+		width: 88%;
+
+		&.qodef--has-appear {
+			&.qodef-orientation--left {
+				transform: translateX(-13.5%);
+			}
+			&.qodef-orientation--right {
+				transform: translateX(27%);
+			}
+		}
+	}
+
+	.qodef-e-inner {
+		@include qodefRelativeLayout();
+	}
+
+	img {
+		position: relative;
+		display: block;
+		box-shadow: $box-shadow;
+	}
+
+	.qodef-m-fake-card {
+		position: relative;
+		display: block;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+	}
+
+	.qodef-m-card {
+		position: absolute;
+		transition: all .5s ease;
+
+		.qodef-m-bundle-item {
+			transform: translateX(0);
+			transition: all .4s cubic-bezier(0.22, 0.61, 0.36, 1);
+		}
+
+		&.qodef-animating {
+			transition: all 1.3s cubic-bezier(.19, 1, .22, 1);
+			pointer-events: none;
+		}
+
+		&.qodef-animating-siblings {
+			transition: all .8s cubic-bezier(0, 0, 0, 1);
+			pointer-events: none;
+		}
+
+		img {
+			box-shadow: $box-shadow-4;
+		}
+	}
+
+	&.qodef--has-appear {
+		&.qodef-orientation--left {
+			.qodef-m-card{
+				img {
+					transform: translateX(-200px);
+					transition: all .6s cubic-bezier(0.22, 0.61, 0.36, 1);
+				}
+
+				@for $i from 1 through 20 {
+					$transition-delay: $i * .2s;
+
+					&:nth-child(#{$i}) img{
+						transition-delay: $transition-delay;
+					}
+				}
+			}
+
+			&.qodef--appeared {
+				.qodef-m-card img{
+					transform: translateX(0);
+				}
+			}
+		}
+
+		&.qodef-orientation--right {
+			.qodef-m-card{
+				img {
+					transform: translateX(200px);
+					transition: all .6s cubic-bezier(0.22, 0.61, 0.36, 1);
+				}
+
+				@for $i from 1 through 20 {
+					$transition-delay: $i * .2s;
+
+					&:nth-child(#{$i}) img{
+						transition-delay: $transition-delay;
+					}
+				}
+			}
+
+			&.qodef--appeared {
+				.qodef-m-card img{
+					transform: translateX(0);
+				}
+			}
+		}
+	}
+
+	&.qodef-orientation--left .qodef-m-card {
+		left: 0;
+		will-change: transform;
+
+		&.qodef-out {
+			transform: translateX(-100%);
+		}
+
+		&:nth-last-child(5) {
+			transform: scale(.32) translateX(191%);
+		}
+
+		&:nth-last-child(4) {
+			transform: scale(.49) translateX(102%);
+		}
+
+		&:nth-last-child(3) {
+			transform: scale(.66) translateX(55%);
+		}
+
+		&:nth-last-child(2) {
+			transform: scale(.83) translateX(23.5%);
+		}
+
+		&:not(:last-of-type) {
+			cursor: pointer;
+		}
+
+		&:not(:last-of-type):not(.active):hover {
+			.qodef-m-bundle-item {
+				transform: translateX(20px);
+			}
+		}
+	}
+
+	&.qodef-orientation--right .qodef-m-card {
+		right: 0;
+		will-change: transform;
+
+		&.qodef-out {
+			transform: translateX(100%);
+		}
+
+		&:nth-last-child(5) {
+			transform: scale(.32) translateX(-191%);
+		}
+
+		&:nth-last-child(4) {
+			transform: scale(.49) translateX(-102%);
+		}
+
+		&:nth-last-child(3) {
+			transform: scale(.66) translateX(-55%);
+		}
+
+		&:nth-last-child(2) {
+			transform: scale(.83) translateX(-23.5%);
+		}
+
+		&:not(:last-of-type) {
+			cursor: pointer;
+		}
+
+		&:not(:last-of-type):not(.active):hover {
+			.qodef-m-bundle-item {
+				transform: translateX(-20px);
+			}
+		}
+	}
+	
+	.no-touch &.qodef-animation--bundle {
+		
+		img {
+			visibility: hidden;
+		}
+		
+		&.qodef-orientation--right.qodef-appeared {
+			@include keyframes(qodefCardAppearFromRight) {
+				0% {
+					transform: translate3d(100%, 0, 0);
+					opacity: 0;
+					visibility: visible;
+				}
+				
+				30% {
+					opacity: 1;
+					visibility: visible;
+				}
+				
+				100% {
+					visibility: visible;
+					transform: translate3d(0, 0, 0);
+				}
+			}
+			
+			img {
+				animation: qodefCardAppearFromRight 1s cubic-bezier(.19, 1, .22, 1) forwards;
+			}
+			
+			.qodef-m-card {
+				@for $i from 1 through 8 {
+					&:nth-child(#{$i}) {
+						img:not(.qodef-animation-done) {
+							animation-delay: $i * .2s;
+						}
+					}
+				}
+			}
+		}
+		
+		&.qodef-orientation--left.qodef-appeared {
+			@include keyframes(qodefCardAppearFromLeft) {
+				0% {
+					visibility: visible;
+					opacity: 0;
+					transform: translate3d(-100%, 0, 0);
+				}
+				
+				30% {
+					visibility: visible;
+					opacity: 1;
+				}
+				
+				100% {
+					visibility: visible;
+					transform: translate3d(0, 0, 0);
+				}
+			}
+			
+			img {
+				animation: qodefCardAppearFromLeft 1s cubic-bezier(.19, 1, .22, 1) forwards;
+			}
+			
+			.qodef-m-card {
+				@for $i from 1 through 8 {
+					&:nth-child(#{$i}) {
+						img:not(.qodef-animation-done) {
+							animation-delay: $i * .2s;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+/* ==========================================================================
+   Cards Gallery shortcode style - begin
+   ========================================================================== */

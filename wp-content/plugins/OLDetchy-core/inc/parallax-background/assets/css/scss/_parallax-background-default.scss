@@ -1,0 +1,136 @@
+/* ==========================================================================
+   #Parallax Background styles - start
+   ========================================================================== */
+
+.qodef-parallax {
+	position: relative;
+	/* set height for parallax item px, vh, % etc. */
+	width: 100%;
+	overflow: hidden;
+
+	&.elementor-section {
+		overflow: visible;
+	}
+}
+
+.qodef-parallax-row-holder {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+
+.qodef-parallax-img-holder {
+	position: absolute;
+	/* set values:
+        top = -x%,
+        height = (100 + x)%
+    */
+	top: -50%;
+	height: 150%;
+	left: 0;
+	width: 100%;
+	opacity: 0;
+
+	.touchevents &,
+	.qodef-browser--edge &,
+	.qodef-browser--ms-explorer & {
+		top: 0;
+		height: 100%;
+		opacity: 1;
+	}
+}
+
+.qodef-parallax-content-holder {
+	position: relative;
+	z-index: 99;
+}
+
+.qodef-parallax-img-wrapper {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	will-change: transform;
+	margin-top: -10%;
+
+	@include qodefScreenSize1024 {
+		margin-top: 0;
+	}
+}
+
+.qodef-parallax-img {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	.touchevents & {
+		height: 100%;
+		width: 100%;
+		object-fit: cover;
+	}
+
+	.qodef-browser--edge &,
+	.qodef-browser--ms-explorer & {
+		height: 100%;
+	}
+}
+
+@include qodefScreenSize1024 {
+
+	.qodef-parallax {
+
+		&.qodef-parallax--custom {
+
+			.qodef-parallax-bg-image-holder {
+				height: 100%;
+			}
+
+			.qodef-parallax-img-holder {
+
+				.qodef-parallax-img-wrapper {
+
+					img {
+						display: none;
+					}
+				}
+			}
+
+			&.qodef-parallax--background {
+
+				.qodef-parallax-bg-image-holder {
+					background-image: none !important;
+					background-color: $heading-color;
+				}
+			}
+		}
+	}
+}
+
+@include qodefScreenSize680 {
+
+	.qodef-parallax {
+
+		&:not(.qodef-parallax--custom) {
+
+			.qodef-parallax-img-holder {
+
+				.qodef-parallax-img-wrapper {
+
+					img {
+						max-width: unset;
+						height: 100%;
+					}
+				}
+			}
+		}
+	}
+}
+
+/* ==========================================================================
+   #Parallax Background styles - end
+   ========================================================================== */

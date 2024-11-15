@@ -1,0 +1,48 @@
+/* ==========================================================================
+   Interactive Link Showcase shortcode responsive styles
+   ========================================================================== */
+
+.qodef-interactive-link-showcase {
+	
+	&.qodef-type--standard {
+		
+		@include qodefScreenSize1366 {
+			padding: 100px 0;
+			
+			.qodef-m-images {
+				width: 60%;
+			}
+			
+			.qodef-m-items {
+				width: 40%;
+			}
+		}
+		
+		@include qodefScreenSize1024 {
+			padding: 60px 0;
+			
+			.qodef-m-images {
+				width: 80%;
+			}
+			
+			.qodef-m-items {
+				width: 100%;
+				padding-left: 60px;
+				align-items: flex-start;
+			}
+			
+			.qodef-m-item {
+				@include qodefH3Style();
+				padding-bottom: 3px;
+			}
+		}
+		
+		@include qodefScreenSize680 {
+			padding: 30px 0;
+			
+			.qodef-m-items {
+				padding-left: 30px;
+			}
+		}
+	}
+}

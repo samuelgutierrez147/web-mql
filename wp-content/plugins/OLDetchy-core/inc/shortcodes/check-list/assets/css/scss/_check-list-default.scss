@@ -1,0 +1,180 @@
+/* ==========================================================================
+   Check Price List shortcode styles
+   ========================================================================== */
+
+.qodef-check-list {
+	
+	$pricing-table-border-color: #202020;
+	
+	display: flex;
+	border: 1px solid;
+	border-color: $pricing-table-border-color;
+	background-color: $heading-color;
+	
+	.qodef-check-items {
+		width: 62%;
+		box-sizing: border-box;
+		border-right: 1px solid;
+		border-color: inherit
+	}
+	
+	.qodef-check-text {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		width: 38%;
+		text-align: center;
+		padding: 63px 5% 70px;
+		box-sizing: border-box;
+	}
+	
+	.qodef-item-price {
+		display: table;
+		width: 100%;
+		padding: 12px 30px;
+		box-sizing: border-box;
+		border-bottom: 1px solid;
+		border-color: inherit;
+		
+		&:last-child {
+			@media only screen and (min-width: $screen-size-768) {
+				border-bottom: none;
+			}
+		}
+	}
+	
+	.qodef-e-holder,
+	.qodef-e-title-holder {
+		display: table-cell;
+		vertical-align: middle;
+	}
+	
+	.qodef-e-holder {
+		width: 1%;
+	}
+	
+	.qodef-e-title-holder {
+		padding-left: 21px;
+		
+		> * {
+			color: $background-color;
+		}
+	}
+	
+	.qode-e-check-holder {
+		@include qodefHeadingStyle(h2);
+		color: $background-color;
+	}
+	
+	.qodef-e-text-side {
+		margin-bottom: 0;
+		padding: 0;
+		margin-top: 14px;
+		font-size: 14px;
+		line-height: 1.6em;
+		color: $background-color;
+		opacity: 0.75;
+	}
+	
+	
+	.qode-e-button {
+		display: inline-block;
+		margin: 52px auto 0;
+		overflow: hidden;
+		
+		a {
+			/*@include qodefButtonsStyle(normal, outline, outline-light-initial);*/
+			@include qodefButtonsStyle(normal);
+			
+			.qodef-btn-masked {
+				color: #fff!important;
+				background-color: #171717!important;
+				width: calc(100% + 4px)!important;
+			}
+		}
+	}
+	
+	.qodef-e-switch {
+		position: relative;
+		display: inline-block;
+		vertical-align: middle;
+		width: 47px;
+		height: 23px;
+		margin-bottom: 3px;
+		
+		input {
+			display: none;
+		}
+		
+		.qodef-e-slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #444444;
+			box-shadow: inset 0 0 3px 1px rgba(0, 0, 0, .1);
+			transition: all .3s cubic-bezier(0.65, 0.05, 0.36, 1);
+			border-radius: 34px;
+			
+			&:before {
+				position: absolute;
+				content: "";
+				height: 19px;
+				width: 19px;
+				left: 2px;
+				bottom: 2px;
+				background-color: $heading-color;
+				box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.1);
+				border-radius: 50%;
+				transition: all .3s cubic-bezier(0.65, 0.05, 0.36, 1);
+			}
+		}
+		
+		input:checked + .qodef-e-slider {
+			background-color: $background-color;
+		}
+		
+		input:checked + .qodef-e-slider:before {
+			transform: translateX(24px);
+		}
+	}
+	
+	// Light skin
+	&.qodef-skin--light {
+		background-color: $background-color;
+		border-color: #dadada;
+		
+		.qodef-e-title-holder {
+			
+			> * {
+				color: $heading-color;
+			}
+		}
+		
+		.qode-e-check-holder {
+			color: $heading-color;
+		}
+		
+		.qodef-e-text-side {
+			color: $heading-color;
+		}
+		
+		.qodef-e-switch {
+			
+			.qodef-e-slider {
+				background-color: #cbcbcb;
+				
+				&:before {
+					background-color: $background-color;
+				}
+			}
+			
+			input:checked + .qodef-e-slider {
+				background-color: $heading-color;
+			}
+		}
+	}
+}
+

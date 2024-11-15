@@ -1,0 +1,87 @@
+/* ==========================================================================
+   Single Post Navigation styles
+   ========================================================================== */
+
+#qodef-single-portfolio-navigation {
+	@include qodefRelativeLayout();
+	margin: 83px 0 0;
+
+	.qodef-m-inner {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.qodef-m-nav {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: $color-transition, $border-color-transition;
+		
+		> * {
+			display: block;
+			line-height: inherit;
+		}
+
+		&.qodef--prev,
+		&.qodef--next {
+			width: 43px;
+			height: 43px;
+			border: 1px solid $heading-color;
+			
+			span {
+				transition: .2s;
+				transform: translateX(0px) translateZ(0);
+			}
+		}
+
+		&.qodef--next {
+			flex-direction: row-reverse;
+			text-align: right;
+			margin-left: auto;
+			
+			&:hover {
+				color: $heading-color;
+				
+				span {
+					transform: translateX(2px);
+					transition: .3s cubic-bezier(.61,.04,0,.98);
+				}
+			}
+		}
+		
+		&.qodef--prev {
+			&:hover {
+				color: $heading-color;
+				
+				span {
+					transform: translateX(-2px);
+					transition: .3s cubic-bezier(.61,.04,0,.98);
+				}
+			}
+		}
+		
+		&.qodef--back-link {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translateX(-50%) translateY(-50%);
+
+			
+			.qodef-m-nav-icon {
+				font-size: 25px;
+			}
+		}
+	}
+	
+	.qodef-m-nav-icon {
+		display: block;
+		font-size: 30px;
+
+		&:before {
+			display: block;
+		}
+	}
+}

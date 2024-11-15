@@ -1,0 +1,42 @@
+/* ==========================================================================
+   Mobile Header styles
+   ========================================================================== */
+.qodef-mobile-header-navigation {
+	
+	ul {
+
+		.qodef--boxed & {
+			width: 100%;
+			padding-left: $boxed-grid-padding-size;
+			padding-right: $boxed-grid-padding-size;
+
+			@include qodefScreenSize1024 {
+				padding-left: $boxed-mobile-grid-padding-size;
+				padding-right: $boxed-mobile-grid-padding-size;
+			}
+
+			@include qodefScreenSize680 {
+				padding-left: $boxed-small-mobile-grid-padding-size;
+				padding-right: $boxed-small-mobile-grid-padding-size;
+			}
+		}
+		
+		li {
+			
+			a {
+				
+				.qodef-menu-item-icon {
+					margin-right: 5px;
+				}
+			}
+			
+			&.qodef--hide-link > a {
+				cursor: default;
+			}
+		}
+	}
+	
+	.qodef-mega-menu-widget-holder {
+		display: none;
+	}
+}

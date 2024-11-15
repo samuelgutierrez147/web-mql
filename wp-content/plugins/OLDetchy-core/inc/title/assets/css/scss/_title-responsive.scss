@@ -1,0 +1,29 @@
+/* ==========================================================================
+   Title responsive styles
+   ========================================================================== */
+
+@include qodefScreenSize1024 {
+    
+    .qodef-page-title {
+    
+        .qodef-m-content {
+        
+            body:not(.qodef-content-behind-header) & {
+                padding-top: 0 !important; //overrides padding that header puts on content
+            }
+        }
+    }
+}
+
+@include qodefScreenSize480 {
+
+    .qodef-page-title {
+
+        .qodef-m-content {
+
+            &.qodef-content-full-width {
+                padding: $full-width-side-padding-mobile;
+            }
+        }
+    }
+}

@@ -1,0 +1,25 @@
+/* ==========================================================================
+   Interactive Link Showcase List styles
+   ========================================================================== */
+
+.qodef-interactive-link-showcase {
+	&.qodef-layout--list {
+		padding: 150px 0;
+		
+		.qodef-m-images {
+			position: relative;
+			display: block;
+			margin-left: auto;
+			width: 62%;
+			height: 100%;
+			overflow: hidden;
+		}
+		
+		.qodef-m-items {
+			@include qodefAbsoluteLayout();
+			width: 38%;
+			justify-content: center;
+			flex-direction: column;
+		}
+	}
+}

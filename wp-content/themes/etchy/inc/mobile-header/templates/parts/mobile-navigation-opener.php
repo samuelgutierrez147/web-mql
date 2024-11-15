@@ -1,0 +1,1 @@
+<a class="qodef-mobile-header-opener" href="#"><?php echo etchy_opener_svg(); ?></a>

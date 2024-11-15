@@ -1,0 +1,77 @@
+/* ==========================================================================
+   WooCommerce Taxonomy Items styles
+   ========================================================================== */
+
+$wp-widgets-area-map: (
+		'#qodef-top-area' : (
+				link-color: #fff,
+				link-hover-color: #fff,
+		),
+		'#qodef-page-footer': (
+				link-color: #fff,
+				link-hover-color: #fff,
+		),
+		'#qodef-side-area': (
+				link-color: #fff,
+				link-hover-color: #fff,
+		),
+		'.qodef-mega-menu-widget-holder': (
+				link-color: #fff,
+				link-hover-color: #fff,
+		)
+);
+
+.widget_etchy_core_woo_taxonomy_items {
+
+	.qodef-widget-title {
+		margin: 0 0 20px;
+	}
+
+	.qodef-woo-taxonomy-items {
+
+		ul li {
+			display: flex;
+			margin: 9px 0 !important;
+			font-size: 14px;
+
+			@each $key, $values in $wp-widgets-area-map {
+
+				#{$key} & {
+
+					@if (map-get($values, 'link-color') != null) {
+						a {
+							color: map-get($values, 'link-color');
+
+							@if (map-get($values, 'link-hover-color') != null) {
+								&:hover {
+									color: map-get($values, 'link-hover-color');
+								}
+							}
+						}
+					}
+				}
+			}
+
+			a {
+				display: flex;
+
+				.qodef-svg-icon {
+					display: flex;
+					align-items: center;
+					width: 20px;
+					margin-right: 5px;
+
+					svg {
+						max-width: 100%;
+						max-height: 19px;
+
+						* {
+							fill: none;
+							stroke: currentColor;
+						}
+					}
+				}
+			}
+		}
+	}
+}

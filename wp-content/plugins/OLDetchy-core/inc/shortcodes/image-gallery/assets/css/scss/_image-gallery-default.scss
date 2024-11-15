@@ -1,0 +1,47 @@
+/* ==========================================================================
+   Image Galleryshortcode styles
+   ========================================================================== */
+
+.qodef-image-gallery {
+
+	&.qodef--has-hover {
+
+		.qodef-image-wrapper {
+
+			.qodef-image-zoom-holder {
+				overflow: hidden;
+			}
+			
+			img {
+				@include qodefZoomImage();
+			}
+			
+			&:hover {
+
+				img {
+					@include qodefZoomImageHover();
+				}
+			}
+		}
+	}
+
+	&.qodef--has-shadow {
+
+		.qodef-image-wrapper {
+
+			img {
+				box-shadow: $box-shadow-4;
+			}
+			
+			&:hover {
+				img {
+					box-shadow: $box-shadow-4-hover;
+				}
+			}
+		}
+	}
+	
+	.swiper-wrapper {
+		cursor: grab;
+	}
+}

@@ -1,0 +1,134 @@
+/* ==========================================================================
+   Section Title shortcode styles
+   ========================================================================== */
+
+.qodef-section-title {
+	@include qodefRelativeLayout();
+	
+	&.qodef-alignment--center {
+		text-align: center;
+	}
+	
+	&.qodef-alignment--left {
+		text-align: left;
+	}
+	
+	&.qodef-alignment--right {
+		text-align: right;
+	}
+	
+	.qodef-m-title-icon-holder {
+		display: flex;
+	}
+	
+	.qodef-m-title {
+		position: relative;
+		display: inline-block;
+		margin: 0;
+
+		.qodef-last-word {
+			position: relative;
+		}
+	}
+	
+	.qodef-m-text {
+		margin: 14px 0 0;
+	}
+	
+	.qodef-m-subtitle {
+		color: $subtitle-color;
+		font-size: 18px;
+		line-height: 28px;
+		padding-top: 7px;
+		margin: 0;
+	}
+	
+	.qodef-m-icon-wrapper {
+		position: absolute;
+		top: -9px;
+		right: -17px;
+		display: block;
+		flex-shrink: 0;
+		font-size: 15px;
+		line-height: 1;
+	}
+	
+	&.qodef--custom-icon {
+		
+		.qodef-m-icon-wrapper {
+			
+			img {
+				display: block;
+			}
+		}
+	}
+	
+	&.qodef--has-appear {
+		
+		.qodef-m-subtitle {
+			display: inline-block;
+			/*opacity: 0;*/
+			transform: translateY(20px);
+			transition: .45s cubic-bezier(0.65, 0.05, 0.36, 1) .5s;
+		}
+		
+		.qodef-m-title-line {
+			display: block;
+			/*opacity: 0;*/
+			transform: translateY(20px);
+			transition: .45s cubic-bezier(0.65, 0.05, 0.36, 1);
+			
+			.qodef-m-icon-wrapper {
+				display: inline-block;
+				opacity: 0;
+				transform: translateY(30px);
+				transition: .8s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+			}
+			
+			@for $i from 1 through 20 {
+				$transition-delay: $i * .2s;
+				
+				&:nth-child(#{$i}) {
+					transition-delay: $transition-delay;
+					
+					.qodef-m-icon-wrapper {
+						transition-delay: $transition-delay + .2s;
+					}
+				}
+			}
+		}
+		
+		#qodef-custom-section--uncover &{
+			.qodef-m-title-line {
+				@for $i from 1 through 20 {
+					$transition-delay: $i * .2s - .2s;
+					
+					&:nth-child(#{$i}) {
+						transition-delay: $transition-delay;
+						
+						.qodef-m-icon-wrapper {
+							transition-delay: $transition-delay + .2s;
+						}
+					}
+				}
+			}
+		}
+		
+		&.qodef--appeared {
+			.qodef-m-title-line {
+				opacity: 1;
+				transform: translateY(0px);
+				
+				.qodef-m-icon-wrapper {
+					transform: translateY(0px);
+					opacity: 1;
+				}
+			}
+			
+			.qodef-m-subtitle {
+				opacity: 1;
+				transform: translateY(0px);
+			}
+		}
+	}
+}

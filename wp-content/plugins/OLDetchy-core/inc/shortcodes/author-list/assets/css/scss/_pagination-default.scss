@@ -1,0 +1,64 @@
+/* ==========================================================================
+   Pagination global styles
+   ========================================================================== */
+
+.qodef-author-pagination--on {
+
+    &.qodef-pagination-type--standard {
+
+        .qodef-grid-inner {
+            opacity: 1;
+            transition: $opacity-transition;
+        }
+
+        &.qodef--loading {
+
+            .qodef-grid-inner {
+                opacity: 0;
+            }
+        }
+    }
+
+    &.qodef-pagination-type--load-more {
+
+        .qodef-loading-spinner {
+            position: absolute;
+            bottom: 10px;
+            left: calc(50% - 16px);
+            font-size: 32px;
+            line-height: 1;
+            color: $main-color;
+            opacity: 0;
+            z-index: -1;
+            transition: $opacity-transition;
+
+            &:before {
+                display: block;
+                line-height: inherit;
+            }
+        }
+
+        &.qodef--loading {
+
+            .qodef-loading-spinner {
+                opacity: 1;
+                z-index: 1;
+            }
+
+            .qodef-load-more-button {
+                opacity: 0;
+            }
+        }
+    }
+
+    &.qodef-pagination-type--infinite-scroll {
+
+        &.qodef--loading {
+
+            .qodef-infinite-scroll-spinner {
+                opacity: 1;
+                z-index: 1;
+            }
+        }
+    }
+}

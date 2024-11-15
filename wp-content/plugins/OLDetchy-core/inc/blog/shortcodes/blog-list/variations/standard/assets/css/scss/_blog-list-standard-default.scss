@@ -1,0 +1,90 @@
+/* ==========================================================================
+   Blog List styles
+   ========================================================================== */
+
+.qodef-blog {
+	
+	&.qodef-item-layout--standard {
+		
+		&.qodef-col-num--1 {
+		
+			article:not(:last-child) {
+				
+				.qodef-e-info {
+					
+					&.qodef-info--bottom {
+						margin-bottom: 69px;
+					}
+				}
+				
+				&.format-link {
+					
+					.qodef-e-link {
+						margin-bottom: 70px;
+					}
+				}
+				
+				&.format-quote {
+					
+					.qodef-e-quote {
+						margin-bottom: 70px;
+					}
+				}
+			}
+		}
+		
+		&:not(.qodef-col-num--1) {
+			
+			article {
+				
+				&.format-link {
+					
+					.qodef-e-link {
+						padding: 76px;
+					}
+					
+					.qodef-icon-elegant-icons {
+						right: 40px;
+						font-size: 140px;
+					}
+				}
+				
+				&.format-quote {
+					
+					.qodef-e-quote {
+						padding: 76px;
+						
+						&:before {
+							font-size: 540px;
+						}
+					}
+				}
+				
+				.qodef-e-inner {
+					.qodef-e-media {
+						overflow: hidden;
+						margin-bottom: 19px;
+						
+						.qodef-e-media-image > a {
+							@include qodefZoomImage();
+							backface-visibility: hidden;
+						}
+					}
+
+					.qodef-e-excerpt {
+                        margin: 11px 0 0;
+					}
+					
+					&:hover {
+						.qodef-e-media {
+							.qodef-e-media-image > a {
+								@include qodefZoomImageHover(1.04);
+							}
+						}
+					}
+				}
+				
+			}
+		}
+	}
+}

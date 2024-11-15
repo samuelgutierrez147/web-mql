@@ -1,0 +1,27 @@
+/* ==========================================================================
+   Wishlist style - begin
+   ========================================================================== */
+
+.qodef-wishlist {
+	@include qodefRelativeLayout();
+	
+	.qodef-m-link {
+		line-height: 1;
+		
+		&.qodef--added {
+			color: $main-color;
+			
+			i {
+				font-weight: 900;
+			}
+		}
+	}
+	
+	.qodef-m-response {
+		@include qodefTooltipNotice(-6px, -6px, auto, auto, 0);
+		
+		&.qodef--show {
+			@include qodefTooltipNoticeHover();
+		}
+	}
+}

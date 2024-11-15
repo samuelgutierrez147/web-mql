@@ -1,0 +1,229 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2022-01-26 11:54:03+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/2.4.0-alpha\n"
+"Language: es\n"
+"Project-Id-Version: WooCommerce - Extensions - WooCommerce One Page Checkout\n"
+
+#: woocommerce-one-page-checkout.php:1807
+msgid "Add checkout to product page."
+msgstr "Añadir funciones de pago a la página del producto."
+
+#: woocommerce-one-page-checkout.php:1699
+msgid "%1$sWooCommerce One Page Checkout is inactive.%2$s This plugin requires WooCommerce 2.5 or newer. Please %3$supdate WooCommerce to version 2.5 or newer%4$s"
+msgstr "%1$sWooCommerce One Page Checkout está desactivado.%2$s El plugin requiere WooCommerce 2.5 o posterior. %3$sActualiza WooCommerce a la versión 2.5 o posterior%4$s"
+
+#: woocommerce-one-page-checkout.php:1695
+msgid "%1$sWooCommerce One Page Checkout is inactive.%2$s The %3$sWooCommerce plugin%4$s must be active for WooCommerce One Page Checkout to work. Please %5$sinstall & activate WooCommerce%6$s"
+msgstr "%1$sWooCommerce One Page Checkout está desactivado.%2$s El %3$splugin de WooCommerce%4$s debe estar activado para que WooCommerce One Page Checkout funcione. %5$sInstala y activa WooCommerce%6$s"
+
+#: woocommerce-one-page-checkout.php:1625
+msgid "You must select a product."
+msgstr "Debes elegir un producto."
+
+#: woocommerce-one-page-checkout.php:1624
+msgid "Sorry, your session has expired. <a href=\"%s\">Return to homepage &rarr;</a>"
+msgstr "Lo sentimos, tu sesión ha caducado. <a href=\"%s\">Volver a la página de inicio →</a>"
+
+#: woocommerce-one-page-checkout.php:1351
+msgid "Error processing your request. Please try refreshing the page. Contact us if you continue to have issues."
+msgstr "Se ha producido un error al procesar tu solicitud. Intenta actualizar la página. Ponte en contacto con nosotros si sigues teniendo problemas."
+
+#: woocommerce-one-page-checkout.php:1127
+#: woocommerce-one-page-checkout.php:1186
+msgid "Please choose product options&hellip;"
+msgstr "Elige las opciones del producto..."
+
+#: woocommerce-one-page-checkout.php:1018
+msgid "&quot;%s&quot; could not be removed from your order."
+msgstr "No se ha podido eliminar \"%s\" de tu pedido."
+
+#: woocommerce-one-page-checkout.php:1011
+msgid "&quot;%s&quot; was successfully removed from your order."
+msgstr "\"%s\" se ha eliminado correctamente de tu pedido."
+
+#: woocommerce-one-page-checkout.php:638
+msgid "%s&quot; added to your order. Complete your order below."
+msgstr "Se ha añadido \"%s\" a tu pedido. Completa el pedido a continuación."
+
+#: woocommerce-one-page-checkout.php:618
+msgid "View Cart"
+msgstr "Ver carro de compra"
+
+#: woocommerce-one-page-checkout.php:195
+msgid "Display a simple pricing table with each product's attributes, weight and dimensions. Useful to allow customers to compare different, but related products, e.g. membership subscriptions."
+msgstr "Muestra una tabla de precios sencilla con las dimensiones, el peso y los atributos de cada producto. Es útil para que los clientes puedan comparar productos diferentes pero parecidos, por ejemplo, suscripciones o membresías."
+
+#: woocommerce-one-page-checkout.php:194
+msgid "Pricing Table"
+msgstr "Tabla de precios"
+
+#: woocommerce-one-page-checkout.php:190
+msgid "Display the single product template for each product. Useful when the description, images, gallery and other meta data will help the customer choose, e.g. evening gowns."
+msgstr "Muestra una plantilla de producto individual para cada producto. Resulta útil cuando la descripción, las imágenes, la galería y otros metadatos ayudan al cliente a elegir, por ejemplo, vestidos de noche."
+
+#: woocommerce-one-page-checkout.php:189
+msgid "Single Product"
+msgstr "Producto individual"
+
+#: woocommerce-one-page-checkout.php:185
+msgid "Display a list of products with a radio button for selection. Useful when the customer does not need a description or photograph to choose, e.g. versions of an eBook."
+msgstr "Muestra una lista de productos con un botón de opción para poder elegirlos. Es útil cuando el cliente no necesita descripciones ni fotografías para elegir, por ejemplo, la versión de un libro electrónico."
+
+#: woocommerce-one-page-checkout.php:184
+msgid "Product List"
+msgstr "Lista de productos"
+
+#: woocommerce-one-page-checkout.php:180
+msgid "Display a row for each product containing its thumbnail, title and price. Best for a few simple products where the thumbnails are helpful, e.g. a set of halloween masks."
+msgstr "Muestra una fila para cada producto con la miniatura, el título y el precio. Es lo mejor para algunos productos sencillos en el que la miniatura resulta útil, por ejemplo, un conjunto de máscaras de Halloween."
+
+#: woocommerce-one-page-checkout.php:179
+msgid "Product Table"
+msgstr "Tabla del producto"
+
+#: templates/checkout/pricing-table.php:69
+msgid "Dimensions"
+msgstr "Dimensiones"
+
+#: templates/checkout/pricing-table.php:64
+msgid "Weight"
+msgstr "Peso"
+
+#: templates/checkout/deprecated/review-order.php:203
+msgid "I&rsquo;ve read and accept the <a href=\"%s\" target=\"_blank\">terms &amp; conditions</a>"
+msgstr "He leído y acepto los <a href=\"%s\" target=\"_blank\">términos y condiciones</a>"
+
+#: templates/checkout/deprecated/review-order.php:194
+msgid "Place order"
+msgstr "Realizar el pedido"
+
+#: templates/checkout/deprecated/review-order.php:187
+msgid "Update totals"
+msgstr "Actualizar totales"
+
+#: templates/checkout/deprecated/review-order.php:187
+msgid "Since your browser does not support JavaScript, or it is disabled, please ensure you click the <em>Update Totals</em> button before placing your order. You may be charged more than the amount stated above if you fail to do so."
+msgstr "Debido a que tu navegador no es compatible con JavaScript o lo tiene desactivado, asegúrate de hacer clic en el botón <em>Actualizar totales</em> antes de realizar el pedido. Si no, se te podría cobrar más de la cantidad indicada arriba."
+
+#: templates/checkout/deprecated/review-order.php:176
+msgid "Sorry, it seems that there are no available payment methods for your state. Please contact us if you require assistance or wish to make alternate arrangements."
+msgstr "Lo sentimos, parece que no hay métodos de pago disponibles para tu estado. Ponte en contacto con nosotros si necesitas ayuda o quieres hacer otras gestiones."
+
+#: templates/checkout/deprecated/review-order.php:174
+msgid "Please fill in your details above to see available payment methods."
+msgstr "Introduce tus datos arriba para ver los métodos de pago disponibles."
+
+#: templates/checkout/deprecated/review-order.php:129
+#: templates/checkout/review-order-opc.php:124
+msgid "Order Total"
+msgstr "Total del pedido"
+
+#: templates/checkout/deprecated/review-order.php:75
+#: templates/checkout/review-order-opc.php:77
+msgid "Cart Subtotal"
+msgstr "Subtotal del carro de compra"
+
+#: templates/checkout/deprecated/review-order.php:38
+#: templates/checkout/review-order-opc.php:40
+msgid "Remove this item"
+msgstr "Borrar este artículo"
+
+#: templates/checkout/deprecated/review-order.php:23
+#: templates/checkout/review-order-opc.php:25
+msgid "Total"
+msgstr "Total"
+
+#: templates/checkout/deprecated/review-order.php:21
+#: templates/checkout/review-order-opc.php:23
+msgid "Quantity"
+msgstr "Cantidad"
+
+#: templates/checkout/deprecated/review-order.php:20
+#: templates/checkout/review-order-opc.php:22
+msgid "Product"
+msgstr "Producto"
+
+#: templates/checkout/add-to-cart/button.php:18
+#: woocommerce-one-page-checkout.php:1350
+msgid "Modify &amp; complete order below"
+msgstr "Modifica y completa el pedido a continuación"
+
+#: templates/checkout/add-to-cart/button.php:16
+#: woocommerce-one-page-checkout.php:648
+msgid "Add to order"
+msgstr "Añadir al pedido"
+
+#: templates/checkout/add-to-cart/button.php:15
+msgid "Remove"
+msgstr "Eliminar"
+
+#: classes/class-wcopc-settings.php:113
+msgid "When items in the cart are added, removed, or otherwise updated, One Page Checkout automatically scrolls to the notification section if necessary. This setting controls that behavior."
+msgstr "Cuando se añaden, eliminan o actualizan artículos del carro de compra, One Page Checkout se desplaza automáticamente a la sección de notificaciones si es necesario. Esta opción controla ese comportamiento."
+
+#: classes/class-wcopc-settings.php:110
+msgid "Automatically scroll to notifications on checkout page"
+msgstr "Desplazarse automáticamente a las notificaciones en la página de pago"
+
+#: classes/class-wcopc-settings.php:109
+msgid "Enable auto-scroll"
+msgstr "Activar desplazamiento automático"
+
+#: classes/class-wcopc-settings.php:104
+msgid "Checkout Behavior"
+msgstr "Comportamiento de página de pago"
+
+#: classes/class-wcopc-settings.php:41 js/admin/editor_plugin_lang.php:5
+#: woocommerce-one-page-checkout.php:1806
+msgid "One Page Checkout"
+msgstr "One Page Checkout"
+
+#: classes/class-wcopc-easy-pricing-tables-template.php:68
+msgid "No pricing tables available."
+msgstr "No hay tablas de precios disponibles."
+
+#: classes/class-wcopc-easy-pricing-tables-template.php:60
+msgid "Pricing Table:"
+msgstr "Tabla de precios:"
+
+#: classes/class-wcopc-easy-pricing-tables-template.php:23
+msgid "Include a pricing table creating with the Easy Pricing Table plugin. Best for creating highly customised pricing tables."
+msgstr "Crea e incluye una tabla de precios con el plugin Easy Pricing Table. La mejor opción para crear tablas de precios personalizadas."
+
+#: classes/class-wcopc-easy-pricing-tables-template.php:22
+msgid "Easy Pricing Table"
+msgstr "Easy Pricing Table"
+
+#: classes/class-wcopc-admin-editor.php:251
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: classes/class-wcopc-admin-editor.php:250
+msgid "Create Shortcode"
+msgstr "Crear un shortcode"
+
+#: classes/class-wcopc-admin-editor.php:236
+msgid "Template:"
+msgstr "Plantilla:"
+
+#: classes/class-wcopc-admin-editor.php:232
+msgid "Search for a category&hellip;"
+msgstr "Buscar una categoría..."
+
+#: classes/class-wcopc-admin-editor.php:226
+msgid "Categories:"
+msgstr "Categorías:"
+
+#: classes/class-wcopc-admin-editor.php:218
+#: classes/class-wcopc-admin-editor.php:220
+msgid "Search for a product&hellip;"
+msgstr "Buscar un producto&hellip;"
+
+#: classes/class-wcopc-admin-editor.php:216
+msgid "Products:"
+msgstr "Productos:"

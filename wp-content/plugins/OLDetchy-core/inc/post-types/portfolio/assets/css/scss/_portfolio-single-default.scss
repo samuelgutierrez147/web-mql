@@ -1,0 +1,77 @@
+/* ==========================================================================
+   Portfolio Single styles
+   ========================================================================== */
+
+.single-portfolio-item {
+
+	.qodef-page-content-section {
+		margin-bottom: 0 !important;
+	}
+}
+
+.qodef-portfolio-single {
+
+	.qodef-e-content {
+
+        > qodef-grid-inner > .qodef-grid-item {
+            margin-bottom: 0 !important;
+        }
+    }
+
+	.qodef-media {
+
+		iframe {
+			max-height: calc(56.25vw);
+		}
+	}
+
+	.qodef-portfolio-title {
+		margin: 0 0 16px;
+	}
+	
+	.qodef-portfolio-info {
+  
+		> * {
+			display: flex;
+			align-items: flex-start;
+			margin-bottom: 14px;
+			font-size: 14px;
+			line-height: 17px;
+			color: $category-color;
+
+			&.qodef-info--category {
+				margin-bottom: 28px;
+			}
+			
+			&:last-child {
+				margin-bottom: 0 !important;
+			}
+		}
+
+		.qodef-e-title {
+			margin: 0 20px 0 0;
+			text-transform: uppercase;
+		}
+		
+		p, a {
+			margin: 0;
+			line-height: inherit;
+			color: $category-color;
+		}
+
+		a:hover {
+			color: $heading-color;
+		}
+	}
+
+	.qodef-social-share {
+
+		.qodef-social-title {
+			margin: 0 14px 0 0;
+			font-size: 14px;
+			font-weight: 400;
+			line-height: 17px;
+			color: $category-color;
+		}
+	}
+}

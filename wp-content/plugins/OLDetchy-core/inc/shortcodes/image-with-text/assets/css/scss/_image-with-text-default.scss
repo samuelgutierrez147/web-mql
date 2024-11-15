@@ -1,0 +1,40 @@
+/* ==========================================================================
+   Image With Text shortcode styles
+   ========================================================================== */
+
+.qodef-image-with-text {
+	position: relative;
+	width: 100%;
+	
+	.qodef-m-image {
+		position: relative;
+		width: 100%;
+		
+		a, img {
+			display: block;
+		}
+	}
+	
+	.qodef-m-content {
+		position: relative;
+		width: 100%;
+	}
+	
+	.qodef-m-title {
+		margin: 31px 0 0;
+	}
+	
+	.qodef-m-text {
+		margin: 15px 0 0;
+	}
+
+	&.qodef--has-shadow {
+
+		.qodef-m-image {
+
+			img {
+				box-shadow: $box-shadow-3;
+			}
+		}
+	}
+}

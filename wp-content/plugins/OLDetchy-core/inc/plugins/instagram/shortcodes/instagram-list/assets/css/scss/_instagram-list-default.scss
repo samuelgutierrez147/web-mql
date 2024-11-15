@@ -1,0 +1,136 @@
+/* ==========================================================================
+   Instagram List shortcode styles
+   ========================================================================== */
+
+.qodef-instagram-list {
+	
+	#sb_instagram #sbi_images {
+		
+		.sbi_photo_wrap a{
+			background-image: none !important;
+			height: auto !important;
+			opacity: 1!important;
+			overflow: hidden;
+			
+			&:after {
+				font-family: "Font Awesome 5 Brands";
+				content: "\f16d";
+				@include qodefAbsoluteLayout();
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				@include qodefIconStyle();
+				font-size: 19px;
+				color: #fff;
+				opacity: 0;
+				transition: .35s ease-out;
+				z-index: 2;
+			}
+			
+			&:before {
+				content: "";
+				@include qodefAbsoluteLayout();
+				background-color: rgba(0, 0, 0, .2);
+				z-index: 1;
+				opacity: 0;
+				transition: .35s ease-out;
+			}
+			
+			img {
+				display: inline-block !important;
+				@include qodefZoomImage();
+				will-change: transform;
+			}
+			
+			&:hover {
+				opacity: 1 !important;
+				
+				&:after,
+				&:before{
+					opacity: 1;
+				}
+				
+				img {
+					@include qodefZoomImageHover(1.04);
+				}
+			}
+		}
+	}
+	
+	@for $i from 0 to length($grid-columns-gutter-label) {
+		&.qodef-gutter--#{nth($grid-columns-gutter-label,$i+1)} {
+			$gutter-size: nth($grid-columns-gutter-size, $i+1);
+			$gutter-double-size: $gutter-size * 2;
+			
+			&.qodef--no-bottom-space {
+				
+				@if ($gutter-size == 0) {
+					margin-bottom: 0;
+				} @else {
+					margin-bottom: -#{$gutter-double-size}px;
+				}
+			}
+			
+			#sb_instagram #sbi_images {
+				float: none;
+				padding: 0 !important;
+				width: auto;
+				@if ($gutter-size == 0) {
+					margin: 0;
+				} @else {
+					margin: 0 -#{$gutter-size}px;
+				}
+				
+				> .sbi_item {
+					
+					@if ($gutter-size == 0) {
+						padding: 0 !important;
+						margin: 0 !important;
+					} @else {
+						padding: 0 #{$gutter-size}px !important;
+						margin: 0 0 #{$gutter-double-size}px !important;
+					}
+				}
+			}
+		}
+	}
+
+	&.qodef-instagram-in-footer {
+
+		@include qodefScreenSize680 {
+
+			#sb_instagram.sbi_col_3 #sbi_images .sbi_item,
+			#sb_instagram.sbi_col_4 #sbi_images .sbi_item,
+			#sb_instagram.sbi_col_5 #sbi_images .sbi_item,
+			#sb_instagram.sbi_col_6 #sbi_images .sbi_item {
+				width: 50%;
+			}
+		}
+	}
+}
+
+// slider styles
+.qodef-instagram-swiper-container {
+	position: relative;
+	margin: 0 auto;
+	padding: 0;
+	list-style: none;
+	z-index: 1;
+	visibility: hidden;
+	overflow: hidden;
+	
+	.swiper-slide {
+		
+		a, img {
+			width: 100%;
+		}
+	}
+	
+	&.qodef-swiper--initialized {
+		visibility: visible;
+	}
+}
+
+/* ==========================================================================
+   Instagram List shortcode styles
+   ========================================================================== */

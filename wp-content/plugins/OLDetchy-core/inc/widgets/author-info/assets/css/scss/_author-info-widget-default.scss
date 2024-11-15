@@ -1,0 +1,45 @@
+.widget.qodef-author-info {
+	
+	.qodef-author-info-image {
+		margin-bottom: 22px;
+		display: inline-block;
+		
+		img {
+			margin: 0;
+		}
+	}
+	
+	.qodef-author-info-text {
+		position: relative;
+		display: block;
+		padding-bottom: 3px;
+		font-size: 14px;
+		color: $category-color;
+	}
+	
+	.qodef-author-info-name {
+		margin: 0 0 11px;
+		
+		a {
+			color: $heading-color;
+			text-transform: uppercase;
+		}
+	}
+	
+	.qodef-author-info-description {
+		margin: 0;
+	}
+	
+	.qodef-m-social-icons-text {
+		display: inline-block;
+		margin: 0 5px 0 0;
+		font-size: 14px;
+		color: $category-color
+	}
+	
+	.qodef-m-social-icons {
+		margin-top: 14px;
+		display: inline-block;
+		@include qodefSocialShareText();
+	}
+}

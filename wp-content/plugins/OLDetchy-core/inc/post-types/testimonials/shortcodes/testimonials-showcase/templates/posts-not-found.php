@@ -1,0 +1,1 @@
+<p class="qodef-m-posts-not-found"><?php esc_html_e( 'No posts were found for provided query parameters.', 'touchup-core' ); ?></p>

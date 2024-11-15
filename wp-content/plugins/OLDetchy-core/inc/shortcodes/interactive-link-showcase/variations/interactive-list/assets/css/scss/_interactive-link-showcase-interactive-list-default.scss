@@ -1,0 +1,68 @@
+/* ==========================================================================
+   Interactive Link Showcase Interactive List styles
+   ========================================================================== */
+
+.qodef-interactive-link-showcase {
+	
+	&.qodef-layout--interactive-list {
+		
+		.qodef-m-items {
+			position: relative;
+			flex-direction: column;
+		}
+		
+		.qodef-m-item {
+			padding: 20px 0;
+			margin: 0;
+			color: $heading-color;
+			background-color: transparent;
+			
+			&.qodef--active {
+				
+				.qodef-e-follow-content {
+					display: block;
+				}
+			}
+		}
+		
+		.qodef-e-title {
+			display: block;
+			z-index: -2;
+		}
+		
+		.qodef-e-follow-content {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: auto;
+			display: none;
+		}
+		
+		.qodef-e-follow-image {
+			position: relative;
+			display: inline-block;
+			vertical-align: top;
+			width: auto;
+			transform: translate3d(-50%, -50%, 0);
+			overflow: hidden;
+			z-index: -1;
+			
+			img {
+				position: relative;
+				display: block;
+				width: auto;
+				max-width: 60vw;
+			}
+		}
+		
+		.qodef-e-follow-title {
+			position: absolute;
+			top: calc(50% + 20px); // 20 is padding top from initial title
+			left: 0;
+			display: block;
+			@include qodefHeadingStyle(h2, false);
+			white-space: nowrap;
+			color: #fff;
+		}
+	}
+}

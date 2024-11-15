@@ -1,0 +1,80 @@
+/* ==========================================================================
+   Global styles
+   ========================================================================== */
+
+.etchy-core-page-inline-style {
+	position: absolute !important;
+	width: 0;
+	height: 0;
+	line-height: 1;
+	display: none;
+}
+
+.qodef-wave-btn-holder {
+	display: block;
+	overflow: hidden;
+}
+
+.qodef-btn-wave--svg, .qodef-btn-wave--svg-initial {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+
+.qodef-page-has-custom-section--uncover {
+	#qodef-custom-section--uncover {
+		position: fixed!important;
+		width: 100%;
+		bottom: 0;
+	}
+	
+	section:not(#qodef-custom-section--uncover){
+		z-index: 1;
+	}
+}
+
+.qodef-custom-contact-link {
+	a {
+		color: $text-color;
+		
+		&:hover {
+			color: $heading-color;
+		}
+	}
+}
+
+.qodef-scroll-circle {
+	svg {
+		path:nth-of-type(2) {
+			stroke-dashoffset: 250;
+			stroke-dasharray: 250;
+			transition: .5s cubic-bezier(0.46, 0.03, 0.52, 0.96);
+			transform: scaleX(-1) translateX(-100%);
+		}
+	}
+	
+	&.qodef-scroll-circle-animated {
+		svg {
+			path:nth-of-type(2) {
+				stroke-dashoffset: 0;
+			}
+		}
+	}
+}
+
+.qodef-landing-home {
+	img {
+		transition: .5s cubic-bezier(0.22, 0.61, 0.36, 1);
+		transform: translateY(0px);
+		box-shadow: $box-shadow-4!important;
+	}
+	
+	
+	&:hover {
+		img {
+			transform: translateY(-10px);
+			box-shadow: $box-shadow-4-hover!important;
+		}
+	}
+}
