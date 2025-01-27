@@ -3485,9 +3485,6 @@ if ( ! function_exists( 'wc_display_item_meta' ) ) {
 			}
 		}
 
-		// Añadir la línea "Precio: A estimar" al final del array $strings
-		$strings[] = $args['label_before'] . 'Precio' . $args['label_after'] . 'A estimar';
-
 		if ( $strings ) {
 			$html = $args['before'] . implode( $args['separator'], $strings ) . $args['after'];
 		}
