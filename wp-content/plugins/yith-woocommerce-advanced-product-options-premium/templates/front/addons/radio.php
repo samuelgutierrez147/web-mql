@@ -43,6 +43,9 @@ $required = $addon->get_option( 'required', $x, 'no', false ) === 'yes';
 $checked  = $addon->get_option( 'default', $x, 'no', false ) === 'yes';
 $selected = $checked ? 'selected' : '';
 
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
 <div id="yith-wapo-option-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
@@ -64,9 +67,9 @@ $selected = $checked ? 'selected' : '';
                 <span class="radiobutton <?php echo $checked ? 'checked' : ''; ?>">
                     <!-- INPUT -->
                     <input type="radio"
-                           id="yith-wapo-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
+                           id="<?= esc_attr($custom_id); ?>"
                            class="yith-wapo-option-value"
-                           name="yith_wapo[][<?php echo esc_attr( $addon->id ); ?>]"
+                           name="yith_wapo[][<?php echo esc_attr($custom_id); ?>]"
                            value="<?php echo esc_attr( $addon->options[$x]['label_in_cart_opt'] ); ?>"
                            data-default-price="<?php echo esc_attr( $default_price ); ?>"
                             <?php

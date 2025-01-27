@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<customerAddress>
+ <!-- The code for the Optimus customer to which this address should be
+      added. -->
+ <customerCode></customerCode>
+
+ <!-- The company name for this address, which must be between 1 and 128
+      characters. Typically this will be the same as the company name for
+      the customer. -->
+ <name></name>
+
+ <!-- The first line of the address, which must be between 1 and 128 characters. -->
+ <addressLine1></addressLine1>
+
+ <!-- The second line of the address. This element is optional and can be left
+      empty or excluded completely. If specified the value must be between 1
+      and 128 characters. -->
+ <addressLine2></addressLine2>
+
+ <!-- The third line of the address. This element is optional and can be left
+      empty or excluded completely. If specified the value must be between 1
+      and 128 characters. -->
+ <addressLine3></addressLine3>
+
+ <!-- The fourth line of the address. This element is optional and can be left
+      empty or excluded completely. If specified the value must be between 1
+      and 128 characters. -->
+ <addressLine4></addressLine4>
+
+ <!-- The postcode for the address. This element is optional and can be left
+      empty or excluded completely. If specified the value must be between 1
+      and 10 characters. -->
+ <postcode></postcode>
+
+ <!-- The name of the person associated with the address. This element is
+      optional and can be left empty or excluded completely. If specified
+      the value must be between 1 and 128 characters. -->
+ <contact></contact>
+
+ <!-- The email address for the person associated with the address. This
+      element is optional and can be left empty or excluded completely. If
+      specified the value must be between 1 and 255 characters. -->
+ <email></email>
+
+ <!-- The Optimus area code for this address. -->
+ <areaCode>ANDALUCIA</areaCode>
+
+ <!-- The Optimus representative code for this address. -->
+ <repCode>FELIPE</repCode>
+
+ <!-- This element should contain the value true if invoices should be sent
+      to this address, otherwise it should contain the value false or be
+      left empty or excluded completely. -->
+ <isInvoice>0</isInvoice>
+
+ <!-- This element should contain the value true if deliveries should be sent
+      to this address, otherwise it should contain the value false or be
+      left empty or excluded completely. -->
+ <isDelivery>0</isDelivery>
+
+ <!-- This element should contain the value true if quotes should be sent
+      to this address, otherwise it should contain the value false or be
+      left empty or excluded completely. -->
+ <isQuote>0</isQuote>
+
+ <!-- This element should contain the value true if this address should be
+      included in address label runs, otherwise it should contain the value
+      false or be left empty or excluded completely. -->
+ <isLabel>0</isLabel>
+
+ <!-- This element should contain the value true if this address should be
+      available to web-to-print applications, otherwise it should contain the
+      value false or be left empty or excluded completely. -->
+ <isWebToPrint>0</isWebToPrint>
+
+ <!-- The Optimus tax classification code for the address. This element is
+      required if tax classifications are in use in the Optimus system, otherwise
+      it should be left blank or excluded completely -->
+ <taxClassification></taxClassification>
+</customerAddress>

@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<headerList>
+ <!-- Código del cliente -->
+ <customerCode>AV-001</customerCode>
+ <!-- Para consultar por estados:
+  ENQ_STAT_ALL
+  ENQ_STAT_OPEN (default o en blanco)
+  ENQ_STAT_PENDING
+  ENQ_STAT_COMPLETE
+  ENQ_STAT_INCOMPLETE
+  ENQ_STAT_CANCELLED
+  ENQ_STAT_NOT_CANCELLED
+  ENQ_STAT_SUCCESSFUL
+  ENQ_STAT_FAILED
+ -->
+ <searchStatus>ENQ_STAT_OPEN</searchStatus>
+
+ <!-- Si el estado es ENQ_STAT_PENDING se puede restringir más con estas opciones:
+ EH_PEND_UNDEF (the status for enquiries that are not pending)
+ ENQ_PEND_DECISION (enquiries that are pending because they are waiting for the customer to make a decision)
+ ENQ_PEND_CREDIT (enquiries that are pending because they failed a credit check when the user attempted to mark them as successful)
+ ENQ_STAT_ALL (all enquiries).
+ -->
+ <pendingReason>ENQ_PEND_ALL</pendingReason>
+
+ <!-- This element can be used to restrict the list to only enquiries
+ that were raised for a specific customer address. The element can
+ be omitted or left blank.
+ -->
+ <quoteAddressNumber>1</quoteAddressNumber>
+ 
+ <!-- This element can be used to restrict the list to only enquiries
+ that were quoted in the specified currency. This element can be
+ omitted or left blank but otherwise must be a valid Optimus
+ currency code.
+ -->
+ <currencyCode>EURO</currencyCode>
+
+ <!-- This element can be used to restrict the list based on the
+ enquiry's customer reference. The pattern can include the
+ following wildcard characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+
+ <custRefPattern>A?123*</custRefPattern>
+ <!-- If this element has a value of true the custRefPattern value will
+ be matched against the customer reference field for enquiry
+ headers and their associated lines, otherwise only the customer
+ reference for enquiry headers will be matched. This element can
+ be omitted or left blank in which case a value of false is
+ assumed.
+ -->
+ <useLineCustRef>true</useLineCustRef>
+ <!-- This element can be used to restrict the list based on the
+ contact name for the enquiry. The pattern can include the
+ following wildcard characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <contactNamePattern>A?123*</contactNamePattern>
+ <!-- This element can be used to restrict the list based on the
+ contact's telephone number for the enquiry. The pattern can
+ include the following wildcard characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <telephonePattern>A?123*</telephonePattern>
+ <!-- This element can be used to restrict the list based on the
+ contact's email address for the enquiry. The pattern can include
+ the following wildcard characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <emailAddressPattern>A?123*</emailAddressPattern>
+ <!-- This element can be used to restrict the list based on the title
+ for the enquiry. The pattern can include the following wildcard
+ characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <enquiryTitlePattern>A?123*</enquiryTitlePattern>
+ <!-- This element can be used to restrict the list to only enquiries
+ that were created on or after the specified date and time. This
+ element can be omitted or left blank.
+ -->
+ <earliestCreatedDate>2020-03-01 09:00</earliestCreatedDate>
+ <!-- This element can be used to restrict the list to only enquiries
+ that were created on or before the specified date and time. This
+ element can be omitted or left blank.
+ -->
+ <latestCreatedDate>2020-03-31 17:30</latestCreatedDate>
+ <!-- This element can be used to restrict the list to only enquiries
+ that were marked as pending on or after the specified date and
+ time. This element can be omitted or left blank.
+ -->
+ <earliestPendingDate>2020-03-01 09:00</earliestPendingDate>
+ <!-- This element can be used to restrict the list to only enquiries
+ that were marked as pending on or before the specified date and
+ time. This element can be omitted or left blank.
+ -->
+ <latestCreatedDate>2020-03-31 17:30</latestCreatedDate>
+ <!-- This element can be used to restrict the list to only enquiries
+` that were marked as successful or failed on or after the
+ specified date and time. This element can be omitted or left
+ blank.
+ -->
+ <earliestDecisionDate>2020-03-01 09:00</earliestDecisionDate>
+ <!-- This element can be used to restrict the list to only enquiries
+ that were marked as successful or failed on or before the
+ specified date and time. This element can be omitted or left
+ blank.
+ -->
+ <latestDecisionDate>2020-03-31 17:30</latestDecisionDate>
+ <!-- This element can be used to restrict the list to only enquiries
+ that are due to be sent to the customer on or after the specified
+ date and time. This element can be omitted or left blank.
+ -->
+ <earliestDueDate>2020-03-01 09:00</earliestDueDate>
+ <!-- This element can be used to restrict the list to only enquiries
+ that are due to be sent to the customer on or before the
+ specified date and time. This element can be omitted or left
+ blank.
+ -->
+ <latestDueDate>2020-03-31 17:30</latestDueDate>
+ <!-- This element can be used to restrict the list to only enquiries
+ that are linked to the specified originator. This element can be
+ omitted or left blank but otherwise the value must be a valid
+ Optimus originator code.
+ -->
+ <originatorCode>ALAN</originatorCode>
+ <!-- This element can be used to restrict the list to only enquiries
+ that are linked to the specified representative. This element can
+ be omitted or left blank but otherwise the value must be a valid
+ Optimus representative code.
+ -->
+ <representativeCode>ALAN</representativeCode>
+ <!-- This element can be used to restrict the list to only enquiries
+ that contain the specified words in some combination of their
+ title, contact name, contact email address, customer code or
+ customer name. This element can be omitted or left blank.
+ -->
+ <filterWords>jones brochure</filterWords>
+ <!-- This element can be used to specify the sort order for the list.
+ The available options are: ENQ_SORT_NUMBER, ENQ_SORT_CUSTOMER,
+ ENQ_SORT_CUST_REF, ENQ_SORT_CONTACT, ENQ_SORT_CREATED,
+ ENQ_SORT_DUE, ENQ_SORT_PENDING, ENQ_SORT_DECISION,
+ ENQ_SORT_ACCEPTED_JOB, ENQ_SORT_ORIG, ENQ_SORT_REP,
+ ENQ_SORT_TITLE. This element can be omitted or left blank in
+ which case ENQ_SORT_NUMBER is assumed.
+ -->
+ <sortBy>ENQ_SORT_CUSTOMER</sortBy>
+ <!-- This element is used to determine whether the list should be
+ presented in descending order based on its sort. This element can
+ be omitted or left blank in which case a value of false is
+ assumed.
+ -->
+ <sortDescending>true</sortDescending>
+ <!-- This element can be used to restrict the number of records that
+ are included in the list to allow a paged presentation. This
+ element can be omitted or left blank.
+ -->
+ <maxRecords>20</maxRecords>
+ <!-- This element can be used to conjunction with the maxRecords
+ element to specify the first record that should be returned. This
+ element can be omitted or left blank.
+ -->
+ <firstRecord>21</firstRecord>
+</headerList>

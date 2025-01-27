@@ -56,6 +56,9 @@ if ( 'default' === $show_number_option ) {
 $default_value = apply_filters( 'yith_wapo_default_addon_number', $default_value, $addon );
 $step_value    = apply_filters( 'yith_wapo_default_addon_number_step', '', $addon, $x );
 
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
 <div id="yith-wapo-option-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
@@ -94,9 +97,9 @@ $step_value    = apply_filters( 'yith_wapo_default_addon_number_step', '', $addo
 		<div class="<?php echo esc_attr( apply_filters( 'yith_wapo_number_main_css_class' ,'input-number quantity' ) ); ?>">
 			<!-- INPUT -->
 			<input type="number"
-			       id="yith-wapo-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
+			       id="<?= esc_attr($custom_id); ?>"
 			       class="yith-wapo-option-value"
-			       name="yith_wapo[][<?php echo esc_attr( $addon->id . '-' . $x ); ?>]"
+			       name="yith_wapo[][<?= esc_attr($custom_id); ?>]"
 			       placeholder="0"
 				<?php if ( 'yes' === $number_limit ) : ?>
 					min="<?php echo esc_attr( $minimum_value ); ?>"

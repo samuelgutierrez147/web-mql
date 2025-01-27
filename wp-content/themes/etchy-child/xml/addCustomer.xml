@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customer>
+ <!-- The customer code for this customer, which must be unique and
+ Between 1 and 10 characters long. The next sequential code to
+ use can be obtained by using the nextCustomerCode endpoint.
+ -->
+ <customerCode></customerCode>
+ <!-- The name of the company, which must be between 1 and 128
+ characters. For private individuals this should be the
+ individual's name.
+ -->
+ <companyName></companyName>
+
+ <priceCategory></priceCategory>
+ <!-- The Optimus currency code that applies to this customer. This
+ element can be left empty or excluded completely if the customer
+ uses the Optimus system's local currency -->
+ <currencyCode></currencyCode>
+ <!-- An optional reference for the customer, which can be between 1
+ and 15 characters long. This element can be left empty or
+ excluded completely if no customer reference is required -->
+ <customerReference></customerReference>
+ <!-- The Optimus customer classification code that applies to this
+ customer -->
+ <classificationCode></classificationCode>
+
+ <taxReference></taxReference>
+ <!-- The Optimus country code that applies to this customer -->
+ <countryCode>ES</countryCode>
+ <!-- Optimus systems can have up to 10 'user codes' defined to allow
+ system specific custom data to be recorded for a customer. These
+ elements can be left empty or excluded completely unless the code
+ has been defined for the system and is not optional -->
+ <userCode1></userCode1> <!-- Required if user code 1 is defined and
+ not optional -->
+ <userCode2></userCode2> <!-- Required if user code 2 is defined and
+ not optional -->
+ <userCode3></userCode3> <!-- Required if user code 3 is defined and
+ not optional -->
+ <userCode4></userCode4> <!-- Required if user code 4 is defined and
+ not optional -->
+ <userCode5></userCode5> <!-- Required if user code 5 is defined and
+ not optional -->
+ <userCode6></userCode6> <!-- Required if user code 6 is defined and
+ not optional -->
+ <userCode7></userCode7> <!-- Required if user code 7 is defined and
+ not optional -->
+ <userCode8></userCode8> <!-- Required if user code 8 is defined and
+ not optional -->
+ <userCode9></userCode9> <!-- Required if user code 9 is defined and
+ not optional -->
+ <userCode10></userCode10> <!-- Required if user code 10 is defined and
+ not optional -->
+ <!-- Payment condition code -->
+ <paymentCondition></paymentCondition>
+
+ <!-- Spanish "retencion" code -->
+ <retencion></retencion>
+
+ <!-- Bank ID -->
+ <bankId></bankId>
+
+ <!-- Bank BIC code -->
+ <bicCode></bicCode>
+
+ <!-- Bank name -->
+ <bankName></bankName>
+
+ <!-- Payment days -->
+ <paymentDay1>0</paymentDay1>
+ <paymentDay2>0</paymentDay2>
+ <paymentDay3>0</paymentDay3>
+
+ <!-- Settlement discount -->
+ <settlementDiscount>0.0</settlementDiscount>
+
+ <!--Payment holiday period -->
+ <holidayStartDay>0</holidayStartDay>
+ <holidayStartMonth>0</holidayStartMonth>
+ <holidayEndDay>0</holidayEndDay>
+ <holidayEndMonth>0</holidayEndMonth>
+</customer>

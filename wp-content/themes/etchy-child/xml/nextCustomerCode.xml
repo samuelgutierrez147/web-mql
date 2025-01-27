@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<nextCustomerCode>
+ <!-- The prefix to be used to create the beginning of the customer
+ code. This can be a constant for all customers created from a
+ single application or can be derived from the customer name.
+ Customer codes have a maximum of 10 characters so the maximum
+ length of the prefix is 10 less the number of digits that will
+ be added to make the code unique. -->
+ <prefix>CLI-</prefix>
+ <!-- The number of digits that should be added to the prefix to make
+ the code unique. Numbers are signed sequentially to each distinct
+ prefix, so if the value for this element is 4 and the prefix is
+ OPT then the first code would be OPT0001, the second would be
+ OPT0002 and so on. Therefore the number of digits required should
+ be based on the likely maximum number of customers that will have
+ the same prefix. -->
+ <numDigits>6</numDigits>
+</nextCustomerCode>

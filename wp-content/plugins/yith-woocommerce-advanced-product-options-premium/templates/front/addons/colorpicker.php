@@ -48,6 +48,9 @@ $placeholder   = $addon->get_option( 'placeholder', $x );
 $default_color = 'default_color' === $colorpicker_show ? wp_kses_post( $colorpicker ) : '';
 
 $colorpickerstyle = apply_filters( 'yith_wapo_color_picker_input', 'text' );
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
 <div id="yith-wapo-option-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
@@ -86,8 +89,8 @@ $colorpickerstyle = apply_filters( 'yith_wapo_color_picker_input', 'text' );
 			<!-- Colorpicker -->
 			<input type="<?php echo esc_attr($colorpickerstyle); ?>"
 				class="wp-color-picker yith-wapo-option-value"
-				id="yith-wapo-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
-				name="yith_wapo[][<?php echo esc_attr( $addon->id . '-' . $x ); ?>]"
+				id="<?= esc_attr($custom_id); ?>"
+				name="yith_wapo[][<?= esc_attr($custom_id); ?>]"
                 data-default-price="<?php echo esc_attr( $default_price ); ?>"
                 <?php
                 if ( $default_price > 0 ) {

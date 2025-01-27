@@ -1,0 +1,266 @@
+<?xml version="1.0"?>
+<jobList>
+ <!-- Send this via HTTP/POST to URL
+http://host:8080/optwebsvcs/customer/jobList?db=optimus
+ where 'host' is the host name of the machine running the web
+service and
+ 'optimus' is the name of the Optimus database you wish to use.
+ -->
+ <!-- The customer code for which a list of jobs is required. This is
+ the only required element and must be a valid existing Optimus
+ customer code.
+ -->
+ <customerCode>AV-001</customerCode>
+ <!-- This element can be used to restrict the list to only jobs with a
+ specific status or statuses. The possible values for this element
+ are: SG_RESERVED, SG_NOT_STARTED, SG_IN_PRODUCTION,
+ SG_INCOMPLETE, SG_CURRENT_ACTIVE, SG_ACTIVE, SG_INACTIVE,
+ SG_COMPLETE, SG_NOT_COMPLETE, SG_CANCELLED, SG_SUSPENDED,
+ SG_LOCKED, SG_ALL. This element can be omitted or left blank, in
+ which case a status of SG_INCOMPLETE is assumed.
+ -->
+ <statusGroup>SG_NOT_STARTED</statusGroup>
+ <!-- This element can be used to specify whether suspended jobs should
+ be included in the list. This element can be omitted or left
+ blank in which case a value of false is assumed.
+ -->
+ <includeSuspended>true</includeSuspended>
+ <!-- This element can be used to specify whether reserved jobs should
+ be included in the list. This element can be omitted or left
+ blank in which case a value of false is assumed.
+ -->
+ <includeReserved>true</includeReserved>
+ <!-- This element can be used to restrict the list to only jobs that
+ were booked-in on or after the specified date and time. This
+ element can be omitted or left blank.
+ -->
+ <earliestBookedIn>2020-03-01 09:00</earliestBookedIn>
+ <!-- This element can be used to restrict the list to only jobs that
+ were booked-in on or before the specified date and time. This
+ element can be omitted or left blank.
+ -->
+ <latestBookedIn>2020-03-31 17:30</latestBookedIn>
+ <!-- This element can be used to restrict the list to only jobs that
+ are due for delivery on or after the specified date and time.
+ This element can be omitted or left blank.
+ -->
+ <earliestDeliveryDue>2020-03-01 09:00</earliestDeliveryDue>
+ <!-- This element can be used to restrict the list to only jobs that
+ are due for delivery on or before the specified date and time.
+ This element can be omitted or left blank.
+ -->
+ <latestDeliveryDue>2020-03-31 17:30</latestDeliveryDue>
+ <!-- This element can be used to restrict the list to only jobs that
+ have no sales analysis date. This element can be omitted or left
+ blank in which case a value of false is assumed.
+ -->
+ <noSalesAnalysisDate>false</noSalesAnalysisDate>
+ <!-- This element can be used to restrict the list to only jobs that
+ have a sales analysis date on or after the specified date and
+ time. This element can be omitted or left blank and will be
+ ignored if the noSalesAnalysisDate element is specified with a
+ value of true.
+ -->
+ <earliestSalesAnalysis>2020-03-01 09:00</earliestSalesAnalysis>
+ <!-- This element can be used to restrict the list to only jobs that
+ have a sales analysis date on or before the specified date and
+ time. This element can be omitted or left blank and will be
+ ignored if the noSalesAnalysisDate element is specified with a
+ value of true.
+ -->
+ <latestSalesAnalysis>2020-03-31 17:30</latestSalesAnalysis>
+ <!-- This element can be used to restrict the list to only jobs that
+ have a priority equal to or less than the specified value. This
+ element can be omitted or left blank, in which case a value of 0
+ is assumed, but otherwise must be a number between 0 and 9.
+ -->
+ <maxPriority>7</maxPriority>
+ <!-- This element can be used to restrict the list to only jobs that
+ have the specified job type code. This element can be omitted or
+ left blank but otherwise must be a valid Optimus job type code.
+ -->
+ <typeCode>BROCHURE</typeCode>
+ <!-- This element can be used to restrict the list to only jobs that
+ have the specified originator code. This element can be omitted
+ or left blank but otherwise must be a valid Optimus originator
+ code.
+ -->
+ <originatorCode>ALAN</originatorCode>
+ <!-- This element can be used to restrict the list to only jobs that
+ have the specified representative code. This element can be
+ omitted or left blank but otherwise must be a valid Optimus
+ representative code.
+ -->
+ <representativeCode>STEVE</representativeCode>
+ <!-- This element can be used to restrict the list to only jobs that
+ have the specified customer code. This element can be omitted or
+ left blank but otherwise must be a valid Optimus customer code.
+ -->
+ <invoiceAddressNumber>1</invoiceAddressNumber>
+ <!-- This element can be used to restrict the list to only jobs that
+ have the specified delivery address number. This element can be
+ omitted or left blank.
+ -->
+ <deliveryAddressNumber>2</deliveryAddressNumber>
+ <!-- This element can be used to restrict the list to only jobs that
+ have the specified invoice or delivery address number. This
+ element can be omitted or left blank.
+ -->
+ <invoiceOrDeliveryAddressNumber>1</invoiceOrDeliveryAddressNumber>
+ <!-- This element can be used to restrict the list based on the job
+ title. The pattern can include the following wildcard characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <titlePattern>*PMS ???*</titlePattern>
+ <!-- This element can be used to restrict the list based on the job's
+ order number. The pattern can include the following wildcard
+ characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <orderNumberPattern>*OC-1??*</orderNumberPattern>
+ <!-- This element can be used to restrict the list based on the job's
+ keywords. The pattern can include the following wildcard
+ characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <keywordPattern>*del?*</keywordPattern>
+ <!-- This element can be used to restrict the list based on the status
+ of the job's chargeable items. The possible values for this
+ element are: CG_ALL, CG_READY_TO_APPROVE, CG_READY_TO_INVOICE,
+ CG_INVOICED, CG_CANCELLED. This element can be omitted or left
+ blank in which case a value of CG_ALL is assumed.
+ -->
+ <chargeableItemStatus>CG_INVOICED</chargeableItemStatus>
+ <!-- This element can be used to restrict the list based on the value
+ for the first user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode1>ROLAND</userCode1>
+ <!-- This element can be used to restrict the list based on the value
+ for the second user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode2></userCode2>
+ <!-- This element can be used to restrict the list based on the value
+ for the third user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode3></userCode3>
+ <!-- This element can be used to restrict the list based on the value
+ for the fourth user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode4></userCode4>
+ <!-- This element can be used to restrict the list based on the value
+ for the fifth user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode5></userCode5>
+ <!-- This element can be used to restrict the list based on the value
+ for the sixth user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode6></userCode6>
+ <!-- This element can be used to restrict the list based on the value
+ for the seventh user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode7></userCode7>
+ <!-- This element can be used to restrict the list based on the value
+ for the eighth user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode8></userCode8>
+ <!-- This element can be used to restrict the list based on the value
+ for the ninth user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode9></userCode9>
+ <!-- This element can be used to restrict the list based on the value
+ for the tenth user code field for the job. This element can be
+ omitted or left blank and it will be ignored if it is specified
+ but the user code is not in use.
+ -->
+ <userCode10></userCode10>
+ <!-- This element can be used to restrict the list to only jobs that
+ have a value for the first user date field that is on or after
+ the specified date. This element can be omitted or left blank and
+ will be ignored if the first user date is not in use.
+ -->
+ <earliestUserDate1>2020-03-01 09:00</earliestUserDate1>
+ <!-- This element can be used to restrict the list to only jobs that
+ have a value for the first user date field that is on or before
+ the specified date. This element can be omitted or left blank and
+ will be ignored if the first user date is not in use.
+ -->
+ <latestUserDate1>2020-03-31 09:00</latestUserDate1>
+ <!-- This element can be used to restrict the list to only jobs that
+ have a value for the second user date field that is on or after
+ the specified date. This element can be omitted or left blank and
+ will be ignored if the first user date is not in use.
+ -->
+ <earliestUserDate2>2020-03-01 09:00</earliestUserDate2>
+ <!-- This element can be used to restrict the list to only jobs that
+ have a value for the second user date field that is on or before
+ the specified date. This element can be omitted or left blank and
+ will be ignored if the first user date is not in use.
+ -->
+ <latestUserDate2>2020-03-31 09:00</latestUserDate2>
+ <!-- This element can be used when the statusGroup element has a value
+ of SG_ACTIVE or SG_INACTIVE to specify the number of days within
+which jobs must have been active or inactive. This element can be
+ omitted or left blank in which case it will be assumed to have a
+ value of 7. This element will be ignored if the statusGroup
+ element does not have a value of SG_ACTIVE or SG_INACTIVE.
+ -->
+ <activeDays>30</activeDays>
+ <!-- This element can be used to restrict the list to only jobs that
+ have one or more tasks that are in the specified department. This
+ element can be omitted or left blank but otherwise must be a
+ valid Optimus department number.
+ -->
+ <department>2</department>
+ <!-- This element can be used to specify the sort order for jobs in
+ the list. The possible values for this element are: ST_JOB,
+ ST_QUANTITY, ST_TITLE, ST_JOB_TYPE, ST_REP, ST_ORIG, ST_CUST,
+ ST_ORDER_NUM, ST_BOOKED_IN, ST_DELIVERY_DUE, ST_SALES_ANALYSIS,
+ ST_PRIORITY, ST_USER_CODE1, ST_USER_CODE2, ST_USER_CODE3,
+ ST_USER_CODE4, ST_USER_CODE5, ST_USER_CODE6, ST_USER_CODE7,
+ ST_USER_CODE8, ST_USER_CODE9, ST_USER_CODE10, ST_USER_DATE1,
+ ST_USER_DATE2, ST_LAST_TRANSACTION. This element can be omitted
+ or left blank in which case it will be assumed to have a value
+ of ST_JOB
+ -->
+ <sortBy>ST_DELIVERY_DUE</sortBy>
+ <!-- This element is used to determine whether the list should be
+ presented in descending order based on its sort. This element can
+ be omitted or left blank in which case a value of false is
+ assumed.
+ -->
+ <sortDescending>true</sortDescending>
+ <!-- This element can be used to restrict the number of records that
+ are included in the list to allow a paged presentation. This
+ element can be omitted or left blank.
+ -->
+ <maxRecords>20</maxRecords>
+ <!-- This element can be used to conjunction with the maxRecords
+ element to specify the first record that should be returned. This
+ element can be omitted or left blank.
+ -->
+ <firstRecord>21</firstRecord>
+</jobList>

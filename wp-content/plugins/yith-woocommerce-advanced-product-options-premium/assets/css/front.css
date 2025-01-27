@@ -359,7 +359,6 @@ form.cart:has(#yith-wapo-container .yith-wapo-block),
   display: flex;
   flex-wrap: wrap;
   word-break: break-all;
-  align-items: center;
   column-gap: 5px;
 }
 .yith-wapo-block .yith-wapo-addon.yith-wapo-addon-type-label .label_container.content-align-left .label_price{

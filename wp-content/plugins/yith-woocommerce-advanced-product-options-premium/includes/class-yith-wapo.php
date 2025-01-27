@@ -869,6 +869,7 @@ if ( ! class_exists( 'YITH_WAPO' ) ) {
                     'title_in_cart' => isset($request['addon_title_in_cart']) ? stripslashes(str_replace('"', '&quot;', $request['addon_title_in_cart'])) : '',
                     'title_in_cart_opt' => isset($request['addon_title_in_cart_opt']) ? stripslashes(str_replace('"', '&quot;', $request['addon_title_in_cart_opt'])) : '',
                     'description' => isset($request['addon_description']) ? stripslashes($request['addon_description']) : '',
+                    'addon_identificador' => isset($request['addon_identificador']) ? stripslashes($request['addon_identificador']) : '',
                     'required' => $request['addon_required'] ?? '',
                     'show_image' => $request['addon_show_image'] ?? '',
                     'image' => $request['addon_image'] ?? '',

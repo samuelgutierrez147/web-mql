@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<enquiry>
+   <jobTemplateCode>PL_STD_PEDIDO</jobTemplateCode>
+   <customerCode></customerCode>
+   <addressNumber></addressNumber>
+   <repCode>FELIPE</repCode>
+   <origCode>WEB_MQL</origCode>
+   <jobVariable>
+      <name>ep_fecha_entrega</name>
+      <type>datetime</type>
+      <value></value>
+   </jobVariable>
+   <jobVariable>
+      <name>ep_tipo_pedido</name>
+      <type>string</type>
+      <value></value>
+   </jobVariable>
+   <jobVariable>
+      <name>ep_titulo</name>
+      <type>string</type>
+      <value></value>
+   </jobVariable>
+
+   <line>
+      <productCode>GENERICO</productCode>
+      <description></description>
+      <includeInQuote>true</includeInQuote>
+   </line>
+</enquiry>

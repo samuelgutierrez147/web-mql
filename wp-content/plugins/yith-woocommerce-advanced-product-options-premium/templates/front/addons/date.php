@@ -249,6 +249,9 @@ $params = wp_json_encode( $params );
 $default_date = ! empty( $default_date ) && ! empty( $time_data ) && isset( $time_data[0] )
     ? $default_date . ' ' . $time_data[0] : $default_date;
 
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
 <div id="yith-wapo-option-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>" class="yith-wapo-option">
@@ -283,9 +286,9 @@ $default_date = ! empty( $default_date ) && ! empty( $time_data ) && isset( $tim
 			<span id="temp-time" class="temp-time" style="display: none;"></span>
 
 			<input type="text"
-			       id="yith-wapo-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
+			       id="<?= esc_attr($custom_id); ?>"
 			       class="yith_wapo_date datepicker yith-wapo-option-value"
-			       name="yith_wapo[][<?php echo esc_attr( $addon->id . '-' . $x ); ?>]"
+			       name="yith_wapo[][<?= esc_attr($custom_id); ?>]"
 			       value="<?php echo esc_attr( $default_date ); ?>"
                    data-default-price="<?php echo esc_attr( $default_price ); ?>"
                     <?php

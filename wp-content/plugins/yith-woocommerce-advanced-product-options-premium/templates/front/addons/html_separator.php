@@ -21,6 +21,9 @@ if ( 'empty_space' === $separator_style ) {
 	$css = 'width: ' . $separator_width . '%; border-width: ' . $separator_size . 'px; border-color: ' . ( ! is_array( $separator_color ) ? $separator_color : '' ) . ';';
 }
 
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
 <div class="yith-wapo-separator <?php echo esc_attr( $separator_style ); ?>" style="<?php echo esc_attr( $css ); ?>"></div>

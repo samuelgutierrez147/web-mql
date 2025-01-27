@@ -45,6 +45,9 @@ $allow_multiple = wc_string_to_bool( $allow_multiple );
 
 $upload_string  = get_option( 'yith_wapo_uploads_text_to_show', __( 'Drop files to upload or', 'yith-woocommerce-product-add-ons' ) );
 
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
 <div id="yith-wapo-option-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
@@ -86,7 +89,7 @@ $upload_string  = get_option( 'yith_wapo_uploads_text_to_show', __( 'Drop files 
 			<div class="file-container">
 				<!-- INPUT -->
 				<input type="hidden"
-				       id="yith-wapo-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
+				       id="<?= esc_attr($custom_id); ?>"
 				       class="option yith-wapo-option-value upload-parent"
 				       value=""
                        data-default-price="<?php echo esc_attr( $default_price ); ?>"

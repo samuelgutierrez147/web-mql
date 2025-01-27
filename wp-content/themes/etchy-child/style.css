@@ -24,12 +24,7 @@ h1, h2, h3, h4, h5, h6, span, p, li, .h1, .h2, .h3, .h4, .h5, .h6, .span, .p, .a
 }
 
 .no-visible{
-    visibility: hidden !important;
-    height: 0 !important;
-    margin: 0px !important;
-    display: block;
-    width: 0px !important;
-    padding: 0px !important;
+    display: none !important;
 }
 
 .elementor-button.elementor-slide-button.elementor-size-sm{
@@ -286,11 +281,7 @@ button.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show::after {
 
 .woocommerce-notices-wrapper{
 	display:none !important;
-}
-
-.product-total, .cart-subtotal, .order-total, th.product-name, .woocommerce-notices-wrapper{
-	display:none !important;
-}
+}s
 
 .woocommerce-input-wrapper, .form-row.form-row-first, .form-row.form-row-last{
 	width:100%;
@@ -381,7 +372,10 @@ div.label-container-display img{
 }
 
 #yith-wapo-block-1 .required{
-	visibility:hidden !important;
+	font-size: 1em;
+	vertical-align: super;
+	color: red;
+	margin-left: 2px;
 	height:0px;
 }
 
@@ -454,21 +448,6 @@ svg.qodef-btn-wave--svg, svg.qodef-btn-wave--svg-initial{
 	height:auto !important;
 }
 
-.shop_table.woocommerce-checkout-review-order-table tbody .product-name{
-	font-size:0px;
-}
-
-.shop_table.woocommerce-checkout-review-order-table tbody .product-name .variation dt{
-	text-transform:uppercase;
-	font-weight:700;
-	padding-bottom:5px;
-	padding-top:10px;
-}
-
-.shop_table.woocommerce-checkout-review-order-table tbody .product-name .variation dd, .shop_table.woocommerce-checkout-review-order-table tbody .product-name .variation dd div{
-	text-transform:uppercase;
-}
-
 .boton-guardar {
     display: inline-block;
     padding: 10px 20px;
@@ -496,19 +475,8 @@ svg.qodef-btn-wave--svg, svg.qodef-btn-wave--svg-initial{
 	margin:0px;
 }
 
-#yith-wapo-option-15-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-16-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-17-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-18-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-19-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-20-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-21-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-22-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-23-0 > div > div > div.label-container-display > div > div.label_price,
-#yith-wapo-option-71-0 > div > div > div.label-container-display > div > div.label_price {
+div.label-container-display > div > div.label_price {
     display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
 }
 
 #yith-wapo-option-15-0 > div > div > div.label-container-display:after,
@@ -588,4 +556,23 @@ select.yith-wapo-option-value{
 
 #yith-wapo-addon-16 .addon-header,#yith-wapo-option-8-0 .option-container{
 	height:0px !important;
+}
+
+.message-error {
+	text-align: center; /* Centra el texto dentro del div */
+	margin: 0 auto; /* Centra el div en el contenedor */
+	width: 80%; /* O ajusta el ancho según sea necesario */
+	padding: 10px; /* Opcional: agrega un poco de relleno */
+	background-color: #f8d7da; /* O el color de fondo que prefieras */
+	color: #721c24; /* Color del texto, ajusta según sea necesario */
+	border: 1px solid #f5c6cb; /* Agrega borde si lo deseas */
+	border-radius: 5px; /* Opcional: redondea las esquinas */
+}
+
+.custom-data-row.title-row th {
+	text-align: center !important; /* Centra el texto */
+	font-weight: bold !important; /* Pone el texto en negrita */
+	font-size: 18px !important; /* Puedes ajustar el tamaño de la fuente si lo deseas */
+	background-color: #f0f0f0 !important; /* Color de fondo para el título */
+	padding: 10px 0 !important; /* Espaciado vertical para que se vea bien */
 }

@@ -22,10 +22,13 @@ extract($settings );
 
 $is_required = 'yes' === $addon_required ? 'required' : '';
 
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
-<select id="yith-wapo-<?php echo esc_attr( $addon->id ) ?>"
-        name="yith_wapo[][<?php echo esc_attr( $addon->id ) ?>]"
+<select id="<?php echo esc_attr($custom_id) ?>"
+        name="yith_wapo[][<?php echo esc_attr($custom_id) ?>]"
         class="yith-wapo-option-value"
         data-addon-id="<?php echo esc_attr( $addon->id ) ?>"
         style="<?php echo esc_attr( $options_width_select_css ) ?>"

@@ -123,9 +123,9 @@ if ( $_product instanceof WC_Product && ! in_array( $_product->get_status(), arr
 		?>
 
 		<input type="checkbox"
-			   id="yith-wapo-<?php echo esc_attr( $addon->id ); ?>-<?php echo esc_attr( $x ); ?>"
+			   id="<?= esc_attr($custom_id); ?>"
 			   class="yith-proteo-standard-checkbox yith-wapo-option-value"
-			   name="yith_wapo[][<?php echo esc_attr( $addon->id . '-' . $x ); ?>]"
+			   name="yith_wapo[][<?= esc_attr($custom_id); ?>]"
 			   value="<?php echo 'product-' . esc_attr( $_product->get_id() ) . '-1'; ?>"
                data-default-price="<?php echo esc_attr( $_product->get_regular_price() ); ?>"
                 <?php

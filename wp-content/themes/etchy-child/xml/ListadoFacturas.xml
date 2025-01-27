@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<invoiceList>
+ <!-- Send this via HTTP/POST to URL
+http://host:8080/optwebsvcs/customer/jobList?db=optimus
+ where 'host' is the host name of the machine running the web
+service and
+ 'optimus' is the name of the Optimus database you wish to use.
+ -->
+ <!-- The customer code for which a list of jobs is required. This is
+ the only required element and must be a valid existing Optimus
+ customer code.
+ -->
+ <customerCode>AV-001</customerCode>
+ <!-- This element can be used to restrict the list to only invoices
+ with a specific status or statuses. The possible values for this
+ element are: IIS_ALL, IIS_UNPRINTED, IIS_PRINTED, IIS_UNRELEASED,
+ IIS_RELEASED, IIS_READY_FOR_RELEASE, IIS_UNEMAILED, IIS_EMAILED.
+ This element can be omitted or left blank, in which case a status
+ Of IIS_UNPRINTED is assumed.
+ -->
+ <status>IIS_PRINTED</status>
+ <!-- This element can be used to restrict the list based on the
+ invoice's reference number. The pattern can include the following
+ wildcard characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <referenceNumberPattern>OR-?1*</referenceNumberPattern>
+ <!-- This element can be used to restrict the list based on the
+ invoice's old reference. The pattern can include the following
+ wildcard characters:
+ * - The asterisk represents any number of characters.
+ ? - The question mark represents a single character.
+ This element can be omitted or left blank.
+ -->
+ <oldReferencePattern>A?-10*</oldReferencePattern>
+ <!-- This element can be used to restrict the list to only invoices
+ that have the specified representative code. This element can be
+ omitted or left blank but otherwise must be a valid Optimus
+ representative code.
+ -->
+ <representativeCode>STEVE</representativeCode>
+ <!-- This element can be used to restrict the list to only invoices
+ that have an invoice date on or after the specified date and
+ time. This element can be omitted or left blank.
+ -->
+ <earliestInvoiceDate>2020-03-01</earliestInvoiceDate>
+ <!-- This element can be used to restrict the list to only invoices
+ that have an invoice date on or before the specified date and
+ time. This element can be omitted or left blank.
+ -->
+ <latestInvoiceDate>2020-03-31</latestInvoiceDate>
+ <!-- This element can be used to restrict the list to only invoices
+ that have a printed date on or after the specified date and time.
+ This element can be omitted or left blank.
+ -->
+ <earliestPrintedDate>2020-03-01</earliestPrintedDate>
+ <!-- This element can be used to restrict the list to only invoices
+ that have a printed date on or before the specified date and
+ time. This element can be omitted or left blank.
+ -->
+ <latestPrintedDate>2020-03-31</latestPrintedDate>
+ <!-- This element can be used to restrict the list to only invoices
+ that have a released date on or after the specified date and
+ time. This element can be omitted or left blank.
+ -->
+ <earliestReleasedDate>2020-03-01</earliestReleasedDate>
+ <!-- This element can be used to restrict the list to only invoices
+ that have a released date on or before the specified date and
+ time. This element can be omitted or left blank.
+ -->
+ <latestReleasedDate>2020-03-31</latestReleasedDate>
+ <!-- This element can be used to specify whether cancelled invoices
+ should be included in the list. This element can be omitted or
+ left blank in which case a value of false is assumed.
+ -->
+ <includeCancelled>true</includeCancelled>
+ <!-- This element can be used to specify whether sales order invoices
+ should be included in the list. This element can be omitted or
+ left blank in which case a value of false is assumed.
+ -->
+ <includeSalesOrderInvoices>true</includeSalesOrderInvoices>
+ <!-- This element can be used to restrict the list to only invoices
+ that have a total goods value equal to or greater than the
+ specified value. This element can be omitted or left blank.
+ -->
+ <lowestGoodsValue>100.00</lowestGoodsValue>
+ <!-- This element can be used to restrict the list to only invoices
+ that have a total goods value equal to or less than the specified
+ value. This element can be omitted or left blank.
+ -->
+ <highestGoodsValue>10000.00</highestGoodsValue>
+ <!-- This element can be used to indicate that the goods value
+ calculated for invoices that is used with the lowestGoodsValue
+ and highestGoodsValue elements should include tax. This element
+ can be omitted or left blank in which case a value of false is
+ assumed.
+ -->
+ <includeTax>true</includeTax>
+ <!-- This element can be used to restrict the list to only invoices
+ that have the specified sales ledger analysis code. This element
+ can be omitted or left blank but otherwise must be a valid
+ Optimus sales ledger analysis code.
+ -->
+ <slAnalysisCode>TECH</slAnalysisCode>
+<!-- This element can be used to restrict the list to only invoices
+ that have at least one section for the specified job. This
+ element can be omitted or left blank but otherwise must be a
+ valid Optimus job number.
+ -->
+ <jobNumber>103442</jobNumber>
+ <!-- This element can be used to restrict the list to only invoices
+ that have at least one section for a job with the specified job
+ type code. This element can be omitted or left blank but
+ otherwise must be a valid Optimus job type code.
+ -->
+ <jobTypeCode>BROCHURE</jobTypeCode>
+ <!-- This element can be used to specify that the list should only
+ contain invoices that have an email address specified. This
+ element can be omitted or left blank in which case a value of
+ false is assumed.
+ -->
+ <withEmailAddress>true</withEmailAddress>
+ <!-- This element can be used to specify the sort order for invoices
+ in the list. The possible values for this element are:
+ IIST_NUMBER, IIST_CREATED_DATE. This element can be omitted or
+ left blank in which case it will be assumed to have a value of
+ IIST_NUMBER.
+ -->
+ <sortBy>IIST_CREATED_DATE</sortBy>
+ <!-- This element is used to determine whether the list should be
+ presented in descending order based on its sort. This element can
+ be omitted or left blank in which case a value of false is
+ assumed.
+ -->
+ <sortDescending>true</sortDescending>
+ <!-- This element can be used to restrict the list to only jobs that
+ contain the specified words in some combination of their title,
+ customer name, technical specification or special instruction
+ text. This element can be omitted or left blank
+ -->
+ <filterWords>jones brochure</filterWords>
+ <!-- This element can be used to restrict the number of records that
+ are included in the list to allow a paged presentation. This
+ element can be omitted or left blank.
+ -->
+ <maxRecords>20</maxRecords>
+ <!-- This element can be used to conjunction with the maxRecords
+ element to specify the first record that should be returned. This
+ element can be omitted or left blank.
+ -->
+ <firstRecord>21</firstRecord>
+</invoiceList>

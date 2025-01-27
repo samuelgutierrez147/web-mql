@@ -41,9 +41,12 @@ $option_description = $addon->get_option( 'description', $x );
 
 $option_disabled = apply_filters( 'yith_wapo_select_option_disabled', false, $addon, $x );
 
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
-<option value="<?php echo esc_attr( $x ); ?>" <?php echo esc_attr( $selected ); ?>
+<option value="<?php echo wp_kses_post($addon->get_option('label_in_cart_opt', $x)); ?>" <?php echo esc_attr( $selected ); ?>
         data-default-price="<?php echo esc_attr( $default_price ); ?>"
         <?php
         if ( isset( $default_price ) && $default_price > 0 ) {

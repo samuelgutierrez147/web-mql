@@ -15,6 +15,9 @@ defined( 'YITH_WAPO' ) || exit; // Exit if accessed directly.
 //Settings configuration.
 extract($settings );
 
+// Obtener el valor del campo personalizado "ID"
+$custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza 'id' por el nombre exacto que usaste en tu configuración
+
 ?>
 
 <p>

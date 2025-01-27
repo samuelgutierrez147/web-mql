@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<enquiry>
+
+    <!-- Send this via HTTP/POST to URL http://host:8080/optwebsvcs/enqbuilder?db=optimus
+         where 'host' is the host name of the machine running the web service and
+         'optimus' is the name of the Optimus database you wish to use.
+     -->
+
+    <!-- The Optimus job template code to use for the enquiry-->
+
+    <jobTemplateCode>PL_STD_PEDIDO</jobTemplateCode>
+
+    <!-- The Optimus customer code to use -->
+
+    <customerCode>PRUEBAS</customerCode>
+
+    <!-- The Customer's address number. If not specified then a default
+         of 1 is assumed.
+     -->
+
+    <addressNumber>1</addressNumber>
+
+    <!-- The customer's reference -->
+
+    <customerRef>Ref. Cliente</customerRef>
+
+    <!-- The customer's contact name -->
+
+    <contactName>Contacto</contactName>
+
+    <!-- The contact's telephone number -->
+
+    <telephone>+34 555 99 99 99</telephone>
+
+    <!-- The contact's email address -->
+
+    <emailAddress>pruebas@acme.es</emailAddress>
+
+    <!-- The Optimus representative code -->
+
+    <repCode>FELIPE</repCode>
+
+    <!-- The Optimus originator code -->
+
+    <origCode>WEB_MQL</origCode>
+
+    <!-- The Optimus currency code to use for determining prices in
+         a foreign currency. If foreign currency isn't in use or no
+         foreign currency price is required then this can be omitted
+         or left blank. -->
+
+    <currencyCode></currencyCode>
+
+    <!-- The date/time that the enquiry is due to be with the
+         customer. This element is optional
+     -->
+
+    <dueAt>2021-12-30T17:00</dueAt>
+
+
+    <!-- Any previous enquiry number that was associated with this request.
+         If specified and non-zero then that enquiry is marked as being
+         updated by the new enquiry that is created.
+    -->
+
+    <prevEnqNumber>0</prevEnqNumber>
+
+    <!-- A boolean value to indicate that any previous enquiry number specified
+         should be marked as cancelled. If true and the previous enquiry is not
+         already cancelled and has been booked-in as a job then an error will
+         occur.
+     -->
+
+    <cancelPrevious>false</cancelPrevious>
+
+
+    <!-- Variables for use by the Job template. These become the "inputs"
+         when the job template is evaluated. Different templates require
+         different variables so they are system configuration dependent.
+         There can be as many as required.
+
+         Each variable element should have three sub-elements:
+
+         The 'name' sub-element is the identifier by which the variable will appear
+         when the template is evaluated; i.e., the variable name "job type"
+         can be referenced as ${job type} within a template expression.
+
+         The 'type' sub-element is the type of the variable so that the value
+         may be coerced into the correct form for use in the template
+         expressions. The valid types are:
+
+            "string":   An arbitrary text string
+            "integer":  A integer value (format 12345)
+            "decimal":  A decimal value with optional floating point (format 123.45)
+            "boolean":  A boolean value (format true or false)
+            "datetime": A date/time value in the local timezone (format 2018-07-01T12:00)
+            "date":     A date value without a time component (format 2018-07-01)
+
+         The 'value' sub-element contains the value of the variable. All variable values are
+         checked for correctness and an error will occur if the format is wrong.
+    -->
+
+    <jobVariable>
+        <name>ep_fecha_entrega</name>
+        <type>datetime</type>
+        <value>2021-12-30T12:00</value>
+    </jobVariable>
+
+    <jobVariable>
+        <name>ep_tipo_pedido</name>
+        <type>string</type>
+        <value>INK_ESPMET</value>
+    </jobVariable>
+
+    <jobVariable>
+        <name>ep_titulo</name>
+        <type>string</type>
+        <value>Web Service</value>
+    </jobVariable>
+
+
+    <!-- A line to add to the enquiry. There many be any number of line elements -->
+
+    <line>
+        <!-- The Optimus product code -->
+
+        <productCode>LIBROS</productCode>
+
+        <!-- A single-line description of the product being ordered -->
+
+        <description>Pruebas WEB SERVICES</description>
+
+        <!-- The customer's reference (optional) -->
+
+        <customerRef>Ref. Cliente</customerRef>
+
+        <!-- Is this line to be included in the written quote? (optional) -->
+
+        <includeInQuote>true</includeInQuote>
+
+        <!-- The cost analysis date for this line. (optional) -->
+
+        <costAnalysisDate/>
+
+        <!-- Variables for use by the product template. These become the "inputs"
+             when the product template is evaluated. Different templates require
+             different variables so they are system configuration dependent.
+             There can be as many as required. The properties of each variable
+             are as for the job variables described above.
+         -->
+
+        <productVariable>
+            <name>e_encu</name>
+            <type>string</type>
+            <value>RUSTICA_PUR</value>
+        </productVariable>
+
+        <productVariable>
+            <name>e_formato</name>
+            <type>string</type>
+            <value>A5</value>
+        </productVariable>
+        <productVariable>
+            <name>0e_tintas</name>
+            <type>string</type>
+            <value>BNCY_CADO</value>
+        </productVariable>
+        <productVariable>
+            <name>0e_maquina</name>
+            <type>string</type>
+            <value>IGEN150</value>
+        </productVariable>
+        <productVariable>
+            <name>0e_soporte</name>
+            <type>string</type>
+            <value>PHCO06006500920-1BLC</value>
+        </productVariable>
+        <productVariable>
+            <name>0e_paginas</name>
+            <type>integer</type>
+            <value>4</value>
+        </productVariable>
+        <productVariable>
+            <name>3e_maquina</name>
+            <type>string</type>
+            <value>IGEN150</value>
+        </productVariable>
+        <productVariable>
+            <name>3e_soporte</name>
+            <type>string</type>
+            <value>PHCO06006500920-1BLC</value>
+        </productVariable>
+        <productVariable>
+            <name>3e_golp_subc</name>
+            <type>boolean</type>
+            <value>false</value>
+        </productVariable>
+        <productVariable>
+            <name>3e_elem</name>
+            <type>boolean</type>
+            <value>true</value>
+        </productVariable>
+        <productVariable>
+            <name>3e_paginas</name>
+            <type>integer</type>
+            <value>4</value>
+        </productVariable>
+        <productVariable>
+            <name>3e_tintas</name>
+            <type>string</type>
+            <value>BNCY_CADO</value>
+        </productVariable>
+
+        <productVariable>
+            <name>3e_plast</name>
+            <type>string</type>
+            <value>MATE</value>
+        </productVariable>
+
+        <productVariable>
+            <name>0e_perf</name>
+            <type>boolean</type>
+            <value>true</value>
+        </productVariable>
+
+        <productVariable>
+            <name>0e_hend</name>
+            <type>boolean</type>
+            <value>true</value>
+        </productVariable>
+
+
+        <productVariable>
+            <name>3e_barn</name>
+            <type>boolean</type>
+            <value>true</value>
+        </productVariable>
+
+
+        <productVariable>
+            <name>e_emp_ensobrado</name>
+            <type>boolean</type>
+            <value>true</value>
+        </productVariable>
+
+        <productVariable>
+            <name>e_emp_retruni</name>
+            <type>boolean</type>
+            <value>true</value>
+        </productVariable>
+
+
+        <productVariable>
+            <name>e_emp_encaj</name>
+            <type>boolean</type>
+            <value>true</value>
+        </productVariable>
+
+        <!-- A list of quantities to quote for. There can
+             be up to four defined and at least one is required.
+        -->
+
+        <quantity>5</quantity>
+        <quantity>10</quantity>
+        <quantity>75</quantity>
+        <quantity>200</quantity>
+    </line>
+</enquiry>
