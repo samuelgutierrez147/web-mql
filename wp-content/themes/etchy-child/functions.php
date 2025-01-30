@@ -2911,6 +2911,13 @@ function add_div_before_my_account_widget()
     }
 }
 
+//cambiamos menú de "mi cuenta"
+add_filter('woocommerce_account_menu_items', function($items) {
+    unset($items['dashboard']); // Quita "Escritorio"
+    unset($items['downloads']); // Quita "Descargas"
+    return $items;
+}, 10, 1);
+
 function updateArrayValueByKey(&$array, $key, $value)
 {
     foreach ($array as &$item) {
@@ -3623,4 +3630,96 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
         }
         return $result;
     }*/
+}
+
+
+//acción en pedidos "subir archivos"
+add_filter('woocommerce_my_account_my_orders_actions', function ($actions, $order) {
+    // Asegurarse de que solo se muestre en ciertos estados (puedes modificar esto)
+    if ($order->has_status(array('processing', 'on-hold', 'completed'))) {
+        $actions['subir_archivos'] = array(
+            'url'  => site_url('/subir-archivos/?order_id=' . $order->get_id()), // URL de la página de subida
+            'name' => __('Subir Archivos', 'woocommerce'),
+        );
+    }
+
+    return $actions;
+}, 10, 2);
+
+//pagina subir archivos
+add_shortcode('subir_archivo_pdf', function() {
+    $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
+
+    if ($order_id === 0) {
+        return '<p style="color: red; text-align: center;">No se encontró el pedido.</p>';
+    }
+    $order = wc_get_order($order_id);
+    $items = $order->get_items();
+    $product_name = '';
+    if (!empty($items)) {
+        $first_item = reset($items);
+        $product_name = $first_item->get_name();
+    }
+    ob_start(); ?>
+
+    <div class="upload-container">
+        <h2><?php echo sprintf(__('Subir archivos PDF pedido %s - %s', 'woocommerce'), $order_id, esc_html($product_name)); ?></h2>
+        <form id="uploadFormSubirArchivos" action="<?php echo esc_url(admin_url('admin-ajax.php')); ?>" method="post" enctype="multipart/form-data">
+            <input type="file" name="archivo_pdf" id="archivo_pdf" accept="application/pdf" required>
+            <input type="hidden" name="order_id" value="<?php echo esc_attr($order_id); ?>">
+            <input type="hidden" name="action" value="subir_pdf">
+            <button type="submit"><?= __('Subir Archivos', 'woocommerce') ?></button>
+        </form>
+        <div id="uploadMessage"></div>
+    </div>
+
+    <script>
+        document.getElementById("uploadFormSubirArchivos").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+
+            fetch("<?php echo esc_url(admin_url('admin-ajax.php')); ?>", {
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("uploadMessage").innerHTML = data.message;
+                })
+                .catch(error => console.error("Error:", error));
+        });
+    </script>
+
+    <?php return ob_get_clean();
+});
+
+// Manejar la subida de archivos PDF
+add_action('wp_ajax_subir_pdf', 'subir_pdf_handler');
+add_action('wp_ajax_nopriv_subir_pdf', 'subir_pdf_handler');
+
+function subir_pdf_handler() {
+    if (!isset($_FILES['archivo_pdf'])) {
+        echo json_encode(['message' => 'No se ha seleccionado ningún archivo.']);
+        wp_die();
+    }
+
+    $file = $_FILES['archivo_pdf'];
+
+    // Verificar el tipo de archivo
+    $file_type = wp_check_filetype($file['name']);
+    if ($file_type['ext'] !== 'pdf') {
+        echo json_encode(['message' => 'Solo se permiten archivos PDF.']);
+        wp_die();
+    }
+
+    // Subir el archivo a la carpeta de WordPress
+    $upload = wp_upload_bits($file['name'], null, file_get_contents($file['tmp_name']));
+
+    if ($upload['error']) {
+        echo json_encode(['message' => 'Error al subir el archivo.']);
+    } else {
+        echo json_encode(['message' => 'Archivo subido correctamente.']);
+    }
+
+    wp_die();
 }
