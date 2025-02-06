@@ -33,6 +33,9 @@ global $product;
     foreach ($addons
 
     as $key => $addon) :
+    // Obtener el valor del campo personalizado "ID"
+    $custom_id = $addon->get_setting('addon_identificador', '', false);
+
     /**
      * @var YITH_WAPO_Addon $addon
      */
@@ -138,9 +141,6 @@ global $product;
         $addon
     );
 
-    // Obtener el valor del campo personalizado "ID"
-    $custom_id = $addon->get_setting('addon_identificador', '', false);
-
     ?>
 
     <div id="yith-wapo-addon-<?php echo esc_attr($addon->id); ?>"
@@ -185,7 +185,7 @@ global $product;
             <?php if (!$hide_title_images && !in_array($addon_type, $html_types)) : ?>
             <<?php echo esc_attr($style_addon_titles); ?>
             class="wapo-addon-title <?php echo esc_attr($toggle_status); ?>">
-            <?php if($addon_title != ''): ?>
+            <?php if ($addon_title != ''): ?>
                 <span><?php echo apply_filters('yith_wapo_addon_display_title', wp_kses_post($addon_title), $addon_title); ?></span>
                 <?php echo $required_addon ? '<span class="required">*</span>' : ''; ?>
             <?php endif; ?>

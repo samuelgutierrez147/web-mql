@@ -1,90 +1,74 @@
 <?php
-/**
- * Thankyou page
- *
- * This template can be overridden by copying it to yourtheme/woocommerce/checkout/thankyou.php.
- *
- * HOWEVER, on occasion WooCommerce will need to update template files and you
- * (the theme developer) will need to copy the new files to your theme to
- * maintain compatibility. We try to do this as little as possible, but it does
- * happen. When this occurs the version of the template file will be bumped and
- * the readme will list any important changes.
- *
- * @see https://woocommerce.com/document/template-structure/
- * @package WooCommerce\Templates
- * @version 8.1.0
- *
- * @var WC_Order $order
- */
+if (!defined('ABSPATH')) {
+    exit;
+}
 
-defined( 'ABSPATH' ) || exit;
+$order_id = absint(get_query_var('order-received'));
+$order = wc_get_order($order_id);
+$status_class = '';
+
+if ($order) {
+    $status = $order->get_status();
+
+    // Colores para diferentes estados de pedido
+    $status_class = match ($status) {
+        'processing', 'completed' => 'status-compra',
+        'pending', 'on-hold' => 'status-pending',
+        'failed', 'cancelled' => 'status-failed',
+        default => '',
+    };
+}
 ?>
 
-<div class="woocommerce-order">
+<div class="thankyou-container">
+    <div class="thankyou-header <?= esc_attr($status_class); ?>">
+        <?php if ($order): ?>
+            <h1>🎉 ¡Gracias por tu compra!</h1>
+            <p>Tu pedido ha sido recibido correctamente.</p>
+        <?php else: ?>
+            <h1>⚠️ Error en el pedido</h1>
+            <p>No se encontró la información del pedido.</p>
+        <?php endif; ?>
+    </div>
 
-	<?php
-	if ( $order ) :
+    <?php if ($order): ?>
+        <div class="thankyou-details">
+            <div class="order-summary">
+                <h2>📦 Resumen del Pedido</h2>
+                <p><strong>Número de Pedido:</strong> <?= $order->get_order_number(); ?></p>
+                <p><strong>Fecha:</strong> <?= wc_format_datetime($order->get_date_created()); ?></p>
+                <p><strong>Total:</strong> <?= $order->get_formatted_order_total(); ?></p>
+                <p><strong>Método de Pago:</strong> <?= wp_kses_post($order->get_payment_method_title()); ?></p>
+            </div>
 
-		do_action( 'woocommerce_before_thankyou', $order->get_id() );
-		?>
+            <div class="order-items">
+                <h2>🛍 Productos</h2>
+                <table class="order-table">
+                    <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($order->get_items() as $item_id => $item): ?>
+                        <tr>
+                            <td><?= $item->get_name(); ?></td>
+                            <td>x<?= $item->get_quantity(); ?></td>
+                            <td><?= wc_price($item->get_total()); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-		<?php if ( $order->has_status( 'failed' ) ) : ?>
-
-			<p class="woocommerce-notice woocommerce-notice--error woocommerce-thankyou-order-failed"><?php esc_html_e( 'Unfortunately your order cannot be processed as the originating bank/merchant has declined your transaction. Please attempt your purchase again.', 'woocommerce' ); ?></p>
-
-			<p class="woocommerce-notice woocommerce-notice--error woocommerce-thankyou-order-failed-actions">
-				<a href="<?php echo esc_url( $order->get_checkout_payment_url() ); ?>" class="button pay"><?php esc_html_e( 'Pay', 'woocommerce' ); ?></a>
-				<?php if ( is_user_logged_in() ) : ?>
-					<a href="<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) ); ?>" class="button pay"><?php esc_html_e( 'My account', 'woocommerce' ); ?></a>
-				<?php endif; ?>
-			</p>
-
-		<?php else : ?>
-
-			<?php wc_get_template( 'checkout/order-received.php', array( 'order' => $order ) ); ?>
-
-			<ul class="woocommerce-order-overview woocommerce-thankyou-order-details order_details">
-
-				<li class="woocommerce-order-overview__order order">
-					<?php esc_html_e( 'Order number:', 'woocommerce' ); ?>
-					<strong><?php echo $order->get_order_number(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></strong>
-				</li>
-
-				<li class="woocommerce-order-overview__date date">
-					<?php esc_html_e( 'Date:', 'woocommerce' ); ?>
-					<strong><?php echo wc_format_datetime( $order->get_date_created() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></strong>
-				</li>
-
-				<?php if ( is_user_logged_in() && $order->get_user_id() === get_current_user_id() && $order->get_billing_email() ) : ?>
-					<li class="woocommerce-order-overview__email email">
-						<?php esc_html_e( 'Email:', 'woocommerce' ); ?>
-						<strong><?php echo $order->get_billing_email(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></strong>
-					</li>
-				<?php endif; ?>
-
-				<li class="woocommerce-order-overview__total total">
-					<?php esc_html_e( 'Total:', 'woocommerce' ); ?>
-					<strong><?php echo $order->get_formatted_order_total(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></strong>
-				</li>
-
-				<?php if ( $order->get_payment_method_title() ) : ?>
-					<li class="woocommerce-order-overview__payment-method method">
-						<?php esc_html_e( 'Payment method:', 'woocommerce' ); ?>
-						<strong><?php echo wp_kses_post( $order->get_payment_method_title() ); ?></strong>
-					</li>
-				<?php endif; ?>
-
-			</ul>
-
-		<?php endif; ?>
-
-		<?php do_action( 'woocommerce_thankyou_' . $order->get_payment_method(), $order->get_id() ); ?>
-		<?php do_action( 'woocommerce_thankyou', $order->get_id() ); ?>
-
-	<?php else : ?>
-
-		<?php wc_get_template( 'checkout/order-received.php', array( 'order' => false ) ); ?>
-
-	<?php endif; ?>
-
+        <div class="thankyou-actions">
+            <a href="<?= esc_url(home_url('/productos')); ?>" class="button primary"><i class="fas fa-shopping-cart"></i> Seguir Comprando</a>
+            <a href="<?= esc_url($order->get_view_order_url()); ?>" class="button secondary"><i class="fas fa-file"></i> Ver Pedido</a>
+        </div>
+    <?php else: ?>
+        <p class="error-message">⚠️ Hubo un error al procesar tu pedido.</p>
+    <?php endif; ?>
 </div>

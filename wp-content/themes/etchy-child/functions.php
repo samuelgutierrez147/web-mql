@@ -251,6 +251,12 @@ function add_nofollow_enlaces($content)
 
 add_filter('the_content', 'add_nofollow_enlaces', 999);
 
+function getDataOptimusToProcessOrder($yith_wapo_data)
+{
+    $transformateData = transformateDataToErp($yith_wapo_data);
+    return $transformateData['data_optimus'];
+}
+
 function handle_tabla_precios_controller()
 {
     if (!WC()->cart) {
@@ -263,6 +269,8 @@ function handle_tabla_precios_controller()
         - estampados cubierta (sin id) 4e_acabados_check
         - 6e_papelap_2caras (papel aportado cliente y 2 caras de marcapaginas)
         - 8e_cabezadas_cinta (cabezas y cinta separadora encuadernacion)
+        - retractilado_ensobrado
+        - encajado_entrega
     */
 
     $dataToDb = filter_input_array(INPUT_POST, FILTER_DEFAULT);
@@ -277,9 +285,7 @@ function handle_tabla_precios_controller()
     $codOptimus = $current_user->api_id;
     //[MQL] - FECHA ESTIMADA
     $fechaEstimada = getFechaEstimada();
-
-    $transformateData = transformateDataToErp($yith_wapo_data);
-    $dataOptimus = $transformateData['data_optimus'];
+    $dataOptimus = getDataOptimusToProcessOrder($yith_wapo_data);
     $priceRequest = getPricePresupuestoToOptimus($dataOptimus, $codOptimus, $fechaEstimada);
 
     // Cambiar
@@ -298,7 +304,8 @@ add_action('wp_ajax_tabla_precios_controller', 'handle_tabla_precios_controller'
 add_action('wp_ajax_nopriv_tabla_precios_controller', 'handle_tabla_precios_controller');
 
 add_filter('woocommerce_get_cart_item_from_session', 'apply_custom_price_for_cart_items', 10, 3);
-function apply_custom_price_for_cart_items($cart_item, $values, $key) {
+function apply_custom_price_for_cart_items($cart_item, $values, $key)
+{
     // Obtener el precio forzado almacenado en la sesión
     $precio_forzado = WC()->session->get('precio_forzado', 0); // Si no hay precio en la sesión, se devuelve 0
 
@@ -338,6 +345,9 @@ function agregar_datos_personalizados_checkout()
 
             foreach ($wapo_options as $option) {
                 foreach ($option as $key => $value) {
+                    if ($key == '9e_ent' || $key == '9e_ent_00_zona' || $key == '9e_ent_00_dir')
+                        continue;
+
                     if (!empty($value)) {
                         $key_modified = $key;
 
@@ -391,28 +401,333 @@ function agregar_datos_personalizados_checkout()
     }
 }
 
-function custom_billing_state_options($states)
+/* PROVINCIAS EN PRODUCTOS */
+add_action('wp_ajax_get_provincias', 'obtener_provincias');
+add_action('wp_ajax_nopriv_get_provincias', 'obtener_provincias');
+function obtener_provincias()
 {
     global $wpdb;
 
-    // Consultar las provincias desde la tabla 'provincia' (ajustar nombre de tabla y columna)
+    // Consultar la base de datos para obtener provincias
     $results = $wpdb->get_results("SELECT provincia, codigo FROM provincia", ARRAY_A);
 
-    // Convertir los resultados en un array de provincias (codigo => nombre)
     if ($results) {
-        // Extraer los valores con wp_list_pluck()
-        $provincias = wp_list_pluck($results, 'codigo', 'provincia');
+        $provincias = array_map(function ($item) {
+            return [
+                'codigo' => esc_attr($item['provincia']),
+                'nombre' => esc_html($item['codigo'])
+            ];
+        }, $results);
 
-        $provincias = array('' => __('Select an option')) + $provincias;
-
-        // Asignar las provincias al estado de España (ES)
-        $states['ES'] = $provincias;
+        wp_send_json_success($provincias);
+    } else {
+        wp_send_json_error('No se encontraron provincias.');
     }
 
-    return $states;
+    wp_die();
 }
 
-add_filter('woocommerce_states', 'custom_billing_state_options');
+add_action('wp_footer', 'actualizar_select_provincias');
+function actualizar_select_provincias()
+{
+    if (is_product()) {
+        ?>
+        <script type="text/javascript">
+            jQuery(document).ready(function ($) {
+                function cargarProvincias() {
+                    $.ajax({
+                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                        type: 'POST',
+                        data: {action: 'get_provincias'},
+                        dataType: 'json',
+                        success: function (response) {
+                            if (response.success) {
+                                let selectField = $('select[name="yith_wapo[][9e_ent_00_zona]"]');
+
+                                if (selectField.length > 0) {
+                                    selectField.empty();
+                                    selectField.append('<option value="">Selecciona una provincia</option>');
+
+                                    $.each(response.data, function (index, provincia) {
+                                        selectField.append('<option value="' + provincia.codigo + '">' + provincia.nombre + '</option>');
+                                    });
+
+                                    selectField.trigger('change'); // Forzar actualización de Select2 si está en uso
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Cargar provincias al cargar la página
+                cargarProvincias();
+            });
+        </script>
+        <?php
+    }
+}
+
+/* PROVINCIAS EN PRODUCTOS */
+
+/* PROVINCIAS EN CARRITO */
+add_filter('woocommerce_checkout_fields', 'ocultar_campos_facturacion_checkout');
+function ocultar_campos_facturacion_checkout($fields)
+{
+    if (isset($fields['billing'])) {
+        // Eliminar Provincia
+        unset($fields['billing']['billing_state']);
+
+        // Eliminar Teléfono
+        unset($fields['billing']['billing_phone']);
+
+        // Eliminar Nombre de Empresa
+        unset($fields['billing']['billing_company']);
+
+        unset($fields['billing']['billing_address_2']);
+
+        unset($fields['billing']['billing_country']);
+
+        unset($fields['billing']['billing_phone']);
+    }
+    return $fields;
+}
+
+/* PROVINCIAS EN CARRITO */
+
+/* DIRECCIONES EN PRODUCTOS*/
+add_action('wp_ajax_get_user_addresses', 'obtener_direcciones_usuario');
+add_action('wp_ajax_nopriv_get_user_addresses', '__return_false');
+
+function obtener_direcciones_usuario()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Usuario no logueado.']);
+        wp_die();
+    }
+
+    $user_id = get_current_user_id();
+    $addresses = [];
+
+    // Buscar direcciones almacenadas en la base de datos (para múltiples direcciones)
+    $user_meta = get_user_meta($user_id);
+    foreach ($user_meta as $key => $value) {
+        if (strpos($key, '_address') !== false) {
+            $id = str_replace('_address', '', $key);
+            $ciudad = get_user_meta($user_id, $id . '_city', true);
+            $codigo_postal = get_user_meta($user_id, $id . '_postal_code', true);
+            $cod_optimus_dir = get_user_meta($user_id, $id . '_direccion_optimus', true);
+            $direccion = $value[0];
+
+            if (!empty($direccion) && !empty($ciudad) && !empty($codigo_postal)) {
+                $addresses[] = [
+                    'id' => $cod_optimus_dir,
+                    'label' => esc_html($direccion . ', ' . $ciudad . ' (' . $codigo_postal . ')'),
+                    'address' => esc_html($direccion),
+                    'city' => esc_html($ciudad),
+                    'postal_code' => esc_html($codigo_postal)
+                ];
+            }
+        }
+    }
+
+    if (empty($addresses)) {
+        wp_send_json_success(['no_address' => true]);
+    } else {
+        wp_send_json_success(['addresses' => $addresses]);
+    }
+
+    wp_die();
+}
+
+add_action('wp_footer', 'insertar_formulario_direccion_en_checkout');
+function insertar_formulario_direccion_en_checkout()
+{
+    if (is_product()) {
+        ?>
+        <script type="text/javascript">
+            jQuery(document).ready(function ($) {
+                function cargarDirecciones() {
+                    $.ajax({
+                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                        type: 'POST',
+                        data: {action: 'get_user_addresses'},
+                        dataType: 'json',
+                        success: function (response) {
+                            let selectField = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
+
+                            if (selectField.length > 0) {
+                                if ($('#direccion-form-container').length === 0) {
+                                    $('<div id="direccion-form-container" style="margin-top: 30px; padding: 15px; border: 1px solid #ccc; background: #f9f9f9;">' +
+                                        '<h4>Añadir Nueva Dirección</h4>' +
+                                        '<input type="text" id="nueva_direccion" placeholder="Dirección" style="width: 100%; padding: 8px; margin-bottom: 10px;">' +
+                                        '<select id="nueva_ciudad" style="width: 100%; padding: 8px; margin-bottom: 10px;">' +
+                                        '<option value="">Selecciona una provincia</option>' +
+                                        '</select>' +
+                                        '<input type="text" id="nuevo_codigo_postal" placeholder="Código Postal" style="width: 100%; padding: 8px; margin-bottom: 10px;">' +
+                                        '<button id="guardar-direccion" style="background: #0073aa; color: white; padding: 8px; border: none;">Guardar Dirección</button>' +
+                                        '</div>').insertAfter(selectField);
+
+                                    cargarProvincias();
+                                }
+
+                                function cargarProvincias() {
+                                    $.ajax({
+                                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                                        type: 'POST',
+                                        data: {action: 'get_provincias'},
+                                        dataType: 'json',
+                                        success: function (response) {
+                                            if (response.success) {
+                                                let selectCiudad = $('#nueva_ciudad');
+
+                                                selectCiudad.empty();
+                                                selectCiudad.append('<option value="">Selecciona una provincia</option>');
+
+                                                $.each(response.data, function (index, provincia) {
+                                                    selectCiudad.append('<option value="' + provincia.codigo + '">' + provincia.nombre + '</option>');
+                                                });
+
+                                                selectCiudad.trigger('change'); // Forzar actualización si usa Select2
+                                            }
+                                        }
+                                    });
+                                }
+
+                                if (response.success && response.data.no_address) {
+                                    selectField.hide();
+                                } else {
+                                    selectField.empty();
+                                    selectField.append('<option value="">Selecciona una dirección</option>');
+
+                                    $.each(response.data.addresses, function (index, address) {
+                                        selectField.append('<option value="' + address.id + '">' + address.label + '</option>');
+                                    });
+
+                                    selectField.trigger('change');
+                                    selectField.show();
+                                }
+                            }
+                        }
+                    });
+                }
+
+                cargarDirecciones();
+
+                $(document).on('click', '#guardar-direccion', function (e) {
+                    e.preventDefault();
+
+                    let nuevaDireccion = $('#nueva_direccion').val().trim();
+                    let nuevaCiudad = $('#nueva_ciudad').val().trim();
+                    let nuevoCodigoPostal = $('#nuevo_codigo_postal').val().trim();
+
+                    if (nuevaDireccion === '' || nuevaCiudad === '' || nuevoCodigoPostal === '') {
+                        alert('Por favor, completa todos los campos.');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                        type: 'POST',
+                        data: {
+                            action: 'guardar_nueva_direccion',
+                            direccion: nuevaDireccion,
+                            ciudad: nuevaCiudad,
+                            codigo_postal: nuevoCodigoPostal
+                        },
+                        dataType: 'json',
+                        success: function (response) {
+                            if (response.success) {
+                                alert('Dirección guardada correctamente.');
+
+                                let selectField = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
+
+                                // Agregar la nueva dirección al select y seleccionarla automáticamente
+                                let nuevaOpcion = `<option value="${response.data.id}" selected>
+                                    ${response.data.direccion}, ${response.data.ciudad} (${response.data.codigo_postal})
+                                   </option>`;
+                                selectField.append(nuevaOpcion);
+                                selectField.trigger('change');
+
+                                selectField.show();
+                            } else {
+                                alert('Error al guardar la dirección.');
+                            }
+                        }
+                    });
+                });
+            });
+        </script>
+        <?php
+    }
+}
+
+add_action('wp_ajax_guardar_nueva_direccion', 'guardar_nueva_direccion');
+function guardar_nueva_direccion()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Debes estar logueado.']);
+        wp_die();
+    }
+
+    $user_id = get_current_user_id();
+    $user_info = get_userdata($user_id);
+    $direccion = sanitize_text_field($_POST['direccion']);
+    $ciudad = sanitize_text_field($_POST['ciudad']);
+    $codigo_postal = sanitize_text_field($_POST['codigo_postal']);
+
+    $data = readOptimusXml('addCustomerAddress');
+    $data->name = $user_info->user_nicename;
+    $data->customerCode = $user_info->api_id;
+    $data->addressLine1 = $direccion;
+    $data->addressLine2 = '';
+    $data->addressLine3 = $ciudad;
+    $data->postcode = $codigo_postal;
+    $data->contact = $user_info->user_nicename;
+    $data->email = $user_info->user_email;
+    $data->phone = $user_info->phone_number;
+
+    $data->isInvoice = 1;
+    $data->isDelivery = 1;
+    $data->isQuote = 1;
+    $data->isLabel = 1;
+    $data->isWebToPrint = 1;
+    $curlResult = sendXmlOptimus($data->asXML(), 'customer/addCustomerAddress');
+    if (filter_var($curlResult->success, FILTER_VALIDATE_BOOLEAN)) {
+        $optimusCodeDir = $curlResult->addressNumber;
+        if (empty($direccion) || empty($ciudad) || empty($codigo_postal)) {
+            wp_send_json_error(['message' => 'Faltan datos.']);
+            wp_die();
+        }
+
+        // Crear un identificador único basado en timestamp
+        $direccion_id = 'shipping_' . time();
+
+        // Guardar la dirección en la base de datos
+        update_user_meta($user_id, $direccion_id . '_address', $direccion);
+        update_user_meta($user_id, $direccion_id . '_city', $ciudad);
+        update_user_meta($user_id, $direccion_id . '_postal_code', $codigo_postal);
+        update_user_meta($user_id, $direccion_id . '_direccion_optimus', $optimusCodeDir);
+
+        // Respuesta AJAX con datos correctos
+        wp_send_json_success([
+            'message' => 'Dirección guardada correctamente.',
+            'success' => true,
+            'id' => $optimusCodeDir,
+            'direccion' => $direccion,
+            'ciudad' => $ciudad,
+            'codigo_postal' => $codigo_postal,
+            'cod_optimus' => $optimusCodeDir
+        ]);
+    } else {
+        wp_send_json_success([
+            'message' => 'Hubo un error al procesar la dirección.',
+            'success' => false
+        ]);
+    }
+    wp_die();
+}
+
+/* DIRECCIONES EN PRODUCTOS */
 
 //AL CARGAR EL FORMULARIO CHECKOUT FINAL
 global $custom_price_request;
@@ -462,6 +777,7 @@ function comprobar_billing_state_en_checkout()
 }
 
 add_action('woocommerce_before_checkout_form', 'comprobar_billing_state_en_checkout');
+
 /*
 add_filter('woocommerce_cart_totals_subtotal_html', 'modificar_subtotal_con_price_request', 10, 1);
 function modificar_subtotal_con_price_request($subtotal_html) {
@@ -478,1925 +794,116 @@ function modificar_subtotal_con_price_request($subtotal_html) {
     return $subtotal_html;
 }*/
 
-add_action('woocommerce_checkout_update_order_review', 'enviar_datos_a_api_al_actualizar_resumen', 10, 1);
-function enviar_datos_a_api_al_actualizar_resumen($order_id)
+// añadir campos de facturación con direccion correcta
+function obtener_identificador_direccion($user_id, $direccion_optimus)
 {
-    $current_user = wp_get_current_user();
-    $codOptimus = $current_user->api_id;
+    $user_meta = get_user_meta($user_id);
+
+    foreach ($user_meta as $key => $value) {
+        // Si la clave contiene '_direccion_optimus' y el valor coincide con `direccion_optimus`
+        if (strpos($key, '_direccion_optimus') !== false && $value[0] == $direccion_optimus) {
+            // Extraer el identificador base eliminando '_direccion_optimus'
+            return str_replace('_direccion_optimus', '', $key);
+        }
+    }
+
+    return null; // Si no se encuentra el identificador
+}
+
+add_filter('woocommerce_checkout_fields', 'autocompletar_detalles_facturacion_desde_carrito', 20, 1);
+function autocompletar_detalles_facturacion_desde_carrito($fields)
+{
+    if (!is_user_logged_in()) {
+        return $fields;
+    }
+
+    $user_id = get_current_user_id();
+    $direccion_optimus = null;
+
+    // 🔍 Buscar `9e_ent_00_dir` en el carrito
+    foreach (WC()->cart->get_cart() as $cart_item) {
+        if (isset($cart_item['yith_wapo_options'])) {
+            foreach ($cart_item['yith_wapo_options'] as $option) {
+                if (isset($option['9e_ent_00_dir'])) {
+                    $direccion_optimus = $option['9e_ent_00_dir'];
+                    break 2; // Salimos del bucle
+                }
+            }
+        }
+    }
+
+    if ($direccion_optimus) {
+        // 🏠 Obtener el identificador de la dirección en base al `direccion_optimus`
+        $identificador_direccion = obtener_identificador_direccion($user_id, $direccion_optimus);
+
+        if ($identificador_direccion) {
+            // 🛠 Obtener los valores de dirección
+            $direccion = get_user_meta($user_id, "{$identificador_direccion}_address", true);
+            $ciudad = get_user_meta($user_id, "{$identificador_direccion}_city", true);
+            $codigo_postal = get_user_meta($user_id, "{$identificador_direccion}_postal_code", true);
+            $telefono = get_user_meta($user_id, "billing_phone", true);
+
+            // 📌 Si no hay teléfono, buscar en otro campo alternativo
+            if (empty($telefono)) {
+                $telefono = get_user_meta($user_id, "phone_number", true);
+            }
+
+            // 🔄 Forzar los valores en los campos de facturación
+            $fields['billing']['billing_address_1']['default'] = $direccion ?: '';
+            $fields['billing']['billing_city']['default'] = $ciudad ?: '';
+            $fields['billing']['billing_postcode']['default'] = $codigo_postal ?: '';
+            $fields['billing']['billing_phone']['default'] = $telefono ?: '';
+
+            // 🔄 Forzar la actualización de los valores en el frontend
+            $_POST['billing_address_1'] = $direccion ?: '';
+            $_POST['billing_city'] = $ciudad ?: '';
+            $_POST['billing_postcode'] = $codigo_postal ?: '';
+            $_POST['billing_phone'] = $telefono ?: '';
+        }
+    }
+
+    return $fields;
+}
+
+
+function obtener_yith_wapo_del_carrito()
+{
     $cart_items = WC()->cart->get_cart();
-    $dataToDb = [];
     foreach ($cart_items as $cart_item) {
         // Verificar si el producto tiene opciones personalizadas de YITH
         if (isset($cart_item['yith_wapo_options']) && !empty($cart_item['yith_wapo_options'])) {
-            $dataToDb = $cart_item['yith_wapo_options'];
+            return $cart_item['yith_wapo_options'];
         }
     }
-
-    $dirData = filter_input_array(INPUT_POST, FILTER_DEFAULT);
-    $country = isset($dirData['s_country']) ? $dirData['s_country'] : '';
-    $state = isset($dirData['s_state']) ? $dirData['s_state'] : '';
-    $postcode = isset($dirData['s_postcode']) ? $dirData['s_postcode'] : '';
-    $city = isset($dirData['s_city']) ? $dirData['s_city'] : '';
-    $address = isset($dirData['s_address']) ? $dirData['s_address'] : '';
-    $address_2 = isset($dirData['s_address_2']) ? $dirData['s_address_2'] : '';
-
-    if ($state != '') {
-        $dataToDb[] = ['e_ent' => 1];
-        $dataToDb[] = ['e_ent_00_zona' => $state];
-        $transformateData = transformateDataToErp($dataToDb);
-        $dataOptimus = $transformateData['data_optimus'];
-        $fechaEstimada = getFechaEstimada();
-        $priceRequest = getPricePresupuestoToOptimus($dataOptimus, $codOptimus, $fechaEstimada);
-    }
+    return null;
 }
 
-add_action('woocommerce_payment_complete', 'so_payment_complete');
-function so_payment_complete($order_id)
+add_action('woocommerce_checkout_order_processed', 'cambiar_estado_y_asignar_codigo_pedido', 10, 1);
+function cambiar_estado_y_asignar_codigo_pedido($order_id)
 {
+    if (!$order_id) {
+        return;
+    }
+
     $order = wc_get_order($order_id);
-    $cart_items = WC()->cart->get_cart();
-    $dataToDb = [];
-    foreach ($cart_items as $cart_item) {
-        if (isset($cart_item['yith_wapo_options']) && !empty($cart_item['yith_wapo_options'])) {
-            $dataToDb = $cart_item['yith_wapo_options'];
-        }
-    }
-    var_dump($dataToDb);
-    exit;
-    $user = $order->get_user();
-    $codOptimus = $user->api_id;
-
-    $url_funcion = "/customer/addCustomerAddress";
-    // $url_funcion = "/customer/updateCustomerAddress";
-    $url = $urlBase . $url_funcion . $url_db;
-    $xml = '<?xml version="1.0" encoding="UTF-8" ?>
-	<customerAddress>
-	 <customerCode>' . $customercode . '</customerCode>
-	 <name>' . $order->get_billing_first_name() . '</name>
-	 <addressLine1>' . $order->get_billing_address_1() . '</addressLine1>
-	 <addressLine2>' . $order->get_billing_address_2() . '</addressLine2>
-	 <addressLine3>' . $order->get_billing_city() . '</addressLine3>
-	 <addressLine4></addressLine4>
-	 <postcode>' . $order->get_billing_postcode() . '</postcode>
-	 <contact>' . $order->get_billing_phone() . '</contact>
-	 <email>' . $order->get_billing_email() . '</email>
-	 <areaCode>ANDALUCIA</areaCode>
-	 <repCode>FELIPE</repCode>
-	 <isInvoice>1</isInvoice>
-	 <isDelivery>1</isDelivery>
-	 <isQuote>1</isQuote>
-	 <isLabel>1</isLabel>
-	 <isWebToPrint>0</isWebToPrint>
-	 <taxClassification></taxClassification>
-	</customerAddress>';
-    $response = sendXmlOverPost($url, $xml);
-    $response_xml = new SimpleXMLElement($response);
-
-    // Extraer los valores de los metadatos
-    if ($item->get_meta('ywapo-addon-7-0') && $item->get_meta('ywapo-addon-7-0') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-0');
-    }
-
-    if ($item->get_meta('ywapo-addon-7-1') && $item->get_meta('ywapo-addon-7-1') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-1');
-    }
-
-    if ($item->get_meta('ywapo-addon-7-2') && $item->get_meta('ywapo-addon-7-2') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-2');
-    }
-
-    if ($item->get_meta('ywapo-addon-7-3') && $item->get_meta('ywapo-addon-7-3') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-3');
-    }
-
-    if ($item->get_meta('ywapo-addon-7-4') && $item->get_meta('ywapo-addon-7-4') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-4');
-    }
-
-    if ($item->get_meta('ywapo-addon-7-5') && $item->get_meta('ywapo-addon-7-5') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-5');
-    }
-
-    if ($item->get_meta('ywapo-addon-7-6') && $item->get_meta('ywapo-addon-7-6') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-6');
-    }
-
-    if ($item->get_meta('ywapo-addon-7-7') && $item->get_meta('ywapo-addon-7-7') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-7');
-    }
-
-    if ($item->get_meta('ywapo-addon-7-8') && $item->get_meta('ywapo-addon-7-8') != "NULL") {
-        $encuadernacion = $item->get_meta('ywapo-addon-7-8');
-    }
-
-    $tipoImpresionInterior = $item->get_meta('ywapo-addon-30-0');
-    $codTipoPedido = getCodTipoPedido($encuadernacion, $tipoImpresionInterior);
-
-
-    //var_dump($item);
-
-    $addressNumber = (array)$response_xml->addressNumber;
-    $addressNumber = $addressNumber[0];
-    $url_funcion = "/enqbuilder";
-    $url = $urlBase . $url_funcion . $url_db;
-    $xml = '<?xml version="1.0" encoding="UTF-8" ?>
-	<enquiry>
-		<jobTemplateCode>PL_STD_PEDIDO</jobTemplateCode>
-		<customerCode>' . $customercode . '</customerCode>
-		<addressNumber>' . $addressNumber . '</addressNumber>
-		<customerRef>' . $user->ID . '</customerRef>
-		<contactName>' . $order->get_billing_first_name() . '</contactName>
-		<telephone>' . $order->get_billing_phone() . '</telephone>
-		<emailAddress>' . $order->get_billing_email() . '</emailAddress>
-		<repCode>FELIPE</repCode>
-		<origCode>WEB</origCode>
-		<currencyCode></currencyCode>
-		<dueAt></dueAt>
-		<prevEnqNumber>0</prevEnqNumber>
-		<cancelPrevious>false</cancelPrevious>
-		<jobVariable>
-			<name>ep_fecha_entrega</name>
-			<type>datetime</type>
-			<value>' . date("Y-m-d") . 'T' . date("H:i") . '</value>
-		</jobVariable>
-		<jobVariable>
-			<name>ep_tipo_pedido</name>
-			<type>string</type>
-			<value>' . $codTipoPedido . '</value>
-		</jobVariable>
-		<jobVariable>
-			<name>ep_titulo</name>
-			<type>string</type>
-			<value>' . $item->get_meta('ywapo-addon-2-0') . '</value>
-		</jobVariable>';
-    if ($item->get_meta('ywapo-addon-9-0')) {
-        $xml .= '
-		<jobVariable>
-			<name>ep_isbn</name>
-			<type>string</type>
-			<value>' . $item->get_meta('ywapo-addon-9-0') . '</value>
-		</jobVariable>
-        <jobVariable>
-        <name>ep_imprimirhr</name>
-        <type>boolean</type>
-        <value>1</value>
-        </jobVariable>';
-    }
-    $xml .= '<line>
-			<productCode>GENERICO</productCode>
-			<description>' . $item->get_meta('ywapo-addon-2-0') . '</description>
-			<includeInQuote>true</includeInQuote>
-			<productVariable>
-				<name>e_elem_mod</name>
-				<type>integer</type>
-				<value>1</value>
-			</productVariable>';
-    for ($i = 0; $i <= 8; $i++) {
-        $meta_key = 'ywapo-addon-7-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>e_encu</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-15-0') && $item->get_meta('ywapo-addon-15-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>0e_elem</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-16-0') && $item->get_meta('ywapo-addon-16-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>1e_elem</name>
-					<type>integer</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-18-0') && $item->get_meta('ywapo-addon-18-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>3e_elem</name>
-					<type>integer</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-17-0') && $item->get_meta('ywapo-addon-17-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_elem</name>
-					<type>integer</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-19-0') && $item->get_meta('ywapo-addon-19-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_elem</name>
-					<type>integer</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-20-0') && $item->get_meta('ywapo-addon-20-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>5e_elem</name>
-					<type>integer</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-21-0') && $item->get_meta('ywapo-addon-21-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>6e_tipo</name>
-					<type>string</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-22-0') && $item->get_meta('ywapo-addon-22-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>7e_tipo</name>
-					<type>string</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    $xml .= '
-			<productVariable>
-				<name>0e_tinta_cobertura</name>
-				<type>decimal</type>
-				<value>12</value>
-			</productVariable>';
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-5-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $e_ancho = trim($val[0]);
-            $e_alto = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>e_ancho</name>
-						<type>integer</type>
-						<value>' . $e_ancho . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>e_alto</name>
-						<type>integer</type>
-						<value>' . $e_alto . '</value>
-					</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-5-7') && $item->get_meta('ywapo-addon-5-7') != "NULL") {
-        $e_ancho = trim($item->get_meta('ywapo-addon-975-0'));
-        $e_alto = trim($item->get_meta('ywapo-addon-975-1'));
-
-        $e_ancho = preg_replace('/[^0-9]/', '', $e_ancho);
-        $e_alto = preg_replace('/[^0-9]/', '', $e_alto);
-
-        $xml .= '
-				<productVariable>
-					<name>e_ancho</name>
-					<type>integer</type>
-					<value>' . $e_ancho . '</value>
-				</productVariable>';
-        $xml .= '
-				<productVariable>
-					<name>e_alto</name>
-					<type>integer</type>
-					<value>' . $e_alto . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-15-0') && $item->get_meta('ywapo-addon-15-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>0e_tipo</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-15-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-30-0') && $item->get_meta('ywapo-addon-30-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>0e_tipo_imp</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-30-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-30-1') && $item->get_meta('ywapo-addon-30-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>0e_tipo_imp</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-30-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 15; $i++) {
-        $meta_key = 'ywapo-addon-31-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>0e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>0e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-89-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>0e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>0e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-32-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>0e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-977-0') && $item->get_meta('ywapo-addon-977-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>0e_paginas</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-977-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-33-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>0e_plast</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-970-0') && $item->get_meta('ywapo-addon-970-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>0e_plast_2c</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-34-0') && $item->get_meta('ywapo-addon-34-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>0e_sop_cliente</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-16-0') && $item->get_meta('ywapo-addon-16-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>1e_tipo</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-16-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-36-0') && $item->get_meta('ywapo-addon-36-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>1e_tipo_imp</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-36-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-36-1') && $item->get_meta('ywapo-addon-36-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>1e_tipo_imp</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-36-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-37-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>1e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>1e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-90-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>1e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>1e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-38-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>1e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-978-0') && $item->get_meta('ywapo-addon-978-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>1e_paginas</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-978-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-41-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>1e_plast</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-971-1') && $item->get_meta('ywapo-addon-971-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>1e_plast_2c</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-40-0') && $item->get_meta('ywapo-addon-40-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>1e_sop_cliente</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-17-0') && $item->get_meta('ywapo-addon-17-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_tipo</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-17-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-24-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>2e_tipo_imp</name>
-						<type>string</type>
-						<value>TONER</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>2e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>2e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-1001-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>2e_tipo_imp</name>
-						<type>string</type>
-						<value>TONER</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>2e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>2e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-25-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>2e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-1002-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>2e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-26-0') && $item->get_meta('ywapo-addon-26-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_solapas</name>
-					<type>decimal</type>
-					<value>' . $item->get_meta('ywapo-addon-26-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-5-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL" && $item->get_meta('ywapo-addon-17-0') != "NULL") {
-            $val = explode("/", $meta_value);
-            $e_ancho = trim($val[0]);
-            $e_alto = trim($val[1]);
-
-            if ($item->get_meta('ywapo-addon-17-0') && $item->get_meta('ywapo-addon-17-0') != "NULL") {
-                $xml .= '
-					<productVariable>
-						<name>2e_ancho</name>
-						<type>integer</type>
-						<value>' . $e_ancho . '</value>
-					</productVariable>';
-                $xml .= '
-					<productVariable>
-						<name>2e_alto</name>
-						<type>integer</type>
-						<value>' . $e_alto . '</value>
-					</productVariable>';
-            }
-        }
-    }
-    if ($item->get_meta('ywapo-addon-5-7') && $item->get_meta('ywapo-addon-5-7') != "NULL" && $item->get_meta('ywapo-addon-17-0') != "NULL") {
-        $e_ancho = trim($item->get_meta('ywapo-addon-975-0'));
-        $e_alto = trim($item->get_meta('ywapo-addon-975-1'));
-
-
-        if ($item->get_meta('ywapo-addon-17-0') && $item->get_meta('ywapo-addon-17-0') != "NULL") {
-            $e_ancho = preg_replace('/[^0-9]/', '', $e_ancho);
-            $e_alto = preg_replace('/[^0-9]/', '', $e_alto);
-
-            $xml .= '
-				<productVariable>
-					<name>2e_ancho</name>
-					<type>integer</type>
-					<value>' . $e_ancho . '</value>
-				</productVariable>';
-            $xml .= '
-				<productVariable>
-					<name>2e_alto</name>
-					<type>integer</type>
-					<value>' . $e_alto . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-972-0') && $item->get_meta('ywapo-addon-972-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_ancho_ab</name>
-					<type>decimal</type>
-					<value>' . $item->get_meta('ywapo-addon-972-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-972-1') && $item->get_meta('ywapo-addon-972-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_alto_ab</name>
-					<type>decimal</type>
-					<value>' . $item->get_meta('ywapo-addon-972-1') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-27-0') && $item->get_meta('ywapo-addon-27-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_sop_cliente</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-28-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>2e_plast</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-29-0') && $item->get_meta('ywapo-addon-29-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_plast_2c</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('yith-wapo-option-973-0') && $item->get_meta('ywapo-addon-973-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_barn</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 15; $i++) {
-        $meta_key = 'ywapo-addon-78-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>2e_esta_color</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-79-0') && $item->get_meta('ywapo-addon-79-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_esta</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-79-1') && $item->get_meta('ywapo-addon-79-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_troq</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-79-2') && $item->get_meta('ywapo-addon-79-2') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>2e_golp</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-18-0') && $item->get_meta('ywapo-addon-18-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>3e_tipo</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-18-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-42-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-                    <productVariable>
-                        <name>3e_tipo_imp</name>
-                        <type>string</type>
-                        <value>TONER</value>
-                    </productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>3e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>3e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-43-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>3e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-44-0') && $item->get_meta('ywapo-addon-44-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>3e_sop_cliente</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-45-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>3e_plast</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-44-1') && $item->get_meta('ywapo-addon-44-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>3e_plast_2c</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-5-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL" && $item->get_meta('ywapo-addon-18-0') != "NULL") {
-            $val = explode("/", $meta_value);
-            $e_ancho = trim($val[0]);
-            $e_alto = trim($val[1]);
-
-            if ($item->get_meta('ywapo-addon-18-0') && $item->get_meta('ywapo-addon-18-0') != "NULL") {
-                $xml .= '
-					<productVariable>
-						<name>3e_ancho</name>
-						<type>integer</type>
-						<value>' . $e_ancho . '</value>
-					</productVariable>';
-                $xml .= '
-					<productVariable>
-						<name>3e_alto</name>
-						<type>integer</type>
-						<value>' . $e_alto . '</value>
-					</productVariable>';
-            }
-        }
-    }
-    if ($item->get_meta('ywapo-addon-5-7') && $item->get_meta('ywapo-addon-5-7') != "NULL" && $item->get_meta('ywapo-addon-18-0') != "NULL") {
-        $e_ancho = trim($item->get_meta('ywapo-addon-975-0'));
-        $e_alto = trim($item->get_meta('ywapo-addon-975-1'));
-
-        $e_ancho = preg_replace('/[^0-9]/', '', $e_ancho);
-        $e_alto = preg_replace('/[^0-9]/', '', $e_alto);
-
-        if ($item->get_meta('ywapo-addon-18-0') && $item->get_meta('ywapo-addon-18-0') != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>3e_ancho</name>
-					<type>integer</type>
-					<value>' . $e_ancho . '</value>
-				</productVariable>';
-            $xml .= '
-				<productVariable>
-					<name>3e_alto</name>
-					<type>integer</type>
-					<value>' . $e_alto . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-80-0') && $item->get_meta('ywapo-addon-80-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>3e_ancho_ab</name>
-					<type>decimal</type>
-					<value>' . $item->get_meta('ywapo-addon-80-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-80-1') && $item->get_meta('ywapo-addon-80-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>3e_alto_ab</name>
-					<type>decimal</type>
-					<value>' . $item->get_meta('ywapo-addon-80-1') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-19-0') && $item->get_meta('ywapo-addon-19-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_tipo</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-19-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-47-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-                    <productVariable>
-                        <name>4e_tipo_imp</name>
-                        <type>string</type>
-                        <value>TONER</value>
-                    </productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>4e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>4e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-48-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>4e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-979-0') && $item->get_meta('ywapo-addon-979-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_solapas</name>
-					<type>decimal</type>
-					<value>' . $item->get_meta('ywapo-addon-979-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-5-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $e_ancho = trim($val[0]);
-            $e_alto = trim($val[1]);
-
-            if ($item->get_meta('ywapo-addon-19-0') && $item->get_meta('ywapo-addon-19-0') != "NULL") {
-                $xml .= '
-					<productVariable>
-						<name>4e_ancho</name>
-						<type>integer</type>
-						<value>' . $e_ancho . '</value>
-					</productVariable>';
-                $xml .= '
-					<productVariable>
-						<name>4e_alto</name>
-						<type>integer</type>
-						<value>' . $e_alto . '</value>
-					</productVariable>';
-            }
-        }
-    }
-    if ($item->get_meta('ywapo-addon-5-7') && $item->get_meta('ywapo-addon-5-7') != "NULL") {
-        $e_ancho = trim($item->get_meta('ywapo-addon-975-0'));
-        $e_alto = trim($item->get_meta('ywapo-addon-975-1'));
-
-        $e_ancho = preg_replace('/[^0-9]/', '', $e_ancho);
-        $e_alto = preg_replace('/[^0-9]/', '', $e_alto);
-
-        if ($item->get_meta('ywapo-addon-19-0') && $item->get_meta('ywapo-addon-19-0') != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>4e_ancho</name>
-					<type>integer</type>
-					<value>' . $e_ancho . '</value>
-				</productVariable>';
-            $xml .= '
-				<productVariable>
-					<name>4e_alto</name>
-					<type>integer</type>
-					<value>' . $e_alto . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-49-0') && $item->get_meta('ywapo-addon-49-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_ancho_ab</name>
-					<type>decimal</type>
-					<value>' . $item->get_meta('ywapo-addon-49-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-49-1') && $item->get_meta('ywapo-addon-49-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_alto_ab</name>
-					<type>decimal</type>
-					<value>' . $item->get_meta('ywapo-addon-49-1') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-51-0') && $item->get_meta('ywapo-addon-51-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_sop_cliente</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-50-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>4e_plast</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-52-0') && $item->get_meta('ywapo-addon-52-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_barn</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-81-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>4e_esta_color</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-82-0') && $item->get_meta('ywapo-addon-82-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_esta</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-82-1') && $item->get_meta('ywapo-addon-82-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_troq</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-82-2') && $item->get_meta('ywapo-addon-82-2') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>4e_golp</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-20-0') && $item->get_meta('ywapo-addon-20-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>5e_tipo</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-20-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-53-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-                    <productVariable>
-                        <name>5e_tipo_imp</name>
-                        <type>string</type>
-                        <value>TONER</value>
-                    </productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>5e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>5e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-54-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>5e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-57-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>5e_plast</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-56-0') && $item->get_meta('ywapo-addon-56-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>5e_sop_cliente</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-21-0') && $item->get_meta('ywapo-addon-21-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>6e_tipo</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-21-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-60-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-                    <productVariable>
-                        <name>6e_tipo_imp</name>
-                        <type>string</type>
-                        <value>TONER</value>
-                    </productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>6e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>6e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-61-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>6e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-62-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>6e_plast</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-63-0') && $item->get_meta('ywapo-addon-63-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>6e_sop_cliente</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-63-1') && $item->get_meta('ywapo-addon-63-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>6e_plast_2c</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-22-0') && $item->get_meta('ywapo-addon-22-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>7e_tipo</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-22-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-68-0') && $item->get_meta('ywapo-addon-68-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>7e_tipo_imp</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-68-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-68-1') && $item->get_meta('ywapo-addon-68-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>7e_tipo_imp</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-68-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-67-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>7e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>7e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 25; $i++) {
-        $meta_key = 'ywapo-addon-99-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $val = explode("/", $meta_value);
-            $pap = trim($val[0]);
-            $grm = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>7e_tipo_pap</name>
-						<type>string</type>
-						<value>' . $pap . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>7e_tipo_grm</name>
-						<type>string</type>
-						<value>' . $grm . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-64-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-					<productVariable>
-						<name>7e_tintas</name>
-						<type>string</type>
-						<value>' . $meta_value . '</value>
-					</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-65-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>7e_plast</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-66-0') && $item->get_meta('ywapo-addon-66-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>7e_sop_cliente</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-974-0') && $item->get_meta('ywapo-addon-974-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>7e_plast_2c</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-58-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>7e_formapleg</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    for ($i = 0; $i <= 6; $i++) {
-        $meta_key = 'ywapo-addon-5-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL" && $item->get_meta('ywapo-addon-22-0') != "NULL") {
-            $val = explode("/", $meta_value);
-            $e_ancho = trim($val[0]);
-            $e_alto = trim($val[1]);
-
-            $xml .= '
-					<productVariable>
-						<name>7e_ancho</name>
-						<type>integer</type>
-						<value>' . $e_ancho . '</value>
-					</productVariable>';
-            $xml .= '
-					<productVariable>
-						<name>7e_alto</name>
-						<type>integer</type>
-						<value>' . $e_alto . '</value>
-					</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-5-7') && $item->get_meta('ywapo-addon-5-7') != "NULL" && $item->get_meta('ywapo-addon-22-0') != "NULL") {
-        $e_ancho = trim($item->get_meta('ywapo-addon-975-0'));
-        $e_alto = trim($item->get_meta('ywapo-addon-975-1'));
-
-        $e_ancho = preg_replace('/[^0-9]/', '', $e_ancho);
-        $e_alto = preg_replace('/[^0-9]/', '', $e_alto);
-
-        $xml .= '
-				<productVariable>
-					<name>7e_ancho</name>
-					<type>integer</type>
-					<value>' . $e_ancho . '</value>
-				</productVariable>';
-        $xml .= '
-				<productVariable>
-					<name>7e_alto</name>
-					<type>integer</type>
-					<value>' . $e_alto . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-59-0') && $item->get_meta('ywapo-addon-59-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>7e_ancho_ab</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-59-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-59-1') && $item->get_meta('ywapo-addon-59-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>7e_alto_ab</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-59-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-83-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_encu_wr_color</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-84-0') && $item->get_meta('ywapo-addon-84-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_wr_color_otro</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-84-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-85-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_encu_es_color</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-86-0') && $item->get_meta('ywapo-addon-86-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_es_color_otro</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-86-0') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 10; $i++) {
-        $meta_key = 'ywapo-addon-69-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_encu_td_carton</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-70-0') && $item->get_meta('ywapo-addon-70-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_td_cab</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-87-0') && $item->get_meta('ywapo-addon-87-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_tc_cab_color</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-87-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-70-1') && $item->get_meta('ywapo-addon-70-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_td_csep</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-88-0') && $item->get_meta('ywapo-addon-88-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_tc_csep_color</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-88-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-70-2') && $item->get_meta('ywapo-addon-70-2') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_td_csep2</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-89-0') && $item->get_meta('ywapo-addon-89-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_tc_csep2_color</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-89-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-70-3') && $item->get_meta('ywapo-addon-70-3') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_td_csep3</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-90-0') && $item->get_meta('ywapo-addon-90-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_encu_tc_csep3_color</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-90-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-73-0') && $item->get_meta('ywapo-addon-73-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_emp_retrcol</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-74-0') && $item->get_meta('ywapo-addon-74-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_emp_retrcol_ctd</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-74-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-73-1') && $item->get_meta('ywapo-addon-73-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_emp_retruni</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-73-2') && $item->get_meta('ywapo-addon-73-2') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_emp_ensobrado</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-96-0') && $item->get_meta('ywapo-addon-96-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_extracostes</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-96-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-96-1') && $item->get_meta('ywapo-addon-96-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_comentario_cli</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-96-1') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-75-0') && $item->get_meta('ywapo-addon-75-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_emp_encaj</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-75-1') && $item->get_meta('ywapo-addon-75-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent</name>
-					<type>boolean</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-982-0') && $item->get_meta('ywapo-addon-982-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_04_dir</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-982-0') . '</value>
-				</productVariable>';
-
-        $xml .= '
-				<productVariable>
-					<name>e_ent_04_cnt_01</name>
-					<type>integer</type>
-					<value>1</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 50; $i++) {
-        $meta_key = 'ywapo-addon-983-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_ent_04_zona</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-76-0') && $item->get_meta('ywapo-addon-76-0') != "NULL") {
-
-        $xml .= '
-				<productVariable>
-					<name>e_ent_00_dir</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-76-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-76-1') && $item->get_meta('ywapo-addon-76-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_00_cnt_01</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-76-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 50; $i++) {
-        $meta_key = 'ywapo-addon-984-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_ent_00_zona</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-
-    if ($item->get_meta('ywapo-addon-92-0') && $item->get_meta('ywapo-addon-92-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_01_dir</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-92-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-92-1') && $item->get_meta('ywapo-addon-92-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_01_cnt_01</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-92-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 50; $i++) {
-        $meta_key = 'ywapo-addon-985-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_ent_01_zona</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-93-0') && $item->get_meta('ywapo-addon-93-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_02_dir</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-93-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-93-1') && $item->get_meta('ywapo-addon-93-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_02_cnt_01</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-93-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 50; $i++) {
-        $meta_key = 'ywapo-addon-986-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_ent_02_zona</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-94-0') && $item->get_meta('ywapo-addon-94-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_03_dir</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-94-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-94-1') && $item->get_meta('ywapo-addon-94-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_03_cnt_01</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-94-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 50; $i++) {
-        $meta_key = 'ywapo-addon-987-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_ent_03_zona</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-95-0') && $item->get_meta('ywapo-addon-95-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_04_dir</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-95-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-95-1') && $item->get_meta('ywapo-addon-95-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_ent_04_cnt_01</name>
-					<type>integer</type>
-					<value>' . $item->get_meta('ywapo-addon-95-1') . '</value>
-				</productVariable>';
-    }
-    for ($i = 0; $i <= 50; $i++) {
-        $meta_key = 'ywapo-addon-988-' . $i;
-        $meta_value = $item->get_meta($meta_key);
-
-        if ($meta_value && $meta_value != "NULL") {
-            $xml .= '
-				<productVariable>
-					<name>e_ent_04_zona</name>
-					<type>string</type>
-					<value>' . $meta_value . '</value>
-				</productVariable>';
-        }
-    }
-    if ($item->get_meta('ywapo-addon-3-0') && $item->get_meta('ywapo-addon-3-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_pruebas</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-3-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-3-1') && $item->get_meta('ywapo-addon-3-1') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_pruebas</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-3-1') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-3-2') && $item->get_meta('ywapo-addon-3-2') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_pruebas</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-3-2') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-8-0') && $item->get_meta('ywapo-addon-8-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>e_observaciones_cli</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-8-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-1-0') && $item->get_meta('ywapo-addon-1-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>orientacion</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-1-0') . '</value>
-				</productVariable>';
-    }
-    if ($item->get_meta('ywapo-addon-1-1') && $item->get_meta('ywapo-addon-1-0') != "NULL") {
-        $xml .= '
-				<productVariable>
-					<name>orientacion</name>
-					<type>string</type>
-					<value>' . $item->get_meta('ywapo-addon-1-0') . '</value>
-				</productVariable>';
-    }
-
-    $cantidad = str_replace("Cantidad 1: ", "", $item->get_meta('ywapo-addon-980-0'));
-    $xml .= '
-			<quantity>' . $cantidad . '</quantity>
-		</line>
-	</enquiry>';
-
-    //var_dump($xml);
-    //die();
-
-
-    $url2_funcion = "/enqPrice";
-    $url2 = $urlBase . $url2_funcion . $url_db;
-
-    $response = sendXmlOverPost($url2, $xml);
-    $response_xml = new SimpleXMLElement($response);
-
-    //var_dump($response);
-    //die();
-
-    $lineQtyPrice = (array)$response_xml->lineQtyPrice;
-    $total = round($lineQtyPrice["price"], 2);
-
-    $order->set_total($total);
-    $order->save();
-
-
-    $response = sendXmlOverPost($url, $xml);
-    $response_xml = new SimpleXMLElement($response);
-
-    $success = (array)$response_xml->success;
-    if ($success[0] == "false") {
-        $error = (array)$response_xml->error;
-        echo '
-		{
-			"result": "failure",
-			"messages": "\n<ul class=\"woocommerce-error\" role=\"alert\">\n\t\t\t<li data-id=\"billing_first_name\">\n\t\t\t' . $error[0] . '\t\t<\/li>\n\t<\/ul>\n",
-			"refresh": false,
-			"reload": false
-		}';
-        //var_dump($xml);
-        exit();
-    } else {
-        $success = (array)$response_xml->success;
-        echo '
-		{
-			"result": "true",
-			"messages": "\n<ul class=\"woocommerce-error\" role=\"alert\">\n\t\t\t<li data-id=\"billing_first_name\" >\n\t\t\t' . $response . '\t\t<\/li>\n\t<\/ul>\n",
-			"refresh": false,
-			"reload": false,
-			"redirect_url": get_size_url()."/gracias-por-comprar/"
-		}';
-
-    }
-
-
-    $url_funcion = "/enquiry/markSuccessful";
-    $url = $urlBase . $url_funcion . $url_db;
-    $xml = '<?xml version="1.0" encoding="UTF-8" ?>
-	<enquirySuccess>
-		<enquiryNumber></enquiryNumber>
-		<successInfo>
-			<lineSuccessInfo>
-				<lineNumber></lineNumber>
-				<acceptedQuantity></acceptedQuantity>
-			</lineSuccessInfo>
-		</successInfo>
-	</enquirySuccess>';
-    $response = sendXmlOverPost($url, $xml);
-    $response_xml = new SimpleXMLElement($response);
-
-    // var_dump($response_xml);
-    // die();
+    $dataDb = getDataOptimusToProcessOrder(obtener_yith_wapo_del_carrito());
+    $fechaEstimada = getFechaEstimada();
+    $total = $order->get_total();
+    //OPTIMUS CAMBIAR
+    //addPresupuestoToOptimus($dataDb, $fechaEstimada, $total);
+
+    $order->update_status('wc-archivos-subidos', __('Pedido en espera de archivos.', 'woocommerce'));
+
+    // Generar un código único basado en timestamp
+    $codigo_pedido = time();
+
+    // Guardar el código en los meta datos del pedido
+    update_post_meta($order_id, '_custom_order_id', $codigo_pedido);
+
+    // Reemplazar el identificador del pedido por el nuevo código (solo para mostrarlo)
+    add_filter('woocommerce_order_number', function ($order_number, $order) use ($codigo_pedido) {
+        return $codigo_pedido;
+    }, 10, 2);
 }
 
 function redirect_non_logged_users_to_login()
@@ -2669,6 +1176,153 @@ function getTintasByCode($tinta)
     return $codigoTinta;
 }
 
+function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
+{
+    $dataPresupuesto['productVariable']['0e_paginas'] = 100;
+    if (!isset($dataPresupuesto['productVariable']))
+        return false;
+
+    $userData = wp_get_current_user();
+    $data = readOptimusXml('enqbuilder-request');
+    $cantidadFinal = 0;
+
+    $jobVariableKeys = array_keys($dataPresupuesto['productVariable']);
+    $tipos = [];
+    foreach ($jobVariableKeys as $key => $jobVariableKey) {
+        if (strpos($jobVariableKey, 'e_tipo_imp') !== false) {
+            $array = explode('e_tipo_imp', $jobVariableKey);
+            $tipos[] = reset($array);
+        }
+    }
+
+
+    $data->emailAddress = $userData->user_email;
+    $data->customerCode = $userData->api_id;
+    $data->addressNumber = ($dataPresupuesto['productVariable']['9e_ent_00_dir']) ?? 1;
+
+    $data->jobVariable->name = 'ep_fecha_entrega';
+    $data->jobVariable->type = 'datetime';
+    if ($fechaEstimada)
+        $data->jobVariable->value = $fechaEstimada . 'T' . date('H:i');
+
+    $encuadernacion = $dataPresupuesto['jobVariable']['e_encu'];
+    $tipoImpresionInterior = $dataPresupuesto['productVariable']['0e_tipo_imp'] ?? $dataPresupuesto['productVariable']['2e_tipo_imp'];
+
+    $tipoPedido = getCodTipoPedido($encuadernacion, $tipoImpresionInterior);
+    $data->jobVariable[1]->value = $tipoPedido;
+
+    $data->jobVariable[2]->value = $dataPresupuesto['jobVariable']['titulo'];
+    if (isset($dataPresupuesto['jobVariable']['titulo_2'])) {
+        $data->jobVariable[3]->value = $dataPresupuesto['jobVariable']['titulo_2'];
+        unset($dataPresupuesto['jobVariable']['titulo_2']);
+    }
+
+    if (isset($dataPresupuesto['jobVariable']['isbn']))
+        $data->jobVariable[4]->value = $dataPresupuesto['jobVariable']['isbn'];
+
+    $data->jobVariable[6]->value = ($dataPresupuesto['jobVariable']['ep_tipo_iva']) ?? '';
+
+    //se cambia a 2 para poder coger el ep_titulo
+    $countJV = 0;
+    $countPV = 0;
+
+    $data->line->description = $dataPresupuesto['productVariable']['titulo_elemento'] ?? $dataPresupuesto['jobVariable']['titulo'];
+    unset($dataPresupuesto['jobVariable']['titulo']);
+    unset($dataPresupuesto['jobVariable']['ep_tipo_iva']);
+    unset($dataPresupuesto['jobVariable']['user_id']);
+    $dataPresupuesto['jobVariable']['e_ancho'] = $dataPresupuesto['jobVariable']['ancho_mm'];
+    $dataPresupuesto['jobVariable']['e_alto'] = $dataPresupuesto['jobVariable']['alto_mm'];
+    unset($dataPresupuesto['jobVariable']['ancho_mm']);
+    unset($dataPresupuesto['jobVariable']['alto_mm']);
+
+    $data->line->productCode = 'GENERICO';
+    $data->line->includeInQuote = true;
+
+    $data->line->productVariable[$countPV]->name = 'e_elem_mod';
+    $data->line->productVariable[$countPV]->type = 'integer';
+    $data->line->productVariable[$countPV]->value = 1;
+    $countPV++;
+
+    foreach ($tipos as $tipo) {
+        $data->line->productVariable[$countPV]->name = $tipo . 'e_elem';
+        $data->line->productVariable[$countPV]->type = 'integer';
+        $data->line->productVariable[$countPV]->value = 1;
+        $countPV++;
+    }
+
+    foreach ($dataPresupuesto as $keyType => $valueData) {
+        foreach ($valueData as $key => $value) {
+            $key = str_replace('9', '', $key);
+            $typeValue = 'string';
+            switch (gettype($value)) {
+                case 'double':
+                    if (is_float($value))
+                        $typeValue = 'decimal';
+                    else
+                        $typeValue = 'integer';
+                    break;
+                case 'boolean':
+                    $typeValue = 'boolean';
+                    break;
+                default:
+                    break;
+            }
+            if ($key == 'e_ancho' || $key == 'e_alto') {
+                $typeValue = 'integer';
+            }
+            if ($keyType == 'jobVariable' || $keyType == 'productVariable') {
+                if (is_numeric($key[0]) && !in_array($key[0], $tipos))
+                    continue;
+
+                if (is_bool($value)) {
+                    $value = intval($value);
+                }
+                $data->line->productVariable[$countPV]->name = $key;
+                $data->line->productVariable[$countPV]->type = $typeValue;
+                $data->line->productVariable[$countPV]->value = $value;
+                $countPV++;
+            } elseif ($keyType == 'quantity') {
+                sort($value);
+                $value = array_values(array_filter($value));
+                foreach ($value as $keyQ => $quantity) {
+                    if ($quantity > 0) {
+                        $data->line->quantity[$keyQ] = $quantity;
+                        $cantidadFinal = $quantity;
+
+                        $data->line->productVariable[$countPV]->name = 'e_prc_esp';
+                        $data->line->productVariable[$countPV]->type = 'boolean';
+                        $data->line->productVariable[$countPV]->value = 1;
+                        $countPV++;
+
+                        $data->line->productVariable[$countPV]->name = 'e_prc_esp_' . ($keyQ + 1);
+                        $data->line->productVariable[$countPV]->type = 'decimal';
+                        $data->line->productVariable[$countPV]->value = $settedPrice;
+                        $countPV++;
+
+                    }
+                }
+            }
+        }
+    }
+
+    /*echo header("Content-type: text/xml");
+    echo $data->asXML();
+    exit;*/
+
+    $dataXml = $data->asXML();
+    $curlResult = sendXmlOptimus($data->asXML(), 'enqbuilder');
+    if (filter_var($curlResult->success, FILTER_VALIDATE_BOOLEAN)) {
+        $dataPres = [
+            'isbn' => $dataPresupuesto['jobVariable']['ep_isbn'] ?? '',
+            'enq_number' => $curlResult->enqNumber,
+
+        ];
+        $codOptimus = markSuccessful($cantidadFinal, $fechaEstimada, $dataPres);
+        var_dump($codOptimus);
+        exit;
+    }
+}
+
 //MQL - CAMPOS NUEVOS DE REGISTRO
 add_action('woocommerce_register_form', 'add_custom_fields_to_registration_form');
 function add_custom_fields_to_registration_form()
@@ -2912,7 +1566,7 @@ function add_div_before_my_account_widget()
 }
 
 //cambiamos menú de "mi cuenta"
-add_filter('woocommerce_account_menu_items', function($items) {
+add_filter('woocommerce_account_menu_items', function ($items) {
     unset($items['dashboard']); // Quita "Escritorio"
     unset($items['downloads']); // Quita "Descargas"
     return $items;
@@ -2940,8 +1594,17 @@ function dataFormatted($yith_wapo_data)
                 return $carry;
             }
 
-            if (str_ends_with($key, '_elem'))
+            if (str_ends_with($key, '_elem') || $key == '9e_ent')
                 $value = true;
+
+            if ($key == '2e_cub_ab') {
+                if (is_array($item[$key])) {
+                    $yith_wapo_data[] = ['2e_ancho_ab' => $item[$key][0]];
+                    $yith_wapo_data[] = ['2e_alto_ab' => $item[$key][1]];
+                } else {
+                    return $carry;
+                }
+            }
 
             if ($key == 'formato' || str_ends_with($key, 'e_tipo_papel') || str_ends_with($key, 'e_tintas'))
                 $value = str_replace('/', '____', $value);
@@ -2962,6 +1625,8 @@ function dataFormatted($yith_wapo_data)
 function transformateDataToErp($yith_wapo_data)
 {
     $dataToDb = dataFormatted($yith_wapo_data);
+    //Añadimos encajado obligatorio
+    $dataToDb['e_emp_encaj'] = true;
     $productVariableKeys = ['titulo', 'e_pruebas', 'orientacion', 'e_observaciones_cli', 'e_encu', 'alto_mm', 'ancho_mm'];
     $dataOptimus = [];
 
@@ -3233,6 +1898,9 @@ function transformateDataToErp($yith_wapo_data)
             $itemOptimus = $item;
         }
 
+        if ($key == '9e_ent_00_dir')
+            $itemOptimus = floatval($item);
+
         if (!in_array($key, $productVariableKeys))
             $dataOptimus['productVariable'][$key] = $itemOptimus;
         else
@@ -3240,11 +1908,16 @@ function transformateDataToErp($yith_wapo_data)
     }
 
     if (isset($dataToDb['quantity'])) {
-        foreach ($dataToDb['quantity'] as $quantity) {
-            if (is_object($quantity)) {
-                $quantity = get_object_vars($quantity);
+        if (is_array($dataToDb['quantity'])) {
+            foreach ($dataToDb['quantity'] as $quantity) {
+                if (is_object($quantity)) {
+                    $quantity = get_object_vars($quantity);
+                }
+                $quantity = str_replace('.', '', $quantity);
+                $dataOptimus['quantity']['quantity'][] = (int)$quantity;
             }
-            $quantity = str_replace('.', '', $quantity);
+        } else {
+            $quantity = str_replace('.', '', $dataToDb['quantity']);
             $dataOptimus['quantity']['quantity'][] = (int)$quantity;
         }
     }
@@ -3632,13 +2305,12 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
     }*/
 }
 
-
 //acción en pedidos "subir archivos"
 add_filter('woocommerce_my_account_my_orders_actions', function ($actions, $order) {
     // Asegurarse de que solo se muestre en ciertos estados (puedes modificar esto)
-    if ($order->has_status(array('processing', 'on-hold', 'completed'))) {
+    if ($order->has_status('completed')) {
         $actions['subir_archivos'] = array(
-            'url'  => site_url('/subir-archivos/?order_id=' . $order->get_id()), // URL de la página de subida
+            'url' => site_url('/subir-archivos/?order_id=' . $order->get_id()), // URL de la página de subida
             'name' => __('Subir Archivos', 'woocommerce'),
         );
     }
@@ -3647,7 +2319,7 @@ add_filter('woocommerce_my_account_my_orders_actions', function ($actions, $orde
 }, 10, 2);
 
 //pagina subir archivos
-add_shortcode('subir_archivo_pdf', function() {
+add_shortcode('subir_archivo_pdf', function () {
     $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 
     if ($order_id === 0) {
@@ -3664,8 +2336,9 @@ add_shortcode('subir_archivo_pdf', function() {
 
     <div class="upload-container">
         <h2><?php echo sprintf(__('Subir archivos PDF pedido %s - %s', 'woocommerce'), $order_id, esc_html($product_name)); ?></h2>
-        <form id="uploadFormSubirArchivos" action="<?php echo esc_url(admin_url('admin-ajax.php')); ?>" method="post" enctype="multipart/form-data">
-            <input type="file" name="archivo_pdf" id="archivo_pdf" accept="application/pdf" required>
+        <form id="uploadFormSubirArchivos" action="<?php echo esc_url(admin_url('admin-ajax.php')); ?>" method="post"
+              enctype="multipart/form-data">
+            <input type="file" name="archivo_pdf[]" multiple id="archivo_pdf" accept="application/pdf" required>
             <input type="hidden" name="order_id" value="<?php echo esc_attr($order_id); ?>">
             <input type="hidden" name="action" value="subir_pdf">
             <button type="submit"><?= __('Subir Archivos', 'woocommerce') ?></button>
@@ -3674,7 +2347,7 @@ add_shortcode('subir_archivo_pdf', function() {
     </div>
 
     <script>
-        document.getElementById("uploadFormSubirArchivos").addEventListener("submit", function(event) {
+        document.getElementById("uploadFormSubirArchivos").addEventListener("submit", function (event) {
             event.preventDefault();
             var formData = new FormData(this);
 
@@ -3693,33 +2366,165 @@ add_shortcode('subir_archivo_pdf', function() {
     <?php return ob_get_clean();
 });
 
+function getFtpFolder($presupuestoOptimusEnqNumber)
+{
+    $folderCount = 100;
+    while ($folderCount < $presupuestoOptimusEnqNumber) {
+        $folderCount += 100;
+    }
+
+    if ($presupuestoOptimusEnqNumber % 100 != 0) {
+        $folderCount -= 100;
+    }
+
+    $folder = substr_replace($folderCount, 'xx', -2);
+    if ($folder == 'xx') {
+        $folder = '0xx';
+    }
+    return [
+        'folder' => $folder,
+        'order_id' => $presupuestoOptimusEnqNumber
+    ];
+}
+
 // Manejar la subida de archivos PDF
 add_action('wp_ajax_subir_pdf', 'subir_pdf_handler');
 add_action('wp_ajax_nopriv_subir_pdf', 'subir_pdf_handler');
 
-function subir_pdf_handler() {
-    if (!isset($_FILES['archivo_pdf'])) {
-        echo json_encode(['message' => 'No se ha seleccionado ningún archivo.']);
+function subir_pdf_handler()
+{
+    if (!isset($_FILES['archivo_pdf']) || !isset($_POST['order_id'])) {
+        echo json_encode(['message' => 'No se ha seleccionado un archivo o falta el pedido.']);
         wp_die();
     }
 
-    $file = $_FILES['archivo_pdf'];
-
-    // Verificar el tipo de archivo
-    $file_type = wp_check_filetype($file['name']);
-    if ($file_type['ext'] !== 'pdf') {
-        echo json_encode(['message' => 'Solo se permiten archivos PDF.']);
+    $order_id = intval($_POST['order_id']);
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        echo json_encode(['message' => 'El pedido no existe.']);
         wp_die();
     }
 
-    // Subir el archivo a la carpeta de WordPress
-    $upload = wp_upload_bits($file['name'], null, file_get_contents($file['tmp_name']));
+    $host = '81.42.209.224';
+    $port = '21';
+    $timeout = 10;
+    $user = "Felipe";
+    $pass = "Masque2601";
+    $ftp_dir = '';
 
-    if ($upload['error']) {
-        echo json_encode(['message' => 'Error al subir el archivo.']);
+    $folder = getFtpFolder($order_id);
+    if (is_array($folder))
+        $ftp_dir = '/pdf/' . $folder['folder'] . '/' . $folder['order_id'];
+    else
+        $ftp_dir = $folder;
+
+    $ftp = ftp_connect($host, $port, $timeout);
+    ftp_login($ftp, $user, $pass);
+    ftp_pasv($ftp, true);
+
+    $archivos_subidos = [];
+    $errores = [];
+
+    foreach ($_FILES['archivo_pdf']['name'] as $key => $filename) {
+        $tmp_name = $_FILES['archivo_pdf']['tmp_name'][$key];
+        $destination_file = $ftp_dir . '/' . basename($filename);
+
+        // Verificar si el archivo temporal existe
+        if (!file_exists($tmp_name) || filesize($tmp_name) == 0) {
+            error_log("❌ Error: El archivo temporal no existe o está vacío - {$filename} del pedido " . $order_id);
+            $errores[] = "Error: El archivo temporal no existe o está vacío - {$filename}";
+            continue;
+        }
+
+        error_log("📤 Intentando subir archivo: {$tmp_name} -> {$destination_file}");
+
+        // Subida asíncrona con ftp_nb_put()
+        $upload_status = ftp_nb_put($ftp, $destination_file, $tmp_name, FTP_BINARY);
+
+        while ($upload_status == FTP_MOREDATA) {
+            // Aquí podrías realizar otras tareas si es necesario
+            $upload_status = ftp_nb_continue($ftp);
+        }
+
+        if ($upload_status == FTP_FINISHED) {
+            $archivos_subidos[] = $filename;
+        } else {
+            error_log("❌ Error: No se pudo subir el archivo {$filename} del pedido " . $order_id);
+            $errores[] = "Error al subir {$filename}.";
+        }
+    }
+
+    ftp_close($ftp);
+
+    if (!empty($archivos_subidos)) {
+        $order->update_status('wc-archivos-subidos', __('Se han subido archivos al FTP.', 'woocommerce'));
+        echo json_encode([
+            'message' => 'Archivos subidos correctamente: ' . implode(', ', $archivos_subidos),
+            'error' => !empty($errores) ? implode(', ', $errores) : ''
+        ]);
     } else {
-        echo json_encode(['message' => 'Archivo subido correctamente.']);
+        error_log("❌ Error: No se subió ningún archivo del pedido " . $order_id);
+        echo json_encode(['message' => 'No se subió ningún archivo.', 'error' => implode(', ', $errores)]);
     }
 
     wp_die();
+}
+
+//Nuevo estado
+add_action('init', function () {
+    register_post_status('wc-archivos-subidos', array(
+        'label' => 'Archivos subidos',
+        'public' => true,
+        'show_in_admin_status_list' => true,
+        'show_in_admin_all_list' => true,
+        'exclude_from_search' => false,
+        'label_count' => _n_noop('Archivos subidos <span class="count">(%s)</span>', 'Archivos subidos <span class="count">(%s)</span>', 'woocommerce')
+    ));
+});
+
+// Agregar el estado en la lista de estados de WooCommerce
+add_filter('wc_order_statuses', function ($order_statuses) {
+    $order_statuses['wc-archivos-subidos'] = __('Archivos subidos', 'woocommerce');
+    return $order_statuses;
+});
+
+function markSuccessful($cantidadFinal, $fechaEstimada, $dataPres)
+{
+    $markResult = [];
+    $tipoIva = ($dataPres['isbn'] == '' || is_null($dataPres['isbn']) || $dataPres['no_isbn'] == 1) ? 'G' : 'S';
+    $imprimirRh = 'SI';
+
+    if ($fechaEstimada)
+        $fechaEstimada = $fechaEstimada . 'T' . date('H:i');
+
+    $aceptarOfertaXml = readOptimusXml('markSuccessful');
+    $aceptarOfertaXml->enquiryNumber = $dataPres['enq_number'];
+    $aceptarOfertaXml->successInfo->jobVariable[0]->name = 'ep_fecha_entrega';
+    $aceptarOfertaXml->successInfo->jobVariable[0]->type = 'datetime';
+    $aceptarOfertaXml->successInfo->jobVariable[0]->value = $fechaEstimada;
+    $aceptarOfertaXml->successInfo->jobVariable[1]->name = 'ep_imprimirhr';
+    $aceptarOfertaXml->successInfo->jobVariable[1]->type = 'string';
+    $aceptarOfertaXml->successInfo->jobVariable[1]->value = $imprimirRh;
+    $aceptarOfertaXml->successInfo->jobVariable[2]->name = 'ep_tipo_iva';
+    $aceptarOfertaXml->successInfo->jobVariable[2]->type = 'string';
+    $aceptarOfertaXml->successInfo->jobVariable[2]->value = $tipoIva;
+
+    $aceptarOfertaXml->successInfo->lineSuccessInfo[0]->lineNumber = 1;
+    $aceptarOfertaXml->successInfo->lineSuccessInfo[0]->acceptedQuantity = $cantidadFinal;
+
+    $curlResult = sendXmlOptimus($aceptarOfertaXml->asXML(), 'enquiry/markSuccessful');
+    var_dump($curlResult);
+    exit;
+    if (filter_var($curlResult->success, FILTER_VALIDATE_BOOLEAN)) {
+        $markResult['cod_pedido_optimus'] = $curlResult->jobNumber;
+    }/* else {
+        return ['success' => false, 'message' => $curlResult->error];
+    }*/
+
+    return $markResult;
+}
+
+function replacePrice($price)
+{
+    return str_replace('.', ',', $price);
 }
