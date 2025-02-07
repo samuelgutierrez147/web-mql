@@ -35,7 +35,11 @@ if ($order) {
         <div class="thankyou-details">
             <div class="order-summary">
                 <h2>📦 Resumen del Pedido</h2>
-                <p><strong>Número de Pedido:</strong> <?= $order->get_order_number(); ?></p>
+                <?php
+                $cod_pedido_optimus = get_post_meta($order->get_id(), '_optimus_cod_pedido', true);
+                $numero_pedido = !empty($cod_pedido_optimus) ? $cod_pedido_optimus : $order->get_order_number();
+                ?>
+                <p><strong>Número de Pedido:</strong> <?= $numero_pedido; ?></p>
                 <p><strong>Fecha:</strong> <?= wc_format_datetime($order->get_date_created()); ?></p>
                 <p><strong>Total:</strong> <?= $order->get_formatted_order_total(); ?></p>
                 <p><strong>Método de Pago:</strong> <?= wp_kses_post($order->get_payment_method_title()); ?></p>

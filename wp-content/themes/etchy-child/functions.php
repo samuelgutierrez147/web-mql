@@ -878,31 +878,46 @@ function obtener_yith_wapo_del_carrito()
     return null;
 }
 
-add_action('woocommerce_checkout_order_processed', 'cambiar_estado_y_asignar_codigo_pedido', 10, 1);
+add_action('woocommerce_checkout_update_order_meta', 'cambiar_estado_y_asignar_codigo_pedido', 10, 1);
 function cambiar_estado_y_asignar_codigo_pedido($order_id)
 {
     if (!$order_id) {
         return;
     }
 
-    $order = wc_get_order($order_id);
+    $order = new WC_Order($order_id);
     $dataDb = getDataOptimusToProcessOrder(obtener_yith_wapo_del_carrito());
     $fechaEstimada = getFechaEstimada();
     $total = $order->get_total();
-    //OPTIMUS CAMBIAR
-    //addPresupuestoToOptimus($dataDb, $fechaEstimada, $total);
 
-    $order->update_status('wc-archivos-subidos', __('Pedido en espera de archivos.', 'woocommerce'));
+    // Procesar pedido en Optimus
+    $datosPedidoOptimus = addPresupuestoToOptimus($dataDb, $fechaEstimada, $total);
 
-    // Generar un código único basado en timestamp
-    $codigo_pedido = time();
+    if (!$datosPedidoOptimus['success']) {
+        $order->update_status('failed', __('Error en Optimus: ' . $datosPedidoOptimus['error_message'], 'woocommerce'));
+        $order->add_order_note(__('Error en Optimus: ' . $datosPedidoOptimus['error_message'], 'woocommerce'));
 
-    // Guardar el código en los meta datos del pedido
-    update_post_meta($order_id, '_custom_order_id', $codigo_pedido);
+        // Notificar por correo
+        wc_mail(
+            get_option('admin_email'),
+            __('Error en pedido WooCommerce', 'woocommerce'),
+            'El pedido #' . $order_id . ' no pudo ser procesado en Optimus. Motivo: ' . $datosPedidoOptimus['error_message']
+        );
+        return;
+    }
 
-    // Reemplazar el identificador del pedido por el nuevo código (solo para mostrarlo)
-    add_filter('woocommerce_order_number', function ($order_number, $order) use ($codigo_pedido) {
-        return $codigo_pedido;
+    // Guardar en metadatos
+    update_post_meta($order_id, '_optimus_enq_number', sanitize_text_field($datosPedidoOptimus['enq_number']));
+    update_post_meta($order_id, '_optimus_cod_pedido', sanitize_text_field($datosPedidoOptimus['cod_pedido_optimus']));
+
+    // Agregar notas al pedido
+    $order->add_order_note('Pedido enviado a Optimus.');
+    $order->add_order_note('ENQ Number: ' . $datosPedidoOptimus['enq_number']);
+    $order->add_order_note('COD Pedido Optimus: ' . $datosPedidoOptimus['cod_pedido_optimus']);
+
+    // Filtro para cambiar el número de pedido
+    add_filter('woocommerce_order_number', function ($order_number, $order) use ($order_id) {
+        return get_post_meta($order_id, '_optimus_cod_pedido', true) ?: $order_number;
     }, 10, 2);
 }
 
@@ -1178,7 +1193,6 @@ function getTintasByCode($tinta)
 
 function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
 {
-    $dataPresupuesto['productVariable']['0e_paginas'] = 100;
     if (!isset($dataPresupuesto['productVariable']))
         return false;
 
@@ -1267,7 +1281,7 @@ function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
                 default:
                     break;
             }
-            if ($key == 'e_ancho' || $key == 'e_alto') {
+            if ($key == 'e_ancho' || $key == 'e_alto' || strpos($key, '_paginas') !== false) {
                 $typeValue = 'integer';
             }
             if ($keyType == 'jobVariable' || $keyType == 'productVariable') {
@@ -1318,9 +1332,17 @@ function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
 
         ];
         $codOptimus = markSuccessful($cantidadFinal, $fechaEstimada, $dataPres);
-        var_dump($codOptimus);
-        exit;
+        if ($codOptimus['success']) {
+            return [
+                'success' => true,
+                'enq_number' => $curlResult->enqNumber,
+                'cod_pedido_optimus' => $codOptimus['cod_pedido_optimus']
+            ];
+        } else {
+            return ['success' => false, 'type' => 'pedido', 'error_message' => $codOptimus['mensaje']];
+        }
     }
+    return ['success' => false, 'type' => 'oferta', 'error_message' => $curlResult->error];
 }
 
 //MQL - CAMPOS NUEVOS DE REGISTRO
@@ -1585,30 +1607,98 @@ function updateArrayValueByKey(&$array, $key, $value)
 
 function dataFormatted($yith_wapo_data)
 {
-    return array_reduce($yith_wapo_data, function ($carry, $item) {
+    $counters = [
+        'cub_ab' => 0,
+        'guard_ab' => 0,
+        'sobrecub_ab' => 0,
+        'despd_ab' => 0,
+        'alto_ancho' => 0,
+        'acabados2e' => 0,
+        'acabados4e' => 0,
+        'papel2caras6e' => 0,
+        'retractiEnso' => 0
+    ];
+
+    // Mapeo de claves que requieren cambios dinámicos
+    $key_mappings = [
+        '2e_cub_ab' => ['2e_ancho_ab', '2e_alto_ab'],
+        '3e_cub_ab' => ['3e_ancho_ab', '3e_alto_ab'],
+        '4e_sobre_ab' => ['4e_ancho_ab', '4e_alto_ab'],
+        '7e_desp_ab' => ['7e_ancho_ab', '7e_alto_ab'],
+        'alto_ancho_personalizado' => ['ancho_mm', 'alto_mm'],
+        //'8e_cabezadas_cinta' => ['']
+    ];
+
+    return array_reduce($yith_wapo_data, function ($carry, $item) use (&$counters, $key_mappings) {
         if (is_array($item)) {
             $key = array_key_first($item);
             $value = trim(str_replace(' ', '', $item[$key]));
 
-            if (str_ends_with($key, '_tipo')) {
+            if (str_ends_with($key, '_tipo') || ($key == 'formato' && $value == 'Personalizado'))
                 return $carry;
+
+            if (str_ends_with($key, '_elem') || $key == '9e_ent') {
+                $value = true;
             }
 
-            if (str_ends_with($key, '_elem') || $key == '9e_ent')
-                $value = true;
+            // Mapear claves específicas con alternancia de valores
+            if (isset($key_mappings[$key])) {
+                $newKey = $key_mappings[$key][$counters[$key] % 2];
 
-            if ($key == '2e_cub_ab') {
-                if (is_array($item[$key])) {
-                    $yith_wapo_data[] = ['2e_ancho_ab' => $item[$key][0]];
-                    $yith_wapo_data[] = ['2e_alto_ab' => $item[$key][1]];
+                if (!empty($value)) {
+                    $key = $newKey;
+                    $counters[$key]++;
                 } else {
-                    return $carry;
+                    return $carry; // Omitir este elemento del array
                 }
             }
 
-            if ($key == 'formato' || str_ends_with($key, 'e_tipo_papel') || str_ends_with($key, 'e_tintas'))
-                $value = str_replace('/', '____', $value);
+            // Campos que deben convertirse en `1`
+            if (str_ends_with($key, 'sop_cliente') || str_ends_with($key, '_barn')) {
+                $value = 1;
+            }
 
+            // Procesar acabados 2e y 4e
+            if ($key === '2e_acabados_check') {
+                $acabados_map = ['2e_esta', '2e_troq', '2e_golp'];
+                $key = $acabados_map[$counters['acabados2e']++] ?? end($acabados_map);
+                $value = 1;
+            }
+
+            if ($key === '4e_acabados_check') {
+                $acabados_map = ['4e_esta', '4e_troq', '4e_golp'];
+                $key = $acabados_map[$counters['acabados4e']++] ?? end($acabados_map);
+                $value = 1;
+            }
+
+            // Procesar retractilado y ensobrado
+            if ($key === 'retractilado_ensobrado') {
+                $retractil_map = ['9e_emp_retrcol', '9e_emp_retruni', '9e_emp_ensobrado'];
+                $key = $retractil_map[$counters['retractiEnso']++] ?? end($retractil_map);
+                $value = 1;
+            }
+
+            // Procesar papel con 2 caras
+            if ($key === '6e_papelap_2caras') {
+                $papel_map = ['6e_sop_cliente', '6e_plast_2c'];
+                $key = $papel_map[$counters['papel2caras6e']++];
+                if ($key === '6e_plast_2c' && !empty($value)) {
+                    $value = 1;
+                }
+            }
+
+            if (str_ends_with($key, '_solapas')) {
+                if (empty($value) || $value == 0)
+                    return $carry;
+
+                $value = intval($value);
+            }
+
+            if ($key == 'formato' || str_ends_with($key, 'e_tipo_papel') || str_ends_with($key, 'e_tintas')) {
+                $value = str_replace('/', '____', $value);
+            }
+
+            // Agregar al resultado
             if (isset($carry[$key])) {
                 if (!is_array($carry[$key])) {
                     $carry[$key] = [$carry[$key]];
@@ -2366,6 +2456,26 @@ add_shortcode('subir_archivo_pdf', function () {
     <?php return ob_get_clean();
 });
 
+add_filter('manage_edit-shop_order_columns', function ($columns) {
+    $columns['cod_pedido_optimus'] = __('Código Optimus', 'woocommerce');
+    return $columns;
+});
+
+// Mostrar el contenido en la nueva columna
+add_action('manage_shop_order_posts_custom_column', function ($column, $post_id) {
+    if ($column === 'cod_pedido_optimus') {
+        $cod_pedido_optimus = get_post_meta($post_id, '_optimus_cod_pedido', true);
+        echo !empty($cod_pedido_optimus) ? esc_html($cod_pedido_optimus) : '-';
+    }
+}, 10, 2);
+
+// Reemplazar el número de pedido en la página "Mis Pedidos"
+add_filter('woocommerce_order_number', function ($order_number, $order) {
+    $cod_pedido_optimus = get_post_meta($order->get_id(), '_optimus_cod_pedido', true);
+    return !empty($cod_pedido_optimus) ? $cod_pedido_optimus : $order_number;
+}, 10, 2);
+
+
 function getFtpFolder($presupuestoOptimusEnqNumber)
 {
     $folderCount = 100;
@@ -2488,6 +2598,13 @@ add_filter('wc_order_statuses', function ($order_statuses) {
     return $order_statuses;
 });
 
+add_action('woocommerce_payment_complete', function ($order_id) {
+    $order = wc_get_order($order_id);
+    if ($order && $order->get_payment_method() === 'redsys') { // Asegúrate de que 'redsys' sea el ID de la pasarela
+        $order->update_status('wc-archivos-subidos', __('Pedido en espera de archivos.', 'woocommerce'));
+    }
+});
+
 function markSuccessful($cantidadFinal, $fechaEstimada, $dataPres)
 {
     $markResult = [];
@@ -2513,13 +2630,18 @@ function markSuccessful($cantidadFinal, $fechaEstimada, $dataPres)
     $aceptarOfertaXml->successInfo->lineSuccessInfo[0]->acceptedQuantity = $cantidadFinal;
 
     $curlResult = sendXmlOptimus($aceptarOfertaXml->asXML(), 'enquiry/markSuccessful');
-    var_dump($curlResult);
-    exit;
+
     if (filter_var($curlResult->success, FILTER_VALIDATE_BOOLEAN)) {
-        $markResult['cod_pedido_optimus'] = $curlResult->jobNumber;
-    }/* else {
-        return ['success' => false, 'message' => $curlResult->error];
-    }*/
+        $markResult = [
+            'success' => true,
+            'cod_pedido_optimus' => $curlResult->jobNumber
+        ];
+    } else {
+        $markResult = [
+            'success' => false,
+            'message' => $curlResult->error
+        ];
+    }
 
     return $markResult;
 }
