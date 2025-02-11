@@ -82,6 +82,14 @@ function cargar_sweetalert()
 
 add_action('wp_enqueue_scripts', 'cargar_sweetalert');
 
+function cargar_script_subida_archivos() {
+    if (is_page('subir-archivos')) {
+        wp_enqueue_script('validacion-subida', get_stylesheet_directory_uri() . '/js/validacion-subida.js', array('jquery'), null, true);
+        wp_localize_script('validacion-subida', 'ajaxurl', array('ajax_url' => admin_url('admin-ajax.php')));
+    }
+}
+add_action('wp_enqueue_scripts', 'cargar_script_subida_archivos');
+
 function custom_loginlogo()
 {
     echo "<style type='text/css'>
@@ -2397,64 +2405,31 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
 
 //acción en pedidos "subir archivos"
 add_filter('woocommerce_my_account_my_orders_actions', function ($actions, $order) {
-    // Asegurarse de que solo se muestre en ciertos estados (puedes modificar esto)
+    // Obtener el valor del meta campo "cod_pedido_optimus"
+    $cod_pedido_optimus = get_post_meta($order->get_id(), '_optimus_cod_pedido', true);
+
+    // Asegurar que el código de pedido está definido
+    if (!empty($cod_pedido_optimus)) {
+        $query_args = array(
+            'order_id' => $order->get_id(),
+            'cod_ped' => $cod_pedido_optimus
+        );
+    } else {
+        $query_args = array(
+            'order_id' => $order->get_id()
+        );
+    }
+
+    // Asegurar que solo se muestre en ciertos estados (puedes modificar esto)
     if ($order->has_status('completed')) {
         $actions['subir_archivos'] = array(
-            'url' => site_url('/subir-archivos/?order_id=' . $order->get_id()), // URL de la página de subida
+            'url'  => add_query_arg($query_args, site_url('/subir-archivos/')), // Agregar parámetros dinámicamente
             'name' => __('Subir Archivos', 'woocommerce'),
         );
     }
 
     return $actions;
 }, 10, 2);
-
-//pagina subir archivos
-add_shortcode('subir_archivo_pdf', function () {
-    $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
-
-    if ($order_id === 0) {
-        return '<p style="color: red; text-align: center;">No se encontró el pedido.</p>';
-    }
-    $order = wc_get_order($order_id);
-    $items = $order->get_items();
-    $product_name = '';
-    if (!empty($items)) {
-        $first_item = reset($items);
-        $product_name = $first_item->get_name();
-    }
-    ob_start(); ?>
-
-    <div class="upload-container">
-        <h2><?php echo sprintf(__('Subir archivos PDF pedido %s - %s', 'woocommerce'), $order_id, esc_html($product_name)); ?></h2>
-        <form id="uploadFormSubirArchivos" action="<?php echo esc_url(admin_url('admin-ajax.php')); ?>" method="post"
-              enctype="multipart/form-data">
-            <input type="file" name="archivo_pdf[]" multiple id="archivo_pdf" accept="application/pdf" required>
-            <input type="hidden" name="order_id" value="<?php echo esc_attr($order_id); ?>">
-            <input type="hidden" name="action" value="subir_pdf">
-            <button type="submit"><?= __('Subir Archivos', 'woocommerce') ?></button>
-        </form>
-        <div id="uploadMessage"></div>
-    </div>
-
-    <script>
-        document.getElementById("uploadFormSubirArchivos").addEventListener("submit", function (event) {
-            event.preventDefault();
-            var formData = new FormData(this);
-
-            fetch("<?php echo esc_url(admin_url('admin-ajax.php')); ?>", {
-                method: "POST",
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("uploadMessage").innerHTML = data.message;
-                })
-                .catch(error => console.error("Error:", error));
-        });
-    </script>
-
-    <?php return ob_get_clean();
-});
 
 add_filter('manage_edit-shop_order_columns', function ($columns) {
     $columns['cod_pedido_optimus'] = __('Código Optimus', 'woocommerce');
@@ -2497,18 +2472,17 @@ function getFtpFolder($presupuestoOptimusEnqNumber)
     ];
 }
 
-// Manejar la subida de archivos PDF
-add_action('wp_ajax_subir_pdf', 'subir_pdf_handler');
-add_action('wp_ajax_nopriv_subir_pdf', 'subir_pdf_handler');
-
-function subir_pdf_handler()
-{
-    if (!isset($_FILES['archivo_pdf']) || !isset($_POST['order_id'])) {
+function procesar_subida_archivos() {
+    if (!isset($_FILES['archivo_pdf']) || !isset($_POST['order_id']) || !isset($_POST['cod_ped'])) {
         echo json_encode(['message' => 'No se ha seleccionado un archivo o falta el pedido.']);
         wp_die();
     }
 
     $order_id = intval($_POST['order_id']);
+    $es_local = in_array($_SERVER['SERVER_NAME'], ['localhost', '127.0.0.1']);
+
+    // 🔹 Si es local, usar 99999 como código
+    $cod_optimus = $es_local ? 99999 : intval($_POST['cod_ped']);
     $order = wc_get_order($order_id);
     if (!$order) {
         echo json_encode(['message' => 'El pedido no existe.']);
@@ -2522,7 +2496,7 @@ function subir_pdf_handler()
     $pass = "Masque2601";
     $ftp_dir = '';
 
-    $folder = getFtpFolder($order_id);
+    $folder = getFtpFolder($cod_optimus);
     if (is_array($folder))
         $ftp_dir = '/pdf/' . $folder['folder'] . '/' . $folder['order_id'];
     else
@@ -2541,12 +2515,9 @@ function subir_pdf_handler()
 
         // Verificar si el archivo temporal existe
         if (!file_exists($tmp_name) || filesize($tmp_name) == 0) {
-            error_log("❌ Error: El archivo temporal no existe o está vacío - {$filename} del pedido " . $order_id);
             $errores[] = "Error: El archivo temporal no existe o está vacío - {$filename}";
             continue;
         }
-
-        error_log("📤 Intentando subir archivo: {$tmp_name} -> {$destination_file}");
 
         // Subida asíncrona con ftp_nb_put()
         $upload_status = ftp_nb_put($ftp, $destination_file, $tmp_name, FTP_BINARY);
@@ -2559,7 +2530,6 @@ function subir_pdf_handler()
         if ($upload_status == FTP_FINISHED) {
             $archivos_subidos[] = $filename;
         } else {
-            error_log("❌ Error: No se pudo subir el archivo {$filename} del pedido " . $order_id);
             $errores[] = "Error al subir {$filename}.";
         }
     }
@@ -2573,12 +2543,45 @@ function subir_pdf_handler()
             'error' => !empty($errores) ? implode(', ', $errores) : ''
         ]);
     } else {
-        error_log("❌ Error: No se subió ningún archivo del pedido " . $order_id);
         echo json_encode(['message' => 'No se subió ningún archivo.', 'error' => implode(', ', $errores)]);
     }
 
     wp_die();
 }
+add_action('wp_ajax_procesar_subida_archivos', 'procesar_subida_archivos');
+add_action('wp_ajax_nopriv_procesar_subida_archivos', 'procesar_subida_archivos');
+
+function proteger_pagina_subir_archivos() {
+    if (is_page('subir-archivos')) { // Verifica que estamos en la página correcta
+        if (!is_user_logged_in()) {
+            // Si el usuario no está logueado, redirigir a la página de login
+            wp_redirect(home_url('/iniciar-sesion'));
+            exit;
+        }
+
+        if (!isset($_GET['order_id']) || empty($_GET['order_id'])) {
+            // Si no hay order_id en la URL, redirigir a la página de pedidos
+            wp_redirect(home_url('/iniciar-sesion/orders/'));
+            exit;
+        }
+
+        $order_id = intval($_GET['order_id']);
+        $current_user_id = get_current_user_id();
+
+        $order = wc_get_order($order_id);
+
+        if (!$order) {
+            wp_redirect(home_url('/iniciar-sesion/orders/'));
+            exit;
+        }
+
+        if ($order->get_user_id() !== $current_user_id) {
+            wp_redirect(home_url('/iniciar-sesion/orders/'));
+            exit;
+        }
+    }
+}
+add_action('template_redirect', 'proteger_pagina_subir_archivos');
 
 //Nuevo estado
 add_action('init', function () {
