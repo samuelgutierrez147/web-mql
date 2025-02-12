@@ -82,12 +82,14 @@ function cargar_sweetalert()
 
 add_action('wp_enqueue_scripts', 'cargar_sweetalert');
 
-function cargar_script_subida_archivos() {
+function cargar_script_subida_archivos()
+{
     if (is_page('subir-archivos')) {
         wp_enqueue_script('validacion-subida', get_stylesheet_directory_uri() . '/js/validacion-subida.js', array('jquery'), null, true);
         wp_localize_script('validacion-subida', 'ajaxurl', array('ajax_url' => admin_url('admin-ajax.php')));
     }
 }
+
 add_action('wp_enqueue_scripts', 'cargar_script_subida_archivos');
 
 function custom_loginlogo()
@@ -2423,7 +2425,7 @@ add_filter('woocommerce_my_account_my_orders_actions', function ($actions, $orde
     // Asegurar que solo se muestre en ciertos estados (puedes modificar esto)
     if ($order->has_status('completed')) {
         $actions['subir_archivos'] = array(
-            'url'  => add_query_arg($query_args, site_url('/subir-archivos/')), // Agregar parámetros dinámicamente
+            'url' => add_query_arg($query_args, site_url('/subir-archivos/')), // Agregar parámetros dinámicamente
             'name' => __('Subir Archivos', 'woocommerce'),
         );
     }
@@ -2472,8 +2474,24 @@ function getFtpFolder($presupuestoOptimusEnqNumber)
     ];
 }
 
-function procesar_subida_archivos() {
-    if (!isset($_FILES['archivo_pdf']) || !isset($_POST['order_id']) || !isset($_POST['cod_ped'])) {
+function filtrar_archivos_validos($archivos)
+{
+    $archivos_validos = [];
+
+    foreach ($archivos as $key => $archivo) {
+        if ($archivo['error'] === 0 && $archivo['size'] > 0) {
+            $archivos_validos[$key] = $archivo;
+        }
+    }
+
+    return $archivos_validos;
+}
+
+function procesar_subida_archivos()
+{
+    $archivos_validos = filtrar_archivos_validos($_FILES);
+
+    if (empty($archivos_validos) || !isset($_POST['order_id']) || !isset($_POST['cod_ped'])) {
         echo json_encode(['message' => 'No se ha seleccionado un archivo o falta el pedido.']);
         wp_die();
     }
@@ -2509,13 +2527,17 @@ function procesar_subida_archivos() {
     $archivos_subidos = [];
     $errores = [];
 
-    foreach ($_FILES['archivo_pdf']['name'] as $key => $filename) {
-        $tmp_name = $_FILES['archivo_pdf']['tmp_name'][$key];
-        $destination_file = $ftp_dir . '/' . basename($filename);
+    foreach ($archivos_validos as $key => $filename) {
+        $codigo = preg_replace('/^archivo_pdf_/', '', $key);
+        $elementoNumeracion = getTypeElemByNumberId($codigo);
+
+        $fileName = $cod_optimus . $elementoNumeracion['numeracion'] . '_' . strtolower($elementoNumeracion['tipo']) . '_' . str_replace(' ', '_', 'pedido_web') . '.pdf';
+        $tmp_name = $filename['tmp_name'];
+        $destination_file = $ftp_dir . '/' . basename($fileName);
 
         // Verificar si el archivo temporal existe
         if (!file_exists($tmp_name) || filesize($tmp_name) == 0) {
-            $errores[] = "Error: El archivo temporal no existe o está vacío - {$filename}";
+            $errores[] = "Error: El archivo temporal no existe o está vacío - {$fileName}";
             continue;
         }
 
@@ -2528,9 +2550,9 @@ function procesar_subida_archivos() {
         }
 
         if ($upload_status == FTP_FINISHED) {
-            $archivos_subidos[] = $filename;
+            $archivos_subidos[] = $fileName;
         } else {
-            $errores[] = "Error al subir {$filename}.";
+            $errores[] = "Error al subir {$fileName}.";
         }
     }
 
@@ -2548,10 +2570,56 @@ function procesar_subida_archivos() {
 
     wp_die();
 }
+
 add_action('wp_ajax_procesar_subida_archivos', 'procesar_subida_archivos');
 add_action('wp_ajax_nopriv_procesar_subida_archivos', 'procesar_subida_archivos');
 
-function proteger_pagina_subir_archivos() {
+function getTypeElemByNumberId($elemId)
+{
+    $result = [];
+    preg_match('/(\d)e$/', $elemId, $matches);
+    if (isset($matches[1])) {
+        if ($matches[1] == 0)
+            $numeracion = str_pad($matches[1] + 1, 2, '0', STR_PAD_LEFT);
+        else
+            $numeracion = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+    } else {
+        $numeracion = null;
+    }
+
+    switch ($elemId) {
+        case '0e':
+        case '1e':
+            $result['tipo'] = 'interior';
+            break;
+        case '4e':
+        case '2e':
+            $result['tipo'] = 'cubierta';
+            break;
+        case '3e':
+            $result['tipo'] = 'guardas';
+            break;
+        case '5e':
+            $result['tipo'] = 'faja';
+            break;
+        case '6e':
+            $result['tipo'] = 'marcapaginas';
+            break;
+        case '7e':
+            $result['tipo'] = 'desplegable';
+            break;
+    }
+
+    // Solo añadir 'numeracion' si se encontró un número válido
+    if ($numeracion !== null) {
+        $result['numeracion'] = $numeracion;
+    }
+
+    return $result;
+}
+
+function proteger_pagina_subir_archivos()
+{
     if (is_page('subir-archivos')) { // Verifica que estamos en la página correcta
         if (!is_user_logged_in()) {
             // Si el usuario no está logueado, redirigir a la página de login
@@ -2581,6 +2649,7 @@ function proteger_pagina_subir_archivos() {
         }
     }
 }
+
 add_action('template_redirect', 'proteger_pagina_subir_archivos');
 
 //Nuevo estado
