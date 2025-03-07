@@ -146,6 +146,17 @@ jQuery(document).ready(function ($) {
             }
         }
     });
+    $('[data-id="8e_encu_wr_color_otro"], [data-id="8e_encu_es_color_otro"]').css('display', 'none').find('input').prop('disabled', true);
+    $('#8e_encu_wr_color, #8e_encu_es_color').on('change', function() {
+        let selectedId = $(this).attr('id');
+        let relatedField = $('[data-id="' + selectedId + '_otro"]');
+
+        if ($(this).val().toLowerCase() === 'otro') {
+            relatedField.show();
+        } else {
+            relatedField.css('display', 'none');
+        }
+    });
     $(document).on('input', 'input#titulo', function () {
         let addon = $(this).closest('.yith-wapo-addon'); // Encuentra el contenedor del addon
         let title = addon.find('.wapo-addon-title'); // Encuentra el título del addon
