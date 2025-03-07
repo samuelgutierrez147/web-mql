@@ -2718,7 +2718,7 @@ function markSuccessful($cantidadFinal, $fechaEstimada, $dataPres)
     return $markResult;
 }
 
-function replacePrice($price)
+/*function replacePrice($price)
 {
     return str_replace('.', ',', $price);
-}
+}*/
