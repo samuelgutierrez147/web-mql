@@ -63,7 +63,6 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 <?php if ( 'yes' === get_option( 'woocommerce_enable_myaccount_registration' ) ) : ?>
 
-	</div>
     <?php
     if (isset($_GET['registro'])) {
         $registro = sanitize_text_field($_GET['registro']);
@@ -76,6 +75,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
         }
     }
     ?>
+	</div>
 	<div class="u-column2 col-6">
 		<h2><?php esc_html_e( 'Register', 'woocommerce' ); ?></h2>
 		<form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?> >

@@ -1594,10 +1594,20 @@ function mi_registro_personalizado()
 
         // 🔐 Login automático
         $creds = array(
-            'user_login'    => $username,
+            'user_login' => $username,
             'user_password' => $password,
-            'remember'      => true,
+            'remember' => true,
         );
+
+        $subject = 'Nuevo registro';
+        $message = "
+            Aviso de nuevo registro, estos son los datos:
+            Usuario: " . $username . ",
+            Email: " . $email . ",
+            Codigo optimus: " . $nextCustomerCode . "
+        ";
+        $headers = ['Content-Type: text/plain; charset=UTF-8'];
+        wp_mail('soporte@masquelibrosdigital.com', $subject, $message, $headers);
 
         $user = wp_signon($creds, false);
         if (is_wp_error($user)) {
