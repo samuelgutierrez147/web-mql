@@ -1380,8 +1380,8 @@ function add_custom_fields_to_registration_form()
         <label for="payment_type"><?php esc_html_e('Payment Method', 'woocommerce'); ?> <span
                     class="required">*</span></label>
         <select name="payment_type" required id="payment_type" class="input-text">
-            <option value="transferencia"><?php esc_html_e('Transferencia', 'textdomain'); ?></option>
-            <option value="tarjeta_credito"><?php esc_html_e('Tarjeta de crédito', 'textdomain'); ?></option>
+            <option value="transferencia"><?php esc_html_e('Transferencia', 'woocommerce'); ?></option>
+            <option value="tarjeta_credito"><?php esc_html_e('Tarjeta de crédito', 'woocommerce'); ?></option>
         </select>
     </p>
     <?php
@@ -1394,10 +1394,10 @@ add_action('edit_user_profile', 'add_custom_fields_to_user_profile');
 function add_custom_fields_to_user_profile($user)
 {
     ?>
-    <h3><?php _e('Información adicional 2', 'textdomain'); ?></h3>
+    <h3><?php esc_html_e('Información adicional 2', 'woocommerce'); ?></h3>
     <table class="form-table">
         <tr>
-            <th><label for="name"><?php _e('Nombre', 'textdomain'); ?><span
+            <th><label for="name"><?php esc_html_e('Nombre', 'woocommerce'); ?><span
                             class="required">*</span></label></th>
             <td>
                 <input type="text" name="name" id="name" required
@@ -1405,7 +1405,7 @@ function add_custom_fields_to_user_profile($user)
             </td>
         </tr>
         <tr>
-            <th><label for="cif"><?php _e('CIF', 'textdomain'); ?><span
+            <th><label for="cif"><?php esc_html_e('CIF', 'woocommerce'); ?><span
                             class="required">*</span></label></th>
             <td>
                 <input type="text" name="cif" id="cif" required
@@ -1413,7 +1413,7 @@ function add_custom_fields_to_user_profile($user)
             </td>
         </tr>
         <tr>
-            <th><label for="phone_number"><?php _e('Número de teléfono', 'textdomain'); ?><span
+            <th><label for="phone_number"><?php esc_html_e('Número de teléfono', 'woocommerce'); ?><span
                             class="required">*</span></label></th>
             <td>
                 <input type="text" name="phone_number" id="phone_number" required
@@ -1422,13 +1422,13 @@ function add_custom_fields_to_user_profile($user)
             </td>
         </tr>
         <tr>
-            <th><label for="payment_type"><?php _e('Método de pago', 'textdomain'); ?><span
+            <th><label for="payment_type"><?php esc_html_e('Método de pago', 'woocommerce'); ?><span
                             class="required">*</span></label></th>
             <td>
                 <select name="payment_type" id="payment_type" required>
-                    <option value=""><?php _e('Selecciona un método de pago', 'textdomain'); ?></option>
-                    <option value="transferencia" <?php selected(get_the_author_meta('payment_type', $user->ID), 'transferencia'); ?>><?php _e('Transferencia', 'textdomain'); ?></option>
-                    <option value="tarjeta_credito" <?php selected(get_the_author_meta('payment_type', $user->ID), 'tarjeta_credito'); ?>><?php _e('Tarjeta de crédito', 'textdomain'); ?></option>
+                    <option value=""><?php esc_html_e('Selecciona un método de pago', 'woocommerce'); ?></option>
+                    <option value="transferencia" <?php selected(get_the_author_meta('payment_type', $user->ID), 'transferencia'); ?>><?php esc_html_e('Transferencia', 'woocommerce'); ?></option>
+                    <option value="tarjeta_credito" <?php selected(get_the_author_meta('payment_type', $user->ID), 'tarjeta_credito'); ?>><?php esc_html_e('Tarjeta de crédito', 'woocommerce'); ?></option>
                 </select>
             </td>
         </tr>
@@ -1482,30 +1482,30 @@ function add_custom_fields_to_edit_account_form()
     $paymentType = $dataUser->payment_type;
 
     ?>
-    <h3><?php _e('Información adicional', 'textdomain'); ?></h3>
+    <h3><?php esc_html_e('Información adicional', 'woocommerce'); ?></h3>
     <p class="form-row form-row-wide">
-        <label for="name"><?php _e('Nombre', 'textdomain'); ?><span
+        <label for="name"><?php esc_html_e('Nombre', 'woocommerce'); ?><span
                     class="required">*</span></label>
         <input type="text" class="input-text" name="name" required id="name" value="<?php echo esc_attr($name); ?>"/>
     </p>
     <p class="form-row form-row-wide">
-        <label for="cif"><?php _e('CIF', 'textdomain'); ?><span
+        <label for="cif"><?php esc_html_e('CIF', 'woocommerce'); ?><span
                     class="required">*</span></label>
         <input type="text" class="input-text" required name="cif" id="cif" value="<?php echo esc_attr($cif); ?>"/>
     </p>
     <p class="form-row form-row-wide">
-        <label for="phone_number"><?php _e('Número de teléfono', 'textdomain'); ?><span
+        <label for="phone_number"><?php esc_html_e('Número de teléfono', 'woocommerce'); ?><span
                     class="required">*</span></label>
         <input type="text" class="input-text" required name="phone_number" id="phone_number"
                value="<?php echo esc_attr($phoneNumber); ?>"/>
     </p>
     <p class="form-row form-row-wide">
-        <label for="payment_type"><?php _e('Método de pago', 'textdomain'); ?><span
+        <label for="payment_type"><?php esc_html_e('Método de pago', 'woocommerce'); ?><span
                     class="required">*</span></label>
         <select name="payment_type" id="payment_type" required class="select">
-            <option value=""><?php _e('Selecciona un método de pago', 'textdomain'); ?></option>
-            <option value="transferencia" <?php selected($paymentType, 'transferencia'); ?>><?php _e('Transferencia', 'textdomain'); ?></option>
-            <option value="tarjeta_credito" <?php selected($paymentType, 'tarjeta_credito'); ?>><?php _e('Tarjeta de crédito', 'textdomain'); ?></option>
+            <option value=""><?php esc_html_e('Selecciona un método de pago', 'woocommerce'); ?></option>
+            <option value="transferencia" <?php selected($paymentType, 'transferencia'); ?>><?php esc_html_e('Transferencia', 'woocommerce'); ?></option>
+            <option value="tarjeta_credito" <?php selected($paymentType, 'tarjeta_credito'); ?>><?php esc_html_e('Tarjeta de crédito', 'woocommerce'); ?></option>
         </select>
     </p>
     <?php
