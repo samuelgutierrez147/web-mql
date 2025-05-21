@@ -1129,7 +1129,7 @@ function addUserToOptimus($dataDb, $nextCustomerCode)
 
     $data->classificationCode = 'OTROS';
     $data->taxReference = $dataDb['cif'];
-    $data->paymentCondition = 'TRC00';
+    $data->paymentCondition = 'TCR00';
     if (isset($dataDb['payment_type']) && $dataDb['payment_type'] == 'transferencia')
         $data->paymentCondition = 'TRF00';
 
@@ -1355,38 +1355,6 @@ function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
     return ['success' => false, 'type' => 'oferta', 'error_message' => $curlResult->error];
 }
 
-//MQL - CAMPOS NUEVOS DE REGISTRO
-add_action('woocommerce_register_form', 'add_custom_fields_to_registration_form');
-function add_custom_fields_to_registration_form()
-{
-    ?>
-    <p class="form-row form-row-wide">
-        <label for="name"><?php esc_html_e('Name', 'woocommerce'); ?> <span class="required">*</span></label>
-        <input type="text" required class="input-text" name="name" id="name"
-               value="<?php echo esc_attr(!empty($_POST['name']) ? $_POST['name'] : ''); ?>"/>
-    </p>
-    <p class="form-row form-row-wide">
-        <label for="cif"><?php esc_html_e('CIF', 'woocommerce'); ?> <span class="required">*</span></label>
-        <input type="text" required class="input-text" name="cif" id="cif"
-               value="<?php echo esc_attr(!empty($_POST['cif']) ? $_POST['cif'] : ''); ?>"/>
-    </p>
-    <p class="form-row form-row-wide">
-        <label for="phone_number"><?php esc_html_e('Phone Number', 'woocommerce'); ?> <span
-                    class="required">*</span></label>
-        <input type="text" required class="input-text" name="phone_number" id="phone_number"
-               value="<?php echo esc_attr(!empty($_POST['phone_number']) ? $_POST['phone_number'] : ''); ?>"/>
-    </p>
-    <p class="form-row form-row-wide">
-        <label for="payment_type"><?php esc_html_e('Payment methods', 'woocommerce'); ?> <span
-                    class="required">*</span></label>
-        <select name="payment_type" required id="payment_type" class="input-text">
-            <option value="transferencia"><?php esc_html_e('Transferencia', 'woocommerce'); ?></option>
-            <option value="tarjeta_credito"><?php esc_html_e('Tarjeta de crédito', 'woocommerce'); ?></option>
-        </select>
-    </p>
-    <?php
-}
-
 // Añadir los campos personalizados en el perfil del usuario
 add_action('show_user_profile', 'add_custom_fields_to_user_profile');
 add_action('edit_user_profile', 'add_custom_fields_to_user_profile');
@@ -1530,38 +1498,114 @@ function save_custom_fields_to_wp_users($user_id)
     );
 }
 
-add_action('user_register', 'crear_usuario');
-function crear_usuario($user_id)
+//MQL - CAMPOS NUEVOS DE REGISTRO
+add_action('woocommerce_register_form', 'add_custom_fields_to_registration_form');
+function add_custom_fields_to_registration_form()
 {
-    global $wpdb;
-    //MQL - OBTENER NEXT CUSTOMER CODE
-    $nextCustomerCode = getLastOptimusCode();
+    ?>
+    <p class="form-row form-row-wide">
+        <label for="reg_password"><?php esc_html_e('Password', 'woocommerce'); ?>&nbsp;<span
+                    class="required">*</span></label>
+        <input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password"
+               id="reg_password" autocomplete="new-password"/>
+    </p>
+    <p class="form-row form-row-wide">
+        <label for="name"><?php esc_html_e('Name', 'woocommerce'); ?> <span class="required">*</span></label>
+        <input type="text" required class="input-text" name="name" id="name"
+               value="<?php echo esc_attr(!empty($_POST['name']) ? $_POST['name'] : ''); ?>"/>
+    </p>
+    <p class="form-row form-row-wide">
+        <label for="cif"><?php esc_html_e('CIF', 'woocommerce'); ?> <span class="required">*</span></label>
+        <input type="text" required class="input-text" name="cif" id="cif"
+               value="<?php echo esc_attr(!empty($_POST['cif']) ? $_POST['cif'] : ''); ?>"/>
+    </p>
+    <p class="form-row form-row-wide">
+        <label for="phone_number"><?php esc_html_e('Phone Number', 'woocommerce'); ?> <span
+                    class="required">*</span></label>
+        <input type="text" required class="input-text" name="phone_number" id="phone_number"
+               value="<?php echo esc_attr(!empty($_POST['phone_number']) ? $_POST['phone_number'] : ''); ?>"/>
+    </p>
+    <p class="form-row form-row-wide">
+        <label for="payment_type"><?php esc_html_e('Payment methods', 'woocommerce'); ?> <span
+                    class="required">*</span></label>
+        <select name="payment_type" required id="payment_type" class="input-text">
+            <option value="transferencia"><?php esc_html_e('Transferencia', 'woocommerce'); ?></option>
+            <option value="tarjeta_credito"><?php esc_html_e('Tarjeta de crédito', 'woocommerce'); ?></option>
+        </select>
+    </p>
+    <?php
+}
 
-    $wpdb->update(
-        'wp_users',
-        [
-            'api_id' => $nextCustomerCode,
-            'name' => sanitize_text_field($_POST['name']) ?? '',
-            'cif' => sanitize_text_field($_POST['cif']) ?? '',
-            'payment_type' => sanitize_text_field($_POST['payment_type']) ?? '',
-            'phone_number' => sanitize_text_field($_POST['phone_number']) ?? ''
-        ],
-        [
-            'ID' => $user_id
-        ]
-    );
+// Procesar registro en página personalizada
+add_action('init', 'mi_registro_personalizado');
+function mi_registro_personalizado()
+{
+    // Solo en la página personalizada "iniciar-sesion"
+    if (strpos($_SERVER['REQUEST_URI'], '/iniciar-sesion') !== false && isset($_POST['mi_registro_nonce']) && wp_verify_nonce($_POST['mi_registro_nonce'], 'mi_registro_action')) {
+        $email = sanitize_email($_POST['email']);
+        $password = $_POST['password'];
+        $username = $_POST['name'];
 
-    $userData = get_userdata($user_id);
+        // Validar campos
+        if (empty($email) || empty($password)) {
+            wp_redirect(home_url('/iniciar-sesion?registro=error&msg=Rellene todos los campos'));
+            exit;
+        }
 
-    //MQL - CREAMOS CLIENTE EN OPTIMUS
-    $optimusResponse = addUserToOptimus($_POST, $nextCustomerCode);
-    if ($optimusResponse['status'] == 'success') {
-        // Si se creó correctamente el cliente en Optimus, redirigimos al perfil del usuario
-        wp_redirect(get_edit_user_link($user_id));
-    } else {
-        $login_url = home_url('/iniciar-sesion/');
-        wc_add_notice($optimusResponse['message'], 'error');
-        wp_redirect($login_url);
+        if (!is_email($email)) {
+            wp_redirect(home_url('/iniciar-sesion?registro=error&msg=El email no es válido'));
+            exit;
+        }
+
+        if (email_exists($email)) {
+            wp_redirect(home_url('/iniciar-sesion?registro=error&msg=El email ya existe.'));
+            exit;
+        }
+
+        if (username_exists($username)) {
+            wp_redirect(home_url('/iniciar-sesion?registro=error&msg=El nombre de usuario ya existe.'));
+            exit;
+        }
+
+        $nextCustomerCode = getLastOptimusCode();
+        $optimusResponse = addUserToOptimus($_POST, $nextCustomerCode);
+        if ($optimusResponse['status'] !== 'success') {
+            wp_redirect(home_url('/iniciar-sesion?registro=error&msg=' . $optimusResponse['message']));
+            exit;
+        }
+
+        $user_id = wp_create_user($username, $password, $email);
+        if (is_wp_error($user_id)) {
+            wp_redirect(home_url('/iniciar-sesion?registro=error&msg=Error al crear su cuenta'));
+            exit;
+        }
+
+        update_user_meta($user_id, 'api_id', $nextCustomerCode);
+        update_user_meta($user_id, 'name', sanitize_text_field($_POST['name'] ?? ''));
+        update_user_meta($user_id, 'cif', sanitize_text_field($_POST['cif'] ?? ''));
+        update_user_meta($user_id, 'payment_type', sanitize_text_field($_POST['payment_type'] ?? ''));
+        update_user_meta($user_id, 'phone_number', sanitize_text_field($_POST['phone_number'] ?? ''));
+
+        // Asignar rol "customer" (WooCommerce)
+        wp_update_user([
+            'ID' => $user_id,
+            'role' => 'customer',
+        ]);
+
+        // 🔐 Login automático
+        $creds = array(
+            'user_login'    => $username,
+            'user_password' => $password,
+            'remember'      => true,
+        );
+
+        $user = wp_signon($creds, false);
+        if (is_wp_error($user)) {
+            wp_redirect(home_url('/iniciar-sesion?registro=error&msg=Error al iniciar sesión automáticamente.'));
+            exit;
+        }
+
+        wp_redirect(home_url('/iniciar-sesion?registro=exito'));
         exit;
     }
 }

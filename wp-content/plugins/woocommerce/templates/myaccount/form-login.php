@@ -64,11 +64,20 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 <?php if ( 'yes' === get_option( 'woocommerce_enable_myaccount_registration' ) ) : ?>
 
 	</div>
+    <?php
+    if (isset($_GET['registro'])) {
+        $registro = sanitize_text_field($_GET['registro']);
 
+        if ($registro === 'exito') {
+            echo '<div class="woocommerce-message" style="padding:10px; background:#d4edda; color:#155724; border-radius:5px;">¡Registro exitoso! Ahora puedes iniciar sesión.</div>';
+        } elseif ($registro === 'error') {
+            $msg = isset($_GET['msg']) ? sanitize_text_field($_GET['msg']) : '';
+            echo '<div class="woocommerce-error" style="padding:10px; background:#f8d7da; color:#721c24; border-radius:5px;">'.$msg.'</div>';
+        }
+    }
+    ?>
 	<div class="u-column2 col-6">
-
 		<h2><?php esc_html_e( 'Register', 'woocommerce' ); ?></h2>
-
 		<form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?> >
 
 			<?php do_action( 'woocommerce_register_form_start' ); ?>
@@ -101,7 +110,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 			<?php endif; ?>
 
 			<?php do_action( 'woocommerce_register_form' ); ?>
-
+            <?php wp_nonce_field('mi_registro_action', 'mi_registro_nonce'); ?>
 			<p class="woocommerce-form-row form-row">
 				<?php wp_nonce_field( 'woocommerce-register', 'woocommerce-register-nonce' ); ?>
 				<button type="submit" class="woocommerce-Button woocommerce-button button<?php echo esc_attr( wc_wp_theme_get_element_class_name( 'button' ) ? ' ' . wc_wp_theme_get_element_class_name( 'button' ) : '' ); ?> woocommerce-form-register__submit" name="register" value="<?php esc_attr_e( 'Register', 'woocommerce' ); ?>"><?php esc_html_e( 'Register', 'woocommerce' ); ?></button>
