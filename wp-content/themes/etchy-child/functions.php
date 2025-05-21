@@ -1533,10 +1533,9 @@ function save_custom_fields_to_wp_users($user_id)
 add_action('user_register', 'crear_usuario');
 function crear_usuario($user_id)
 {
-    global $wpdb;
-    //MQL - OBTENER NEXT CUSTOMER CODE
     $nextCustomerCode = getLastOptimusCode();
 
+    global $wpdb;
     $wpdb->update(
         'wp_users',
         [
@@ -1546,25 +1545,43 @@ function crear_usuario($user_id)
             'payment_type' => sanitize_text_field($_POST['payment_type']) ?? '',
             'phone_number' => sanitize_text_field($_POST['phone_number']) ?? ''
         ],
-        [
-            'ID' => $user_id
-        ]
+        ['ID' => $user_id]
     );
 
-    $userData = get_userdata($user_id);
-
-    //MQL - CREAMOS CLIENTE EN OPTIMUS
     $optimusResponse = addUserToOptimus($_POST, $nextCustomerCode);
-    if ($optimusResponse['status'] == 'success') {
-        // Si se creó correctamente el cliente en Optimus, redirigimos al perfil del usuario
-        wp_redirect(get_edit_user_link($user_id));
-    } else {
-        $login_url = home_url('/iniciar-sesion/');
-        wc_add_notice($optimusResponse['message'], 'error');
-        wp_redirect($login_url);
+
+    if ($optimusResponse['status'] !== 'success') {
+        // Asegurar que la sesión está inicializada
+        if ( ! WC()->session ) {
+            WC()->initialize_session();
+        }
+
+        // Guardar el mensaje de error
+        WC()->session->set('optimus_error', $optimusResponse['message']);
+
+        // Redirigir a la página de login
+        wp_redirect(home_url('/iniciar-sesion/'));
         exit;
     }
 }
+
+add_shortcode('mostrar_errores_woocommerce', function () {
+    ob_start();
+    wc_print_notices();
+    return ob_get_clean();
+});
+
+add_action('woocommerce_before_customer_login_form', function () {
+    if ( ! WC()->session ) {
+        WC()->initialize_session();
+    }
+
+    $error = WC()->session->get('optimus_error');
+    if ($error) {
+        wc_print_notice($error, 'error');
+        WC()->session->__unset('optimus_error');
+    }
+});
 
 add_action('wp_footer', 'add_div_before_my_account_widget');
 function add_div_before_my_account_widget()
