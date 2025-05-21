@@ -1361,23 +1361,23 @@ function add_custom_fields_to_registration_form()
 {
     ?>
     <p class="form-row form-row-wide">
-        <label for="name"><?php esc_html_e('Name', 'textdomain'); ?> <span class="required">*</span></label>
+        <label for="name"><?php esc_html_e('Name', 'woocommerce'); ?> <span class="required">*</span></label>
         <input type="text" required class="input-text" name="name" id="name"
                value="<?php echo esc_attr(!empty($_POST['name']) ? $_POST['name'] : ''); ?>"/>
     </p>
     <p class="form-row form-row-wide">
-        <label for="cif"><?php esc_html_e('CIF', 'textdomain'); ?> <span class="required">*</span></label>
+        <label for="cif"><?php esc_html_e('CIF', 'woocommerce'); ?> <span class="required">*</span></label>
         <input type="text" required class="input-text" name="cif" id="cif"
                value="<?php echo esc_attr(!empty($_POST['cif']) ? $_POST['cif'] : ''); ?>"/>
     </p>
     <p class="form-row form-row-wide">
-        <label for="phone_number"><?php esc_html_e('Phone Number', 'textdomain'); ?> <span
+        <label for="phone_number"><?php esc_html_e('Phone Number', 'woocommerce'); ?> <span
                     class="required">*</span></label>
         <input type="text" required class="input-text" name="phone_number" id="phone_number"
                value="<?php echo esc_attr(!empty($_POST['phone_number']) ? $_POST['phone_number'] : ''); ?>"/>
     </p>
     <p class="form-row form-row-wide">
-        <label for="payment_type"><?php esc_html_e('Payment Method', 'textdomain'); ?> <span
+        <label for="payment_type"><?php esc_html_e('Payment Method', 'woocommerce'); ?> <span
                     class="required">*</span></label>
         <select name="payment_type" required id="payment_type" class="input-text">
             <option value="transferencia"><?php esc_html_e('Transferencia', 'textdomain'); ?></option>
