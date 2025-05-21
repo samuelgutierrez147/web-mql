@@ -1377,7 +1377,7 @@ function add_custom_fields_to_registration_form()
                value="<?php echo esc_attr(!empty($_POST['phone_number']) ? $_POST['phone_number'] : ''); ?>"/>
     </p>
     <p class="form-row form-row-wide">
-        <label for="payment_type"><?php esc_html_e('Payment Method', 'woocommerce'); ?> <span
+        <label for="payment_type"><?php esc_html_e('Payment Methods', 'woocommerce'); ?> <span
                     class="required">*</span></label>
         <select name="payment_type" required id="payment_type" class="input-text">
             <option value="transferencia"><?php esc_html_e('Transferencia', 'woocommerce'); ?></option>
