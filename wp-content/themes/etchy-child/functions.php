@@ -1560,11 +1560,8 @@ function crear_usuario($user_id)
         WC()->session->set('optimus_error', $optimusResponse['message']);
 
         // Redirigir a la página de login
-        $page = get_page_by_path('iniciar-sesion');
-        if ($page) {
-            wp_redirect(get_permalink($page->ID));
-            exit;
-        }
+        wp_redirect(home_url('/iniciar-sesion/'));
+        exit;
     }
 }
 
