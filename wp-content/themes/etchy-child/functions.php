@@ -899,6 +899,13 @@ function cambiar_estado_y_asignar_codigo_pedido($order_id)
     $dataDb = getDataOptimusToProcessOrder(obtener_yith_wapo_del_carrito());
     $fechaEstimada = getFechaEstimada();
     $total = $order->get_total();
+    $user_id = $order->get_user_id();
+
+    if ($user_id) {
+        $codOptimusUser = get_user_meta($user_id, 'api_id', true);
+    } else {
+        $codOptimusUser = null; // o algún valor por defecto si fue compra como invitado
+    }
 
     // Procesar pedido en Optimus
     $datosPedidoOptimus = addPresupuestoToOptimus($dataDb, $fechaEstimada, $total);
@@ -915,6 +922,17 @@ function cambiar_estado_y_asignar_codigo_pedido($order_id)
         );
         return;
     }
+
+    $subject = 'Nuevo presupuesto';
+    $message = "
+            Aviso de nuevo presupuesto, estos son los datos:
+            Codigo presupuesto wordpress: " . $order_id . ",
+            Codigo pedido: " . $datosPedidoOptimus['cod_pedido_optimus'] . ",
+            Codigo oferta: " . $datosPedidoOptimus['enq_number'] . ",
+            Cliente: " . $codOptimusUser . "
+        ";
+    $headers = ['Content-Type: text/plain; charset=UTF-8'];
+    wp_mail('soporte@masquelibrosdigital.com', $subject, $message, $headers);
 
     // Guardar en metadatos
     update_post_meta($order_id, '_optimus_enq_number', sanitize_text_field($datosPedidoOptimus['enq_number']));
