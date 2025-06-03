@@ -2802,6 +2802,22 @@ function cambiar_titulo_redsys_pedido($title, $order) {
 // Quitar botón "Volver a pedir"
 remove_action('woocommerce_order_details_after_order_table', 'woocommerce_order_again_button');
 
+add_action('wp_footer', function() {
+    ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const botonVolver = document.getElementById('b_volv_mql');
+            if (botonVolver) {
+                botonVolver.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    history.back();
+                });
+            }
+        });
+    </script>
+    <?php
+});
+
 /*function replacePrice($price)
 {
     return str_replace('.', ',', $price);
