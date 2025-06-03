@@ -2791,8 +2791,8 @@ function markSuccessful($cantidadFinal, $fechaEstimada, $dataPres)
 }
 
 // Cambiar "Redsys" por "Tarjeta de crédito"
-add_filter('woocommerce_get_order_payment_method_title', 'cambiar_nombre_forma_pago_redsys', 10, 2);
-function cambiar_nombre_forma_pago_redsys($title, $order) {
+add_filter('woocommerce_order_get_payment_method_title', 'cambiar_titulo_redsys_pedido', 10, 2);
+function cambiar_titulo_redsys_pedido($title, $order) {
     if ($order->get_payment_method() === 'redsys') {
         return 'Tarjeta de crédito';
     }
