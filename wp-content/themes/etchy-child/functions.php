@@ -2790,6 +2790,18 @@ function markSuccessful($cantidadFinal, $fechaEstimada, $dataPres)
     return $markResult;
 }
 
+// Cambiar "Redsys" por "Tarjeta de crédito"
+add_filter('woocommerce_get_order_payment_method_title', 'cambiar_nombre_forma_pago_redsys', 10, 2);
+function cambiar_nombre_forma_pago_redsys($title, $order) {
+    if ($order->get_payment_method() === 'redsys') {
+        return 'Tarjeta de crédito';
+    }
+    return $title;
+}
+
+// Quitar botón "Volver a pedir"
+remove_action('woocommerce_order_details_after_order_table', 'woocommerce_order_again_button');
+
 /*function replacePrice($price)
 {
     return str_replace('.', ',', $price);
