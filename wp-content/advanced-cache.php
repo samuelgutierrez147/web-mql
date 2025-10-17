@@ -8,18 +8,16 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'WP_ROCKET_ADVANCED_CACHE', true );
 
-$rocket_path        = '/var/www/html/wp-content/plugins/wp-rocket/';
-$rocket_config_path = '/var/www/html/wp-content/wp-rocket-config/';
-$rocket_cache_path  = '/var/www/html/wp-content/cache/wp-rocket/';
-
-if (
-	version_compare( phpversion(), '7.3', '<' )
-	|| ! file_exists( $rocket_path )
-	|| ! file_exists( $rocket_config_path )
-	|| ! file_exists( $rocket_cache_path )
-) {
-	define( 'WP_ROCKET_ADVANCED_CACHE_PROBLEM', true );
-	return;
+if ($_SERVER['HTTP_HOST'] === 'localhost' || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false) {
+    // Entorno local
+    $rocket_path        = '/var/www/html/wp-content/plugins/wp-rocket/';
+    $rocket_config_path = '/var/www/html/wp-content/wp-rocket-config/';
+    $rocket_cache_path  = '/var/www/html/wp-content/cache/wp-rocket/';
+} else {
+    // Entorno real
+    $rocket_path        = '/home/masquelibros/public_html/wp-content/plugins/wp-rocket/';
+    $rocket_config_path = '/home/masquelibros/public_html/wp-content/wp-rocket-config/';
+    $rocket_cache_path  = '/home/masquelibros/public_html/wp-content/cache/wp-rocket/';
 }
 
 
