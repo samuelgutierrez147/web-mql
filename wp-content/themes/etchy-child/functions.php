@@ -2818,3 +2818,805 @@ add_action('wp_footer', function () {
     </script>
     <?php
 });
+
+/* ===========================
+ *  MQL Chat – todo en functions.php
+ * =========================== */
+
+// (Opcional) define la API key en wp-config.php: define('OPENAI_API_KEY','sk-...');
+// o configúrala como variable de entorno OPENAI_API_KEY
+
+/* 1) Endpoint REST que actúa como proxy a OpenAI */
+add_action('rest_api_init', function () {
+    register_rest_route('mql/v1', '/chat', [
+        'methods' => 'POST',
+        'callback' => 'mql_chat_handler',
+        'permission_callback' => '__return_true', // añade tus checks si quieres
+    ]);
+});
+
+/**
+ * Extrae “needles” (palabras clave) del mensaje del usuario
+ * y normaliza variantes (wire o / wire-o, rústica/tapa blanda…).
+ */
+function mql_extract_needles($msg) {
+    $s = mb_strtolower((string)$msg, 'UTF-8');
+    $s = preg_replace('/\s+/', ' ', $s);
+    $s = str_replace(['wire o','wireo'], 'wire-o', $s);
+
+    $needles = [];
+
+    // compuestos primero
+    if (preg_match('/tapa\s+dura/u', $s))     $needles[] = 'tapa dura';
+    if (preg_match('/tapa\s+blanda|r[uú]stica|rustica/u', $s)) $needles[] = 'tapa blanda'; // rústica ~ tapa blanda
+
+    // simples
+    if (preg_match('/wire-?o/u', $s))         $needles[] = 'wire-o';
+    if (preg_match('/espiral/u', $s))         $needles[] = 'espiral';
+    if (preg_match('/grapa(?:do)?/u', $s))    $needles[] = 'grapado';
+    if (preg_match('/cosido/u', $s))          $needles[] = 'cosido';
+    if (preg_match('/pur/u', $s))             $needles[] = 'pur';
+
+    // si no detecta nada, usa tokens >2 chars (quitando palabras vacías)
+    if (empty($needles)) {
+        $tokens = array_filter(preg_split('/\s+/u', $s), fn($t)=> mb_strlen($t,'UTF-8')>=3);
+        $stop = ['con','para','los','las','una','unos','unas','del','de','en','y','o','el','la','por','que','un','al'];
+        $needles = array_values(array_diff($tokens, $stop));
+    }
+
+    return array_values(array_unique($needles));
+}
+
+/**
+ * Busca productos cuyo TÍTULO contenga TODOS los needles (AND),
+ * case/acentos-insensible, con alias por término.
+ *
+ * @param string[]  $needles
+ * @param int       $limit
+ * @param string    $categorySlug  (opcional)
+ * @param bool      $onlyStock
+ * @return WC_Product[]
+ */
+function mql_search_by_title_contains(array $needles, $limit = 20, $categorySlug = null, $onlyStock = false) {
+    global $wpdb;
+    if (empty($needles)) return [];
+
+    // alias para variantes ortográficas
+    $aliases = [
+        'wire-o'      => ['wire-o','wire o','wireo'],
+        'tapa dura'   => ['tapa dura'],
+        'tapa blanda' => ['tapa blanda','rústica','rustica'],
+        'espiral'     => ['espiral'],
+        'grapado'     => ['grapado','grapa'],
+        'cosido'      => ['cosido'],
+        'pur'         => ['pur'],
+    ];
+
+    $orGlobal = [];
+    $params   = [];
+    foreach ($needles as $n) {
+        $n = mb_strtolower(trim($n), 'UTF-8');
+        $vars = $aliases[$n] ?? [$n];
+        foreach ($vars as $v) {
+            $like = '%' . $wpdb->esc_like(mb_strtolower($v,'UTF-8')) . '%';
+            $orGlobal[] = "LOWER(p.post_title) COLLATE utf8mb4_unicode_ci LIKE %s";
+            $params[]   = $like;
+        }
+    }
+    $whereAND = '(' . implode(' OR ', $orGlobal) . ')';
+
+    // categoría (opcional)
+    $catSQL = '';
+    if (!empty($categorySlug)) {
+        $term = get_term_by('slug', sanitize_title($categorySlug), 'product_cat');
+        if ($term && !is_wp_error($term)) {
+            $catSQL = $wpdb->prepare("
+                AND EXISTS (
+                  SELECT 1 FROM {$wpdb->term_relationships} tr
+                  JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                  WHERE tr.object_id = p.ID
+                    AND tt.taxonomy = 'product_cat'
+                    AND tt.term_id = %d
+                )
+            ", (int)$term->term_id);
+        }
+    }
+
+    // stock (opcional)
+    $stockSQL = '';
+    if ($onlyStock) {
+        $stockSQL = "
+            AND EXISTS (
+              SELECT 1 FROM {$wpdb->postmeta} pm
+              WHERE pm.post_id = p.ID AND pm.meta_key = '_stock_status' AND pm.meta_value = 'instock'
+            )
+        ";
+    }
+
+    $sql = "
+        SELECT p.ID
+        FROM {$wpdb->posts} p
+        WHERE p.post_type='product' AND p.post_status='publish'
+          {$catSQL}
+          {$stockSQL}
+          AND {$whereAND}
+        ORDER BY p.menu_order ASC, p.post_title ASC
+        LIMIT " . (int)$limit;
+
+    $prepared = $wpdb->prepare($sql, $params);
+    $ids = $wpdb->get_col($prepared);
+
+    // cargar productos y filtrar visibilidad (excluir 'hidden')
+    $out = [];
+    $seen = [];
+    foreach ((array)$ids as $id) {
+        $p = wc_get_product($id);
+        if (!$p || $p->get_status()!=='publish') continue;
+        if ($p->get_catalog_visibility()==='hidden') continue;
+        if ($onlyStock && !$p->is_in_stock()) continue;
+        if (isset($seen[$id])) continue;
+        $seen[$id] = true;
+        $out[] = $p;
+    }
+    return $out;
+}
+
+function mql_chat_handler(WP_REST_Request $req)
+{
+    $msg = trim((string)($req->get_param('message') ?? ''));
+    if ($msg === '') return new WP_REST_Response(['error' => 'Mensaje vacío'], 400);
+
+    // API key desde entorno o wp-config.php (recomendado)
+    $api_key = getenv('OPENAI_API_KEY');
+    if (!$api_key && defined('OPENAI_API_KEY')) $api_key = OPENAI_API_KEY;
+    if (!$api_key) return new WP_REST_Response(['error' => 'Falta API key'], 500);
+
+    // ---------- DETECCIÓN INTENCIÓN ----------
+    $isProductIntent = preg_match('/(libro|libros|impresi[oó]n|encuadernaci[oó]n|tapa|papel|formato|tirada|precio|cat[aá]logo|stock|recomienda|recomendaci[oó]n|cotizaci[oó]n|presupuesto|espiral|wire-?o|grapa(?:do)?|cosido|pur|r[uú]stica|rustica)/i', $msg);
+
+    $found = [];
+    if ($isProductIntent && class_exists('WooCommerce')) {
+        // 1) Buscar por TÍTULO CONTIENE (AND de needles)
+        $needles = mql_extract_needles($msg);
+        $found   = mql_search_by_title_contains($needles, 30, null, false);
+
+        // 2) (Opcional) Si no hay resultados, puedes llamar a tu búsqueda general anterior:
+        // if (empty($found)) { $found = mql_catalog_search($msg, ['limit' => 12, 'stock' => false]); }
+    }
+
+    // ---------- SI HAY PRODUCTOS: DEVOLVEMOS HTML BONITO (solo título enlazado) ----------
+    if (!empty($found)) {
+        $items = [];
+        foreach ($found as $p) {
+            $pl = mql_product_to_payload($p);
+            $items[] = sprintf(
+                '<li class="mql-item"><a href="%s" target="_blank" rel="noopener" class="mql-item-link"><strong>%s</strong></a></li>',
+                esc_url($pl['link']),
+                esc_html($pl['name'])
+            );
+        }
+        $html = '<div class="mql-list-wrap">
+                    <div class="mql-list-title">Opciones disponibles en catálogo:</div>
+                    <ul class="mql-list">'.implode("\n", $items).'</ul>
+                 </div>';
+        return ['reply_html' => $html];
+    }
+
+    // ---------- SI NO HAY PRODUCTOS: IA con reglas (sin inventar) ----------
+    $rules = mql_get_business_rules();
+    $rules_text = "Reglas de negocio:\n- ".implode("\n- ", array_map(
+            function($k,$v){ return ucfirst($k).": ".$v; }, array_keys($rules), $rules
+        ));
+    $guardrails = "Si la intención es de catálogo, no inventes productos. Pide más detalles (tamaño, papel, tirada) si no hay coincidencias.";
+
+    $messages = [
+        ['role' => 'system', 'content' => "Eres el asistente de masquelibrosdigital.com. Responde en español, claro y conciso. No inventes datos.\n$rules_text\n$guardrails"],
+        ['role' => 'user',   'content' => $msg],
+    ];
+
+    $body = [
+        'model' => 'gpt-4o-mini',
+        'messages' => $messages,
+        'temperature' => 0.2,
+    ];
+
+    $res = wp_remote_post('https://api.openai.com/v1/chat/completions', [
+        'headers' => [
+            'Authorization' => 'Bearer ' . $api_key,
+            'Content-Type'  => 'application/json',
+        ],
+        'body'    => wp_json_encode($body),
+        'timeout' => 30,
+    ]);
+
+    if (is_wp_error($res)) return new WP_REST_Response(['error' => $res->get_error_message()], 500);
+
+    $code = wp_remote_retrieve_response_code($res);
+    $json = json_decode(wp_remote_retrieve_body($res), true);
+    if ($code >= 400) return new WP_REST_Response(['error' => $json['error']['message'] ?? 'Error API'], $code);
+
+    $text = $json['choices'][0]['message']['content'] ?? 'Puedo ayudarte a configurar tu libro: tamaño, páginas, papel y tirada.';
+    return ['reply' => $text];
+}
+
+/* 2) CSS: estilos del botón y panel (inline para simplificar) */
+add_action('wp_enqueue_scripts', function () {
+    // Encola un “handle” vacío para poder adjuntar CSS inline
+    wp_register_style('mql-chat-inline', false);
+    wp_enqueue_style('mql-chat-inline');
+    $css = <<<CSS
+#mql-launcher{
+  position: fixed; right: 20px; bottom: 20px;
+  width: 56px; height: 56px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: #0d6efd; color: #fff; font-size: 22px;
+  display: grid; place-items: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  z-index: 9999;
+}
+#mql-launcher:hover{ filter: brightness(1.1); }
+
+#mql-chat-panel{
+  position: fixed; right: 20px; bottom: 86px; z-index: 9999;
+  width: 360px; max-width: 95vw;
+  transition: opacity .2s ease, transform .2s ease;
+}
+#mql-chat-panel[hidden]{ opacity: 0; transform: translateY(10px); pointer-events: none; }
+#mql-chat-panel.open{ opacity: 1; transform: translateY(0); }
+
+.mql-chat-card{
+  background: #fff; color: #212529; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0,0,0,.2); border: 1px solid rgba(0,0,0,.08);
+  display: flex; flex-direction: column; height: 520px; max-height: 70vh;
+}
+@media (prefers-color-scheme: dark){
+  .mql-chat-card{ background: #121212; color:#eaeaea; border-color: #333; }
+}
+
+.mql-chat-header{
+  display: flex;
+  align-items: center;         /* alinea verticalmente en el centro */
+  justify-content: space-between;
+  background: #0d6efd;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;              /* reduce altura de línea */
+  padding: 4px 8px;            /* menos espacio arriba/abajo */
+  min-height: 32px;            /* fija altura compacta */
+}
+
+.mql-chat-header strong{
+  font-weight: 600;
+  margin: 0;                   /* elimina márgenes extra */
+}
+
+.mql-chat-actions{
+  display: flex;
+  gap: 4px;                    /* separación mínima entre botones */
+}
+
+.mql-chat-actions button{
+  background: transparent;
+  border: 0;
+  color: #fff;
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  border-radius: 4px;
+  padding: 0;                  /* elimina relleno interno extra */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mql-chat-actions button:hover{
+  background: rgba(255,255,255,.2);
+}
+
+.mql-chat-body{
+  padding: 12px; flex: 1; overflow:auto; white-space: pre-wrap;
+  scrollbar-width: thin;
+  background: rgba(13,110,253,.03);
+}
+.mql-msg{ margin: 0 0 10px 0; max-width: 85%; }
+.mql-user{ margin-left: auto; text-align: right; }
+.mql-bot{ margin-right: auto; }
+.mql-badge{
+  display:inline-block; font-size:12px; padding:2px 6px; border-radius:999px; margin-bottom:4px;
+}
+.mql-badge.user{ background:#0d6efd; color:#fff; }
+.mql-badge.bot { background:#6c757d; color:#fff; }
+
+.mql-bubble{
+  padding:8px 10px; border-radius:10px;
+  background:#fff; border:1px solid rgba(0,0,0,.07);
+}
+@media (prefers-color-scheme: dark){
+  .mql-bubble{ background:#1b1b1b; border-color:#333; }
+}
+
+.mql-chat-footer{
+  display: flex;
+  align-items: center;      /* centra verticalmente input y botón */
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+
+#mql-chat-input{
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  background: #fff;
+  color: #212529;
+  font-size: 16px;          /* texto más grande */
+  line-height: 1.4;         /* ayuda al alineado */
+}
+@media (prefers-color-scheme: dark){
+  #mql-chat-input{
+    background:#121212;
+    color:#eaeaea;
+    border-color:#333;
+  }
+}
+
+#mql-chat-send{
+  width: 36px;
+  height: 36px;             /* mismo alto que el input */
+  border-radius: 50%;
+  border: 0;
+  background: #0d6efd;
+  color: #fff;
+  margin-top: 0px !important;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;      /* centra icono vertical */
+  justify-content: center;  /* centra icono horizontal */
+}
+#mql-chat-send[disabled]{ opacity:.6; cursor:not-allowed; }
+
+.mql-list-wrap { margin: 4px 0 6px; }
+.mql-list-title { font-weight: 600; margin-bottom: 6px; }
+.mql-list { list-style: none; padding: 0; margin: 0; }
+.mql-list .mql-item { display: flex; align-items: baseline; gap: 8px; padding: 6px 8px; border: 1px solid #e5e5e5; border-radius: 6px; margin-bottom: 6px; background: #fafafa; }
+.mql-item-link { text-decoration: none; color: #0d6efd; }
+.mql-item-link:hover { text-decoration: underline; }
+.mql-price { color: #0d6efd; font-weight: 600; }
+.mql-sep { margin: 0 6px; color:#ccc; }
+.mql-stock.ok { color: #198754; }
+.mql-stock.ko { color: #dc3545; }
+
+
+CSS;
+    wp_add_inline_style('mql-chat-inline', $css);
+});
+
+/* 3) HTML + JS: botón flotante y panel (impresos en el footer) */
+add_action('wp_footer', function () {
+    if (is_admin()) return; // no en dashboard
+    $endpoint = esc_url(site_url('/wp-json/mql/v1/chat'));
+    ?>
+    <!-- MQL Chat Floating -->
+    <button id="mql-launcher"
+            aria-label="<?php esc_attr_e('Abrir chat', 'mql'); ?>"
+            aria-controls="mql-chat-panel"
+            aria-expanded="false">💬
+    </button>
+
+    <div id="mql-chat-panel" role="dialog" aria-modal="false" aria-labelledby="mql-chat-title" hidden>
+        <div class="mql-chat-card">
+            <div class="mql-chat-header">
+                <strong id="mql-chat-title"><?php esc_html_e('Asistente', 'mql'); ?></strong>
+                <div class="mql-chat-actions">
+                    <button id="mql-minimize" aria-label="<?php esc_attr_e('Minimizar', 'mql'); ?>">—</button>
+                    <button id="mql-close" aria-label="<?php esc_attr_e('Cerrar', 'mql'); ?>">✕</button>
+                </div>
+            </div>
+            <div id="mql-chat-log" class="mql-chat-body" tabindex="0" aria-live="polite"></div>
+            <div class="mql-chat-footer">
+                <input id="mql-chat-input" type="text"
+                       placeholder="<?php esc_attr_e('Escribe tu pregunta…', 'mql'); ?>"/>
+                <button id="mql-chat-send" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const launcher = document.getElementById('mql-launcher');
+            const panel = document.getElementById('mql-chat-panel');
+            const log = document.getElementById('mql-chat-log');
+            const input = document.getElementById('mql-chat-input');
+            const sendBtn = document.getElementById('mql-chat-send');
+            const closeBtn = document.getElementById('mql-close');
+            const miniBtn = document.getElementById('mql-minimize');
+            const ENDPOINT = <?php echo json_encode($endpoint); ?>;
+
+            function openPanel() {
+                panel.hidden = false;
+                setTimeout(() => panel.classList.add('open'), 10);
+                launcher.setAttribute('aria-expanded', 'true');
+                input.focus();
+            }
+
+            function closePanel() {
+                panel.classList.remove('open');
+                launcher.setAttribute('aria-expanded', 'false');
+                setTimeout(() => panel.hidden = true, 200);
+            }
+
+            function togglePanel() {
+                if (panel.hidden || !panel.classList.contains('open')) openPanel(); else closePanel();
+            }
+
+            launcher.addEventListener('click', togglePanel);
+            closeBtn.addEventListener('click', closePanel);
+            miniBtn.addEventListener('click', () => {
+                panel.classList.toggle('open');
+                if (panel.classList.contains('open')) input.focus();
+            });
+
+            function esc(s) {
+                return (s || '').replace(/[&<>"']/g, m => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[m]));
+            }
+
+            function append(role, text) {
+                const wrap = document.createElement('div');
+                wrap.className = 'mql-msg ' + (role === 'user' ? 'mql-user' : 'mql-bot');
+                wrap.innerHTML =
+                    `<div class="mql-badge ${role === 'user' ? 'user' : 'bot'}">${role === 'user' ? 'Tú' : 'Bot'}</div>
+         <div class="mql-bubble">${esc(text)}</div>`;
+                log.appendChild(wrap);
+                log.scrollTop = log.scrollHeight;
+            }
+
+            function appendLoading() {
+                const wrap = document.createElement('div');
+                wrap.className = 'mql-msg mql-bot';
+                wrap.id = 'mql-loading';
+                wrap.innerHTML = `<div class="mql-badge bot">Bot</div><div class="mql-bubble">…</div>`;
+                log.appendChild(wrap);
+                log.scrollTop = log.scrollHeight;
+            }
+
+            function removeLoading() {
+                const n = document.getElementById('mql-loading');
+                if (n) n.remove();
+            }
+
+            async function ask(msg) {
+                append('user', msg);
+                appendLoading();
+                sendBtn.disabled = true;
+                try {
+                    const res = await fetch(ENDPOINT, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({message: msg})
+                    });
+                    const data = await res.json();
+                    removeLoading();
+                    if (data.reply_html) {
+                        appendHTML('bot', data.reply_html);  // <-- nuevo: renderiza HTML permitido
+                    } else if (data.reply) {
+                        append('bot', data.reply);           // texto normal
+                    } else {
+                        append('bot', 'Lo siento, no he podido responder ahora.');
+                    }
+
+                } catch (e) {
+                    removeLoading();
+                    append('bot', 'Error de red. Inténtalo de nuevo.');
+                } finally {
+                    sendBtn.disabled = false;
+                }
+            }
+
+            sendBtn.addEventListener('click', () => {
+                const msg = input.value.trim();
+                if (!msg) return;
+                input.value = '';
+                ask(msg);
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendBtn.click();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !panel.hidden) closePanel();
+            });
+
+            function appendHTML(role, html){
+                const wrap = document.createElement('div');
+                wrap.className = 'mql-msg ' + (role === 'user' ? 'mql-user' : 'mql-bot');
+                // allowlist muy básica de etiquetas/atributos:
+                const allowed = /<(\/?(div|ul|ol|li|span|strong|b|em|i|a|br))( [^>]*?)?>/gi;
+                const safe = html
+                    .replace(/<\/?script[^>]*?>/gi,'')           // fuera scripts
+                    .replace(/ on\w+="[^"]*"/gi,'')               // fuera onClick...
+                    .replace(/javascript:/gi,'')                  // fuera javascript:
+                    .replace(/<[^>]+>/g, m => m.match(allowed) ? m : ''); // filtra tags no permitidas
+
+                wrap.innerHTML =
+                    `<div class="mql-badge bot">Bot</div>
+     <div class="mql-bubble">${safe}</div>`;
+                log.appendChild(wrap);
+                log.scrollTop = log.scrollHeight;
+            }
+
+        })();
+    </script>
+    <!-- //MQL Chat Floating -->
+    <?php
+});
+
+
+//BUSCADOR CHAT
+
+/* ==== MQL: BÚSQUEDA ROBUSTA DE PRODUCTOS (WooCommerce) ==== */
+add_action('rest_api_init', function () {
+    register_rest_route('mql/v1', '/find-products', [
+        'methods'  => 'GET',
+        'callback' => 'mql_find_products_handler',
+        'permission_callback' => '__return_true',
+    ]);
+});
+
+/**
+ * Busca productos por: ID, SKU exacto, SKU parcial, título, contenido.
+ * Filtros opcionales: categoría (slug) y stock.
+ */
+function mql_find_products_handler(WP_REST_Request $req) {
+    if (!class_exists('WooCommerce')) {
+        return new WP_REST_Response(['error' => 'WooCommerce no está activo'], 400);
+    }
+    $q       = sanitize_text_field($req->get_param('q') ?? '');
+    $limit   = max(1, min(20, intval($req->get_param('limit') ?? 8)));
+    $cat     = sanitize_text_field($req->get_param('cat') ?? '');
+    $onstock = $req->get_param('stock') === '1';
+
+    $products = mql_catalog_search($q, [
+        'limit' => $limit,
+        'category' => $cat ?: null,
+        'stock' => $onstock,
+    ]);
+
+    $data = array_map('mql_product_to_payload', $products);
+    return ['count' => count($data), 'results' => $data];
+}
+
+/**
+ * Búsqueda con relevancia para WooCommerce: ID, SKU, título y contenido.
+ * Puntúa candidatos y devuelve top-N por score. Evita devolver siempre lo mismo.
+ * @param string $query
+ * @param array  $opts [limit, category(slug), stock(bool)]
+ * @return WC_Product[]
+ */
+function mql_catalog_search($query, array $opts = []) {
+    global $wpdb;
+
+    $limit     = isset($opts['limit']) ? max(1, min(50, (int)$opts['limit'])) : 8;
+    $catSlug   = !empty($opts['category']) ? sanitize_title($opts['category']) : null;
+    $onlyStock = !empty($opts['stock']);
+    $qraw      = trim((string)$query);
+
+    // Normalización básica
+    $norm = function($s){
+        $s = preg_replace('/\s+/u',' ', $s);
+        $s = mb_strtolower($s, 'UTF-8');
+        return $s;
+    };
+    $qnorm = $norm($qraw);
+
+    // Tokens (palabras de 2+ chars) – así “A5” también cuenta
+    $tokens = array_values(array_filter(
+        preg_split('/\s+/u', $qnorm),
+        function($t){ return mb_strlen($t,'UTF-8') >= 2; }
+    ));
+    if (empty($tokens)) {
+        // sin tokens ⇒ no devolvemos un listado genérico (evita repetir siempre)
+        return [];
+    }
+
+    // Mapa sinónimos opcional
+    $synonyms = [
+        'wire o' => 'wire-o',
+        'wireo'  => 'wire-o',
+        'grapa'  => 'grapado',
+        'tapa dura' => 'tapa dura', // ejemplo
+    ];
+    foreach ($synonyms as $a=>$b) {
+        $qnorm = str_replace($a, $b, $qnorm);
+        $tokens = array_map(function($t) use($a,$b){
+            return str_replace($a, $b, $t);
+        }, $tokens);
+    }
+
+    // Filtro por categoría (SQL)
+    $termFilterSQL = '';
+    if ($catSlug) {
+        $term = get_term_by('slug', $catSlug, 'product_cat');
+        if ($term && !is_wp_error($term)) {
+            $term_id = (int)$term->term_id;
+            $termFilterSQL = $wpdb->prepare("
+                AND EXISTS (
+                  SELECT 1
+                  FROM {$wpdb->term_relationships} tr
+                  JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                  WHERE tr.object_id = p.ID
+                    AND tt.taxonomy = 'product_cat'
+                    AND tt.term_id = %d
+                )
+            ", $term_id);
+        }
+    }
+
+    // Colección de candidatos con puntuación
+    $scores = []; // [product_id => score]
+    $touch  = function($pid, $pts) use (&$scores){ $scores[$pid] = ($scores[$pid] ?? 0) + $pts; };
+
+    // Helper convertir IDs a productos y filtrar
+    $add_products_by_ids = function(array $ids, $score) use (&$touch){
+        foreach ($ids as $id) { if ($id) $touch((int)$id, $score); }
+    };
+
+    // 1) ID exacto
+    if (ctype_digit($qraw)) {
+        $p = wc_get_product((int)$qraw);
+        if ($p && $p->get_status()==='publish') $touch($p->get_id(), 100);
+    }
+
+    // 2) SKU exacto
+    $pid = wc_get_product_id_by_sku($qraw);
+    if ($pid) $touch((int)$pid, 90);
+
+    // 3) SKU parcial
+    $likeRaw = '%' . $wpdb->esc_like($qraw) . '%';
+    $idsSku = $wpdb->get_col($wpdb->prepare("
+        SELECT p.ID
+        FROM {$wpdb->posts} p
+        JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_sku'
+        WHERE p.post_type = 'product' AND p.post_status = 'publish'
+          AND pm.meta_value LIKE %s
+        LIMIT %d
+    ", $likeRaw, $limit*3));
+    $add_products_by_ids($idsSku, 60);
+
+    // 4) Título exacto (case/acentos insensible)
+    $idsTitleExact = $wpdb->get_col($wpdb->prepare("
+        SELECT p.ID
+        FROM {$wpdb->posts} p
+        WHERE p.post_type='product' AND p.post_status='publish'
+          {$termFilterSQL}
+          AND LOWER(p.post_title) COLLATE utf8mb4_unicode_ci = %s
+        LIMIT %d
+    ", $qnorm, $limit*2));
+    $add_products_by_ids($idsTitleExact, 80);
+
+    // 5) Título empieza por...
+    $likeStart = $wpdb->esc_like($qnorm) . '%';
+    $idsTitleStart = $wpdb->get_col($wpdb->prepare("
+        SELECT p.ID
+        FROM {$wpdb->posts} p
+        WHERE p.post_type='product' AND p.post_status='publish'
+          {$termFilterSQL}
+          AND LOWER(p.post_title) COLLATE utf8mb4_unicode_ci LIKE %s
+        ORDER BY p.menu_order ASC, p.post_title ASC
+        LIMIT %d
+    ", $likeStart, $limit*3));
+    $add_products_by_ids($idsTitleStart, 70);
+
+    // 6) Todos los tokens en título o contenido (AND)
+    $whereParts = [];
+    foreach ($tokens as $t) {
+        $like = '%' . $wpdb->esc_like($t) . '%';
+        $whereParts[] = $wpdb->prepare(
+            "(LOWER(p.post_title) COLLATE utf8mb4_unicode_ci LIKE %s OR LOWER(p.post_content) COLLATE utf8mb4_unicode_ci LIKE %s)",
+            $like, $like
+        );
+    }
+    if ($whereParts) {
+        $whereSQL = implode(' AND ', $whereParts);
+        $idsTok = $wpdb->get_col("
+            SELECT p.ID
+            FROM {$wpdb->posts} p
+            WHERE p.post_type='product' AND p.post_status='publish'
+              {$termFilterSQL}
+              AND {$whereSQL}
+            ORDER BY p.menu_order ASC, p.post_title ASC
+            LIMIT ".(int)($limit*4)
+        );
+        $add_products_by_ids($idsTok, 40);
+    }
+
+    // 7) Fallback controlado: wc_get_products(search) – solo si hay tokens pero poca señal
+    if (count($scores) < $limit) {
+        $argsWoo = [
+            'status' => 'publish',
+            'limit'  => $limit*2,
+            'return' => 'ids', // ids para sumar score, luego cargamos objetos
+        ];
+        if ($qraw !== '')   $argsWoo['search']   = $qraw;
+        if ($catSlug)       $argsWoo['category'] = [$catSlug];
+        if ($onlyStock)     $argsWoo['stock_status'] = 'instock';
+
+        $idsWoo = wc_get_products($argsWoo);
+        foreach ($idsWoo as $id) $touch((int)$id, 20);
+    }
+
+    if (empty($scores)) return [];
+
+    // Cargar productos y filtrar visibilidad/stock
+    $products = [];
+    foreach (array_keys($scores) as $pid) {
+        $p = wc_get_product($pid);
+        if (!$p || $p->get_status() !== 'publish') continue;
+        $vis = $p->get_catalog_visibility(); // visible | catalog | search | hidden
+        if ($vis === 'hidden') continue;
+        if ($onlyStock && !$p->is_in_stock()) continue;
+        $products[$pid] = $p;
+    }
+    if (empty($products)) return [];
+
+    // Bonus al score por estar en stock y por categoría coincidente (si hay)
+    foreach ($products as $pid => $p) {
+        if ($p->is_in_stock()) $scores[$pid] += 5;
+        if ($catSlug) {
+            $cats = wp_get_post_terms($pid, 'product_cat', ['fields'=>'slugs']);
+            if (in_array($catSlug, $cats, true)) $scores[$pid] += 8;
+        }
+    }
+
+    // Ordenar por score desc, luego por título asc
+    uasort($products, function($a, $b) use ($scores){
+        $sa = $scores[$a->get_id()] ?? 0;
+        $sb = $scores[$b->get_id()] ?? 0;
+        if ($sa === $sb) {
+            return strcasecmp($a->get_name(), $b->get_name());
+        }
+        return $sb <=> $sa;
+    });
+
+    // Devolver top N
+    return array_slice(array_values($products), 0, $limit);
+}
+
+/** Serializa un producto a un payload ligero para el chat o UI */
+function mql_product_to_payload($p) {
+    $img = wp_get_attachment_image_src($p->get_image_id(), 'medium');
+    return [
+        'id'          => $p->get_id(),
+        'sku'         => $p->get_sku(),
+        'name'        => $p->get_name(),
+        'price'       => wc_price($p->get_price()),
+        'price_raw'   => $p->get_price(),
+        'link'        => get_permalink($p->get_id()),
+        'image'       => $img ? $img[0] : null,
+        'stock'       => $p->is_in_stock() ? 'in_stock' : 'out_of_stock',
+        'categories'  => wp_get_post_terms($p->get_id(), 'product_cat', ['fields'=>'names']),
+        'short_desc'  => wp_strip_all_tags($p->get_short_description()),
+    ];
+}
+
+/* ==== MQL: reglas de negocio del asistente ==== */
+function mql_get_business_rules() {
+    return [
+        'actividad'  => 'Somos fabricantes de libros (impresión y encuadernación). No vendemos otros tipos de productos no relacionados.',
+        'oferta'     => 'Trabajamos tiradas cortas y medianas, tapa blanda/dura, distintos papeles y tamaños. Personalización bajo pedido.',
+        'envio'      => 'Envíos 24-48h en península según tirada y carga de trabajo. Urgentes: consultar.',
+        'devolucion' => 'Devoluciones 14 días salvo productos personalizados.',
+        'venta'      => 'Recomienda sólo productos/servicios del catálogo WooCommerce. Si no hay coincidencias, pide detalles y no inventes.',
+        'cruces'     => 'Si un producto no está en stock, sugiere 1-2 alternativas del catálogo cercanas por categoría/servicio.',
+    ];
+}
