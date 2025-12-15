@@ -604,7 +604,9 @@ function insertar_formulario_direccion_en_checkout()
                                 }
 
                                 if (response.success && response.data.no_address) {
-                                    selectField.hide();
+                                    selectField.empty();
+                                    selectField.append('<option value="">No tienes direcciones guardadas</option>');
+                                    selectField.show();
                                 } else {
                                     selectField.empty();
                                     selectField.append('<option value="">Selecciona una dirección</option>');
@@ -1603,6 +1605,22 @@ function mi_registro_personalizado()
         update_user_meta($user_id, 'cif', sanitize_text_field($_POST['cif'] ?? ''));
         update_user_meta($user_id, 'payment_type', sanitize_text_field($_POST['payment_type'] ?? ''));
         update_user_meta($user_id, 'phone_number', sanitize_text_field($_POST['phone_number'] ?? ''));
+
+
+        global $wpdb;
+        $wpdb->update(
+            $wpdb->users,
+            [
+                'api_id'       => $nextCustomerCode,
+                'name'         => sanitize_text_field($_POST['name'] ?? ''),
+                'cif'          => sanitize_text_field($_POST['cif'] ?? ''),
+                'phone_number' => sanitize_text_field($_POST['phone_number'] ?? ''),
+                'payment_type' => sanitize_text_field($_POST['payment_type'] ?? ''),
+            ],
+            ['ID' => $user_id],
+            ['%s','%s','%s','%s','%s'],
+            ['%d']
+        );
 
         // Asignar rol "customer" (WooCommerce)
         wp_update_user([
