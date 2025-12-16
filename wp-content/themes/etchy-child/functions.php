@@ -2437,7 +2437,11 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
                 default:
                     break;
             }
-            if ($key == 'e_ancho' || $key == 'e_alto' || strpos($key, '_paginas') !== false) {
+            if (
+                substr($key, -7) === 'e_ancho' ||  // e_ancho, 0e_ancho, 2e_ancho...
+                substr($key, -6) === 'e_alto'  ||  // e_alto, 0e_alto, 2e_alto...
+                strpos($key, '_paginas') !== false // cualquier *_paginas
+            ) {
                 $typeValue = 'integer';
             }
             if ($keyType == 'jobVariable' || $keyType == 'productVariable') {
