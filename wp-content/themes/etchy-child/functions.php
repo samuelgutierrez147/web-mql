@@ -967,7 +967,7 @@ add_action('woocommerce_before_single_product', 'redirect_non_logged_users_to_lo
 function getConfigUrlOptimus($optimusUri)
 {
     $urlBase = "http://81.42.209.224:8080/optwebsvcs/";
-    $configDbOptimus = "masquelibros";
+    $configDbOptimus = "pruebas";
     return $urlBase . $optimusUri . '?db=' . $configDbOptimus;
 }
 
