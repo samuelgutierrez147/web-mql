@@ -1611,14 +1611,14 @@ function mi_registro_personalizado()
         $wpdb->update(
             $wpdb->users,
             [
-                'api_id'       => $nextCustomerCode,
-                'name'         => sanitize_text_field($_POST['name'] ?? ''),
-                'cif'          => sanitize_text_field($_POST['cif'] ?? ''),
+                'api_id' => $nextCustomerCode,
+                'name' => sanitize_text_field($_POST['name'] ?? ''),
+                'cif' => sanitize_text_field($_POST['cif'] ?? ''),
                 'phone_number' => sanitize_text_field($_POST['phone_number'] ?? ''),
                 'payment_type' => sanitize_text_field($_POST['payment_type'] ?? ''),
             ],
             ['ID' => $user_id],
-            ['%s','%s','%s','%s','%s'],
+            ['%s', '%s', '%s', '%s', '%s'],
             ['%d']
         );
 
@@ -2046,7 +2046,10 @@ function transformateDataToErp($yith_wapo_data)
                 $elemType = reset($elemEx);
                 $papelEx = explode('____', $target[$key]);
                 $target[$elemType . 'e_tipo_pap'] = $papelEx[0];
-                $target[$elemType . 'e_tipo_grm'] = $papelEx[1];
+                if ($papelEx[1] < 100)
+                    $target[$elemType . 'e_tipo_grm'] = '0' . $papelEx[1];
+                else
+                    $target[$elemType . 'e_tipo_grm'] = $papelEx[1];
                 unset($target[$key]);
             }
         }
@@ -2857,28 +2860,29 @@ add_action('rest_api_init', function () {
  * Extrae “needles” (palabras clave) del mensaje del usuario
  * y normaliza variantes (wire o / wire-o, rústica/tapa blanda…).
  */
-function mql_extract_needles($msg) {
+function mql_extract_needles($msg)
+{
     $s = mb_strtolower((string)$msg, 'UTF-8');
     $s = preg_replace('/\s+/', ' ', $s);
-    $s = str_replace(['wire o','wireo'], 'wire-o', $s);
+    $s = str_replace(['wire o', 'wireo'], 'wire-o', $s);
 
     $needles = [];
 
     // compuestos primero
-    if (preg_match('/tapa\s+dura/u', $s))     $needles[] = 'tapa dura';
+    if (preg_match('/tapa\s+dura/u', $s)) $needles[] = 'tapa dura';
     if (preg_match('/tapa\s+blanda|r[uú]stica|rustica/u', $s)) $needles[] = 'tapa blanda'; // rústica ~ tapa blanda
 
     // simples
-    if (preg_match('/wire-?o/u', $s))         $needles[] = 'wire-o';
-    if (preg_match('/espiral/u', $s))         $needles[] = 'espiral';
-    if (preg_match('/grapa(?:do)?/u', $s))    $needles[] = 'grapado';
-    if (preg_match('/cosido/u', $s))          $needles[] = 'cosido';
-    if (preg_match('/pur/u', $s))             $needles[] = 'pur';
+    if (preg_match('/wire-?o/u', $s)) $needles[] = 'wire-o';
+    if (preg_match('/espiral/u', $s)) $needles[] = 'espiral';
+    if (preg_match('/grapa(?:do)?/u', $s)) $needles[] = 'grapado';
+    if (preg_match('/cosido/u', $s)) $needles[] = 'cosido';
+    if (preg_match('/pur/u', $s)) $needles[] = 'pur';
 
     // si no detecta nada, usa tokens >2 chars (quitando palabras vacías)
     if (empty($needles)) {
-        $tokens = array_filter(preg_split('/\s+/u', $s), fn($t)=> mb_strlen($t,'UTF-8')>=3);
-        $stop = ['con','para','los','las','una','unos','unas','del','de','en','y','o','el','la','por','que','un','al'];
+        $tokens = array_filter(preg_split('/\s+/u', $s), fn($t) => mb_strlen($t, 'UTF-8') >= 3);
+        $stop = ['con', 'para', 'los', 'las', 'una', 'unos', 'unas', 'del', 'de', 'en', 'y', 'o', 'el', 'la', 'por', 'que', 'un', 'al'];
         $needles = array_values(array_diff($tokens, $stop));
     }
 
@@ -2889,36 +2893,37 @@ function mql_extract_needles($msg) {
  * Busca productos cuyo TÍTULO contenga TODOS los needles (AND),
  * case/acentos-insensible, con alias por término.
  *
- * @param string[]  $needles
- * @param int       $limit
- * @param string    $categorySlug  (opcional)
- * @param bool      $onlyStock
+ * @param string[] $needles
+ * @param int $limit
+ * @param string $categorySlug (opcional)
+ * @param bool $onlyStock
  * @return WC_Product[]
  */
-function mql_search_by_title_contains(array $needles, $limit = 20, $categorySlug = null, $onlyStock = false) {
+function mql_search_by_title_contains(array $needles, $limit = 20, $categorySlug = null, $onlyStock = false)
+{
     global $wpdb;
     if (empty($needles)) return [];
 
     // alias para variantes ortográficas
     $aliases = [
-        'wire-o'      => ['wire-o','wire o','wireo'],
-        'tapa dura'   => ['tapa dura'],
-        'tapa blanda' => ['tapa blanda','rústica','rustica'],
-        'espiral'     => ['espiral'],
-        'grapado'     => ['grapado','grapa'],
-        'cosido'      => ['cosido'],
-        'pur'         => ['pur'],
+        'wire-o' => ['wire-o', 'wire o', 'wireo'],
+        'tapa dura' => ['tapa dura'],
+        'tapa blanda' => ['tapa blanda', 'rústica', 'rustica'],
+        'espiral' => ['espiral'],
+        'grapado' => ['grapado', 'grapa'],
+        'cosido' => ['cosido'],
+        'pur' => ['pur'],
     ];
 
     $orGlobal = [];
-    $params   = [];
+    $params = [];
     foreach ($needles as $n) {
         $n = mb_strtolower(trim($n), 'UTF-8');
         $vars = $aliases[$n] ?? [$n];
         foreach ($vars as $v) {
-            $like = '%' . $wpdb->esc_like(mb_strtolower($v,'UTF-8')) . '%';
+            $like = '%' . $wpdb->esc_like(mb_strtolower($v, 'UTF-8')) . '%';
             $orGlobal[] = "LOWER(p.post_title) COLLATE utf8mb4_unicode_ci LIKE %s";
-            $params[]   = $like;
+            $params[] = $like;
         }
     }
     $whereAND = '(' . implode(' OR ', $orGlobal) . ')';
@@ -2969,8 +2974,8 @@ function mql_search_by_title_contains(array $needles, $limit = 20, $categorySlug
     $seen = [];
     foreach ((array)$ids as $id) {
         $p = wc_get_product($id);
-        if (!$p || $p->get_status()!=='publish') continue;
-        if ($p->get_catalog_visibility()==='hidden') continue;
+        if (!$p || $p->get_status() !== 'publish') continue;
+        if ($p->get_catalog_visibility() === 'hidden') continue;
         if ($onlyStock && !$p->is_in_stock()) continue;
         if (isset($seen[$id])) continue;
         $seen[$id] = true;
@@ -2996,7 +3001,7 @@ function mql_chat_handler(WP_REST_Request $req)
     if ($isProductIntent && class_exists('WooCommerce')) {
         // 1) Buscar por TÍTULO CONTIENE (AND de needles)
         $needles = mql_extract_needles($msg);
-        $found   = mql_search_by_title_contains($needles, 30, null, false);
+        $found = mql_search_by_title_contains($needles, 30, null, false);
 
         // 2) (Opcional) Si no hay resultados, puedes llamar a tu búsqueda general anterior:
         // if (empty($found)) { $found = mql_catalog_search($msg, ['limit' => 12, 'stock' => false]); }
@@ -3015,21 +3020,23 @@ function mql_chat_handler(WP_REST_Request $req)
         }
         $html = '<div class="mql-list-wrap">
                     <div class="mql-list-title">Opciones disponibles en catálogo:</div>
-                    <ul class="mql-list">'.implode("\n", $items).'</ul>
+                    <ul class="mql-list">' . implode("\n", $items) . '</ul>
                  </div>';
         return ['reply_html' => $html];
     }
 
     // ---------- SI NO HAY PRODUCTOS: IA con reglas (sin inventar) ----------
     $rules = mql_get_business_rules();
-    $rules_text = "Reglas de negocio:\n- ".implode("\n- ", array_map(
-            function($k,$v){ return ucfirst($k).": ".$v; }, array_keys($rules), $rules
+    $rules_text = "Reglas de negocio:\n- " . implode("\n- ", array_map(
+            function ($k, $v) {
+                return ucfirst($k) . ": " . $v;
+            }, array_keys($rules), $rules
         ));
     $guardrails = "Si la intención es de catálogo, no inventes productos. Pide más detalles (tamaño, papel, tirada) si no hay coincidencias.";
 
     $messages = [
         ['role' => 'system', 'content' => "Eres el asistente de masquelibrosdigital.com. Responde en español, claro y conciso. No inventes datos.\n$rules_text\n$guardrails"],
-        ['role' => 'user',   'content' => $msg],
+        ['role' => 'user', 'content' => $msg],
     ];
 
     $body = [
@@ -3041,9 +3048,9 @@ function mql_chat_handler(WP_REST_Request $req)
     $res = wp_remote_post('https://api.openai.com/v1/chat/completions', [
         'headers' => [
             'Authorization' => 'Bearer ' . $api_key,
-            'Content-Type'  => 'application/json',
+            'Content-Type' => 'application/json',
         ],
-        'body'    => wp_json_encode($body),
+        'body' => wp_json_encode($body),
         'timeout' => 30,
     ]);
 
@@ -3355,15 +3362,15 @@ add_action('wp_footer', function () {
                 if (e.key === 'Escape' && !panel.hidden) closePanel();
             });
 
-            function appendHTML(role, html){
+            function appendHTML(role, html) {
                 const wrap = document.createElement('div');
                 wrap.className = 'mql-msg ' + (role === 'user' ? 'mql-user' : 'mql-bot');
                 // allowlist muy básica de etiquetas/atributos:
                 const allowed = /<(\/?(div|ul|ol|li|span|strong|b|em|i|a|br))( [^>]*?)?>/gi;
                 const safe = html
-                    .replace(/<\/?script[^>]*?>/gi,'')           // fuera scripts
-                    .replace(/ on\w+="[^"]*"/gi,'')               // fuera onClick...
-                    .replace(/javascript:/gi,'')                  // fuera javascript:
+                    .replace(/<\/?script[^>]*?>/gi, '')           // fuera scripts
+                    .replace(/ on\w+="[^"]*"/gi, '')               // fuera onClick...
+                    .replace(/javascript:/gi, '')                  // fuera javascript:
                     .replace(/<[^>]+>/g, m => m.match(allowed) ? m : ''); // filtra tags no permitidas
 
                 wrap.innerHTML =
@@ -3385,7 +3392,7 @@ add_action('wp_footer', function () {
 /* ==== MQL: BÚSQUEDA ROBUSTA DE PRODUCTOS (WooCommerce) ==== */
 add_action('rest_api_init', function () {
     register_rest_route('mql/v1', '/find-products', [
-        'methods'  => 'GET',
+        'methods' => 'GET',
         'callback' => 'mql_find_products_handler',
         'permission_callback' => '__return_true',
     ]);
@@ -3395,13 +3402,14 @@ add_action('rest_api_init', function () {
  * Busca productos por: ID, SKU exacto, SKU parcial, título, contenido.
  * Filtros opcionales: categoría (slug) y stock.
  */
-function mql_find_products_handler(WP_REST_Request $req) {
+function mql_find_products_handler(WP_REST_Request $req)
+{
     if (!class_exists('WooCommerce')) {
         return new WP_REST_Response(['error' => 'WooCommerce no está activo'], 400);
     }
-    $q       = sanitize_text_field($req->get_param('q') ?? '');
-    $limit   = max(1, min(20, intval($req->get_param('limit') ?? 8)));
-    $cat     = sanitize_text_field($req->get_param('cat') ?? '');
+    $q = sanitize_text_field($req->get_param('q') ?? '');
+    $limit = max(1, min(20, intval($req->get_param('limit') ?? 8)));
+    $cat = sanitize_text_field($req->get_param('cat') ?? '');
     $onstock = $req->get_param('stock') === '1';
 
     $products = mql_catalog_search($q, [
@@ -3418,20 +3426,21 @@ function mql_find_products_handler(WP_REST_Request $req) {
  * Búsqueda con relevancia para WooCommerce: ID, SKU, título y contenido.
  * Puntúa candidatos y devuelve top-N por score. Evita devolver siempre lo mismo.
  * @param string $query
- * @param array  $opts [limit, category(slug), stock(bool)]
+ * @param array $opts [limit, category(slug), stock(bool)]
  * @return WC_Product[]
  */
-function mql_catalog_search($query, array $opts = []) {
+function mql_catalog_search($query, array $opts = [])
+{
     global $wpdb;
 
-    $limit     = isset($opts['limit']) ? max(1, min(50, (int)$opts['limit'])) : 8;
-    $catSlug   = !empty($opts['category']) ? sanitize_title($opts['category']) : null;
+    $limit = isset($opts['limit']) ? max(1, min(50, (int)$opts['limit'])) : 8;
+    $catSlug = !empty($opts['category']) ? sanitize_title($opts['category']) : null;
     $onlyStock = !empty($opts['stock']);
-    $qraw      = trim((string)$query);
+    $qraw = trim((string)$query);
 
     // Normalización básica
-    $norm = function($s){
-        $s = preg_replace('/\s+/u',' ', $s);
+    $norm = function ($s) {
+        $s = preg_replace('/\s+/u', ' ', $s);
         $s = mb_strtolower($s, 'UTF-8');
         return $s;
     };
@@ -3440,7 +3449,9 @@ function mql_catalog_search($query, array $opts = []) {
     // Tokens (palabras de 2+ chars) – así “A5” también cuenta
     $tokens = array_values(array_filter(
         preg_split('/\s+/u', $qnorm),
-        function($t){ return mb_strlen($t,'UTF-8') >= 2; }
+        function ($t) {
+            return mb_strlen($t, 'UTF-8') >= 2;
+        }
     ));
     if (empty($tokens)) {
         // sin tokens ⇒ no devolvemos un listado genérico (evita repetir siempre)
@@ -3450,13 +3461,13 @@ function mql_catalog_search($query, array $opts = []) {
     // Mapa sinónimos opcional
     $synonyms = [
         'wire o' => 'wire-o',
-        'wireo'  => 'wire-o',
-        'grapa'  => 'grapado',
+        'wireo' => 'wire-o',
+        'grapa' => 'grapado',
         'tapa dura' => 'tapa dura', // ejemplo
     ];
-    foreach ($synonyms as $a=>$b) {
+    foreach ($synonyms as $a => $b) {
         $qnorm = str_replace($a, $b, $qnorm);
-        $tokens = array_map(function($t) use($a,$b){
+        $tokens = array_map(function ($t) use ($a, $b) {
             return str_replace($a, $b, $t);
         }, $tokens);
     }
@@ -3482,17 +3493,21 @@ function mql_catalog_search($query, array $opts = []) {
 
     // Colección de candidatos con puntuación
     $scores = []; // [product_id => score]
-    $touch  = function($pid, $pts) use (&$scores){ $scores[$pid] = ($scores[$pid] ?? 0) + $pts; };
+    $touch = function ($pid, $pts) use (&$scores) {
+        $scores[$pid] = ($scores[$pid] ?? 0) + $pts;
+    };
 
     // Helper convertir IDs a productos y filtrar
-    $add_products_by_ids = function(array $ids, $score) use (&$touch){
-        foreach ($ids as $id) { if ($id) $touch((int)$id, $score); }
+    $add_products_by_ids = function (array $ids, $score) use (&$touch) {
+        foreach ($ids as $id) {
+            if ($id) $touch((int)$id, $score);
+        }
     };
 
     // 1) ID exacto
     if (ctype_digit($qraw)) {
         $p = wc_get_product((int)$qraw);
-        if ($p && $p->get_status()==='publish') $touch($p->get_id(), 100);
+        if ($p && $p->get_status() === 'publish') $touch($p->get_id(), 100);
     }
 
     // 2) SKU exacto
@@ -3508,7 +3523,7 @@ function mql_catalog_search($query, array $opts = []) {
         WHERE p.post_type = 'product' AND p.post_status = 'publish'
           AND pm.meta_value LIKE %s
         LIMIT %d
-    ", $likeRaw, $limit*3));
+    ", $likeRaw, $limit * 3));
     $add_products_by_ids($idsSku, 60);
 
     // 4) Título exacto (case/acentos insensible)
@@ -3519,7 +3534,7 @@ function mql_catalog_search($query, array $opts = []) {
           {$termFilterSQL}
           AND LOWER(p.post_title) COLLATE utf8mb4_unicode_ci = %s
         LIMIT %d
-    ", $qnorm, $limit*2));
+    ", $qnorm, $limit * 2));
     $add_products_by_ids($idsTitleExact, 80);
 
     // 5) Título empieza por...
@@ -3532,7 +3547,7 @@ function mql_catalog_search($query, array $opts = []) {
           AND LOWER(p.post_title) COLLATE utf8mb4_unicode_ci LIKE %s
         ORDER BY p.menu_order ASC, p.post_title ASC
         LIMIT %d
-    ", $likeStart, $limit*3));
+    ", $likeStart, $limit * 3));
     $add_products_by_ids($idsTitleStart, 70);
 
     // 6) Todos los tokens en título o contenido (AND)
@@ -3553,7 +3568,7 @@ function mql_catalog_search($query, array $opts = []) {
               {$termFilterSQL}
               AND {$whereSQL}
             ORDER BY p.menu_order ASC, p.post_title ASC
-            LIMIT ".(int)($limit*4)
+            LIMIT " . (int)($limit * 4)
         );
         $add_products_by_ids($idsTok, 40);
     }
@@ -3562,12 +3577,12 @@ function mql_catalog_search($query, array $opts = []) {
     if (count($scores) < $limit) {
         $argsWoo = [
             'status' => 'publish',
-            'limit'  => $limit*2,
+            'limit' => $limit * 2,
             'return' => 'ids', // ids para sumar score, luego cargamos objetos
         ];
-        if ($qraw !== '')   $argsWoo['search']   = $qraw;
-        if ($catSlug)       $argsWoo['category'] = [$catSlug];
-        if ($onlyStock)     $argsWoo['stock_status'] = 'instock';
+        if ($qraw !== '') $argsWoo['search'] = $qraw;
+        if ($catSlug) $argsWoo['category'] = [$catSlug];
+        if ($onlyStock) $argsWoo['stock_status'] = 'instock';
 
         $idsWoo = wc_get_products($argsWoo);
         foreach ($idsWoo as $id) $touch((int)$id, 20);
@@ -3591,13 +3606,13 @@ function mql_catalog_search($query, array $opts = []) {
     foreach ($products as $pid => $p) {
         if ($p->is_in_stock()) $scores[$pid] += 5;
         if ($catSlug) {
-            $cats = wp_get_post_terms($pid, 'product_cat', ['fields'=>'slugs']);
+            $cats = wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']);
             if (in_array($catSlug, $cats, true)) $scores[$pid] += 8;
         }
     }
 
     // Ordenar por score desc, luego por título asc
-    uasort($products, function($a, $b) use ($scores){
+    uasort($products, function ($a, $b) use ($scores) {
         $sa = $scores[$a->get_id()] ?? 0;
         $sb = $scores[$b->get_id()] ?? 0;
         if ($sa === $sb) {
@@ -3611,30 +3626,32 @@ function mql_catalog_search($query, array $opts = []) {
 }
 
 /** Serializa un producto a un payload ligero para el chat o UI */
-function mql_product_to_payload($p) {
+function mql_product_to_payload($p)
+{
     $img = wp_get_attachment_image_src($p->get_image_id(), 'medium');
     return [
-        'id'          => $p->get_id(),
-        'sku'         => $p->get_sku(),
-        'name'        => $p->get_name(),
-        'price'       => wc_price($p->get_price()),
-        'price_raw'   => $p->get_price(),
-        'link'        => get_permalink($p->get_id()),
-        'image'       => $img ? $img[0] : null,
-        'stock'       => $p->is_in_stock() ? 'in_stock' : 'out_of_stock',
-        'categories'  => wp_get_post_terms($p->get_id(), 'product_cat', ['fields'=>'names']),
-        'short_desc'  => wp_strip_all_tags($p->get_short_description()),
+        'id' => $p->get_id(),
+        'sku' => $p->get_sku(),
+        'name' => $p->get_name(),
+        'price' => wc_price($p->get_price()),
+        'price_raw' => $p->get_price(),
+        'link' => get_permalink($p->get_id()),
+        'image' => $img ? $img[0] : null,
+        'stock' => $p->is_in_stock() ? 'in_stock' : 'out_of_stock',
+        'categories' => wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names']),
+        'short_desc' => wp_strip_all_tags($p->get_short_description()),
     ];
 }
 
 /* ==== MQL: reglas de negocio del asistente ==== */
-function mql_get_business_rules() {
+function mql_get_business_rules()
+{
     return [
-        'actividad'  => 'Somos fabricantes de libros (impresión y encuadernación). No vendemos otros tipos de productos no relacionados.',
-        'oferta'     => 'Trabajamos tiradas cortas y medianas, tapa blanda/dura, distintos papeles y tamaños. Personalización bajo pedido.',
-        'envio'      => 'Envíos 24-48h en península según tirada y carga de trabajo. Urgentes: consultar.',
+        'actividad' => 'Somos fabricantes de libros (impresión y encuadernación). No vendemos otros tipos de productos no relacionados.',
+        'oferta' => 'Trabajamos tiradas cortas y medianas, tapa blanda/dura, distintos papeles y tamaños. Personalización bajo pedido.',
+        'envio' => 'Envíos 24-48h en península según tirada y carga de trabajo. Urgentes: consultar.',
         'devolucion' => 'Devoluciones 14 días salvo productos personalizados.',
-        'venta'      => 'Recomienda sólo productos/servicios del catálogo WooCommerce. Si no hay coincidencias, pide detalles y no inventes.',
-        'cruces'     => 'Si un producto no está en stock, sugiere 1-2 alternativas del catálogo cercanas por categoría/servicio.',
+        'venta' => 'Recomienda sólo productos/servicios del catálogo WooCommerce. Si no hay coincidencias, pide detalles y no inventes.',
+        'cruces' => 'Si un producto no está en stock, sugiere 1-2 alternativas del catálogo cercanas por categoría/servicio.',
     ];
 }
