@@ -194,6 +194,70 @@ jQuery(document).ready(function ($) {
             $messageContainer.text('El ISBN-13 no es válido.').css('color', 'red');
         }
     });
+    // Manejar TODOS los checkboxes de YITH
+    $(document).on('change', '.yith-wapo-option-value[type="checkbox"]', function () {
+        if (!this.checked) return;
+
+        const id = this.id;
+        const valor = this.value;
+
+        const prefijo = id.split('_')[0]; // 2e o 4e
+
+        // Mapeo de mensajes por prefijo + valor
+        const mensajes = {
+            '2e': { // CUBIERTA
+                'Barniz': {
+                    titulo: "BARNIZ UVI (RESERVA) - CUBIERTA",
+                    texto: "Su pedido queda pendiente de revisar si el porcentaje de la reserva UVI está dentro del estándar (reserva del 25 %). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
+                },
+                'Estampado': {
+                    titulo: "ESTAMPADO - CUBIERTA",
+                    texto: "Su pedido queda pendiente de revisar si el tamaño del estampado está dentro del estándar (70 x 70 mm). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
+                },
+                'Troquelado': {
+                    titulo: "TROQUELADO - CUBIERTA",
+                    texto: "Su pedido queda pendiente de revisar si el tamaño del troquel y la dificultad del mismo está dentro del estándar. Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
+                },
+                'Golpe seco': {
+                    titulo: "GOLPE SECO - CUBIERTA",
+                    texto: "Su pedido queda pendiente de revisar si el tamaño del cliché está dentro del estándar (50 x 50 mm). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
+                }
+            },
+            '4e': { // SOBRECUBIERTA
+                'Barniz': {
+                    titulo: "BARNIZ UVI (RESERVA) - SOBRECUBIERTA",
+                    texto: "Su pedido queda pendiente de revisar si el porcentaje de la reserva UVI está dentro del estándar (reserva del 25 %). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
+                },
+                'Estampado': {
+                    titulo: "ESTAMPADO - SOBRECUBIERTA",
+                    texto: "Su pedido queda pendiente de revisar si el tamaño del estampado está dentro del estándar (70 x 70 mm). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
+                },
+                'Troquelado': {
+                    titulo: "TROQUELADO - SOBRECUBIERTA",
+                    texto: "Su pedido queda pendiente de revisar si el tamaño del troquel y la dificultad del mismo está dentro del estándar. Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
+                },
+                'Golpe seco': {
+                    titulo: "GOLPE SECO - SOBRECUBIERTA",
+                    texto: "Su pedido queda pendiente de revisar si el tamaño del cliché está dentro del estándar (50 x 50 mm). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
+                }
+            }
+        };
+
+        const grupo = mensajes[prefijo];
+        const mensaje = grupo ? grupo[valor] : null;
+
+        if (mensaje) {
+            Swal.fire({
+                position: "center",
+                icon: "info",
+                title: `<strong>${mensaje.titulo}</strong>`,
+                html: `<p>${mensaje.texto}</p>`,
+                showConfirmButton: true,
+                width: '800px'
+            });
+        }
+    });
+
 
     function validateISBN13(isbn) {
         // Eliminar cualquier guión o espacio
