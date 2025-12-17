@@ -637,6 +637,17 @@ function insertar_formulario_direccion_en_checkout()
                         return;
                     }
 
+                    Swal.fire({
+                        title: '<strong>Guardando dirección...</strong>',
+                        html: '<p>Por favor, espera un momento.</p>',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     $.ajax({
                         url: '<?php echo admin_url('admin-ajax.php'); ?>',
                         type: 'POST',
@@ -649,7 +660,15 @@ function insertar_formulario_direccion_en_checkout()
                         dataType: 'json',
                         success: function (response) {
                             if (response.success) {
-                                alert('Dirección guardada correctamente.');
+                                Swal.close();
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '<strong>Dirección guardada correctamente</strong>',
+                                    html: `<p>La nueva dirección se ha añadido a la lista.</p>`,
+                                    confirmButtonText: 'Aceptar',
+                                    width: '600px'
+                                });
 
                                 let selectField = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
 
@@ -662,8 +681,27 @@ function insertar_formulario_direccion_en_checkout()
 
                                 selectField.show();
                             } else {
-                                alert('Error al guardar la dirección.');
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '<strong>Error al guardar la dirección</strong>',
+                                    html: '<p>Ha ocurrido un problema al guardar la dirección. Inténtalo de nuevo.</p>',
+                                    confirmButtonText: 'Aceptar',
+                                    width: '600px'
+                                });
                             }
+                        },
+                        error: function () {
+                            // Cerramos el Swal de carga por si sigue abierto
+                            Swal.close();
+
+                            // Swal de error cuando falla la petición AJAX
+                            Swal.fire({
+                                icon: 'error',
+                                title: '<strong>Error de conexión</strong>',
+                                html: '<p>No se ha podido contactar con el servidor. Revisa tu conexión e inténtalo de nuevo.</p>',
+                                confirmButtonText: 'Aceptar',
+                                width: '600px'
+                            });
                         }
                     });
                 });
