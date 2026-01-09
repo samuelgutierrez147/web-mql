@@ -20,6 +20,16 @@ add_action('after_setup_theme', function () {
     add_theme_support('wc-product-gallery-slider');
 });
 
+add_filter('woocommerce_single_product_flexslider_enabled', '__return_true', 999);
+
+add_action('wp_enqueue_scripts', function () {
+    if (is_product()) {
+        wp_enqueue_script('flexslider');
+        wp_enqueue_script('wc-single-product');
+    }
+}, 20);
+
+
 // Incluir Bootstrap CSS
 function bootstrap_css()
 {
