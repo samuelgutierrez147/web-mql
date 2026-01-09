@@ -2404,6 +2404,22 @@ function preparePricePresupuestoData($curlResult, $dataXml)
     return $result;
 }
 
+function getTipoOptimus($tipo)
+{
+    $mapa = [
+        0 => 'INTERIOR',
+        1 => 'INTERIOR 2',
+        2 => 'CUBIERTA',
+        3 => 'GUARDAS',
+        4 => 'SOBRECUBIERTAS',
+        5 => 'FAJA',
+        6 => 'MARCAPAGINAS',
+        7 => 'DESPLEGABLE'
+    ];
+
+    return $mapa[$tipo] ?? null;
+}
+
 function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada = '')
 {
     if (!isset($dataOptimus['productVariable']))
@@ -2452,11 +2468,18 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
     $countPV++;
 
     foreach ($tipos as $tipo) {
-        $data->line->productVariable[$countPV]->name = $tipo . 'e_elem';
-        $data->line->productVariable[$countPV]->type = 'integer';
-        $data->line->productVariable[$countPV]->value = 1;
+        $data->line->productVariable[$countPV]->name = $tipo . 'e_tipo';
+        $data->line->productVariable[$countPV]->type = 'string';
+        $data->line->productVariable[$countPV]->value = getTipoOptimus($tipo);
         $countPV++;
     }
+
+    //añadimos cantidad a la dirección
+    $cantidad = isset($dataOptimus['quantity']['quantity'][0])
+        ? (int)$dataOptimus['quantity']['quantity'][0]
+        : 0;
+
+    $dataOptimus['productVariable']['e_ent_00_cnt_01'] = floatval($cantidad);
 
     foreach ($dataOptimus as $keyType => $valueData) {
         foreach ($valueData as $key => $value) {
@@ -2477,8 +2500,9 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
             }
             if (
                 substr($key, -7) === 'e_ancho' ||  // e_ancho, 0e_ancho, 2e_ancho...
-                substr($key, -6) === 'e_alto'  ||  // e_alto, 0e_alto, 2e_alto...
-                strpos($key, '_paginas') !== false // cualquier *_paginas
+                substr($key, -6) === 'e_alto' ||  // e_alto, 0e_alto, 2e_alto...
+                strpos($key, '_paginas') !== false ||
+                strpos($key, 'ent_00_cnt_0') !== false
             ) {
                 $typeValue = 'integer';
             }
@@ -2513,8 +2537,10 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
     $curlResult = sendXmlOptimus($dataXml, 'enqPrice', 'POST', false, true);
     $result = preparePricePresupuestoData($curlResult, $dataXml);
 
-    if (!empty($result))
+    if (!empty($result)) {
+        $result['xml'] = $dataXml;
         return $result;
+    }
 
     /*if (empty($result)) {
         return ['error_message' => $curlResult->error, 'xml' => $dataXml];
