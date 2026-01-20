@@ -3149,15 +3149,18 @@ add_action('wp_enqueue_scripts', function () {
     wp_enqueue_style('mql-chat-inline');
     $css = <<<CSS
 #mql-launcher{
-  position: fixed; right: 20px; bottom: 20px;
-  width: 56px; height: 56px; border-radius: 50%;
-  border: none; cursor: pointer;
-  background: #0d6efd; color: #fff; font-size: 22px;
-  display: grid; place-items: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,.2);
-  z-index: 9999;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:0 !important;
+  line-height:1 !important;
 }
-#mql-launcher:hover{ filter: brightness(1.1); }
+#mql-launcher .mql-emoji{
+  display:block;
+  font-size: 22px;
+  line-height: 1;
+}
+
 
 #mql-chat-panel{
   position: fixed; right: 20px; bottom: 86px; z-index: 9999;
@@ -3305,8 +3308,7 @@ add_action('wp_footer', function () {
     <button id="mql-launcher"
             aria-label="<?php esc_attr_e('Abrir chat', 'mql'); ?>"
             aria-controls="mql-chat-panel"
-            aria-expanded="false">💬
-    </button>
+            aria-expanded="false"><span class="mql-emoji" aria-hidden="true">💬</span></button>
 
     <div id="mql-chat-panel" role="dialog" aria-modal="false" aria-labelledby="mql-chat-title" hidden>
         <div class="mql-chat-card">
