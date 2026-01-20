@@ -3134,6 +3134,16 @@ function mql_chat_handler(WP_REST_Request $req)
 
 /* 2) CSS: estilos del botón y panel (inline para simplificar) */
 add_action('wp_enqueue_scripts', function () {
+    if (is_admin()) return;
+
+    // Font Awesome (iconos)
+    wp_enqueue_style(
+        'fontawesome',
+        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+        [],
+        '6.5.1'
+    );
+
     // Encola un “handle” vacío para poder adjuntar CSS inline
     wp_register_style('mql-chat-inline', false);
     wp_enqueue_style('mql-chat-inline');
