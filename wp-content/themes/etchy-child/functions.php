@@ -3375,7 +3375,7 @@ add_action('wp_footer', function () {
                 const wrap = document.createElement('div');
                 wrap.className = 'mql-msg ' + (role === 'user' ? 'mql-user' : 'mql-bot');
                 wrap.innerHTML =
-                    `<div class="mql-badge ${role === 'user' ? 'user' : 'bot'}">${role === 'user' ? 'Tú' : 'Bot'}</div>
+                    `<div class="mql-badge ${role === 'user' ? 'user' : 'bot'}">${role === 'user' ? 'Tú' : 'IA Masquelibros'}</div>
          <div class="mql-bubble">${esc(text)}</div>`;
                 log.appendChild(wrap);
                 log.scrollTop = log.scrollHeight;
