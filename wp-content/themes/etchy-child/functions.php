@@ -3148,15 +3148,43 @@ add_action('wp_enqueue_scripts', function () {
     wp_register_style('mql-chat-inline', false);
     wp_enqueue_style('mql-chat-inline');
     $css = <<<CSS
+/* Launcher fijo abajo-derecha */
 #mql-launcher{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  padding:0 !important;
-  line-height:1 !important;
+  position: fixed !important;
+  right: 20px !important;
+  bottom: 20px !important;
+
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+
+  border: none !important;
+  cursor: pointer !important;
+
+  background: #0d6efd !important;
+  color: #fff !important;
+
+  box-shadow: 0 8px 24px rgba(0,0,0,.2) !important;
+  z-index: 9999 !important;
+
+  /* centrado del contenido */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
 }
+
+#mql-launcher:hover{
+  filter: brightness(1.1);
+}
+
+/* Emoji centrado y sin “baseline raro” */
 #mql-launcher .mql-emoji{
-  display:block;
+  display: block;
   font-size: 22px;
   line-height: 1;
 }
