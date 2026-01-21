@@ -1798,13 +1798,13 @@ function dataFormatted($yith_wapo_data)
 
             // Procesar acabados 2e y 4e
             if ($key === '2e_acabados_check') {
-                $acabados_map = ['2e_esta', '2e_troq', '2e_golp'];
+                $acabados_map = ['2e_barn','2e_esta', '2e_troq', '2e_golp'];
                 $key = $acabados_map[$counters['acabados2e']++] ?? end($acabados_map);
                 $value = 1;
             }
 
             if ($key === '4e_acabados_check') {
-                $acabados_map = ['4e_esta', '4e_troq', '4e_golp'];
+                $acabados_map = ['4e_barn','4e_esta', '4e_troq', '4e_golp'];
                 $key = $acabados_map[$counters['acabados4e']++] ?? end($acabados_map);
                 $value = 1;
             }
