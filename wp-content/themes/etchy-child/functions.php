@@ -566,7 +566,32 @@ function insertar_formulario_direccion_en_checkout()
                             let selectField = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
 
                             if (selectField.length > 0) {
+                                function ajustarLayoutDireccion() {
+                                    const addon = selectField.closest('.yith-wapo-addon').get(0);
+                                    if (!addon) return;
+
+                                    if (window.matchMedia('(min-width: 1024px)').matches) {
+                                        addon.style.setProperty('grid-column', 'span 4', 'important'); // 2/3
+                                        addon.style.setProperty('order', '30', 'important');
+                                    } else {
+                                        addon.style.setProperty('grid-column', '1 / -1', 'important'); // full en tablet/móvil
+                                        addon.style.setProperty('order', '30', 'important');
+                                    }
+                                }
+
+                                ajustarLayoutDireccion();
+                                $(window).off('resize.ajustarDireccion').on('resize.ajustarDireccion', ajustarLayoutDireccion);
                                 if ($('#direccion-form-container').length === 0) {
+                                    const form = $('#direccion-form-container');
+                                    form.css({
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                                        gap: '10px',
+                                        marginTop: '12px',
+                                        padding: '12px'
+                                    });
+                                    form.find('h4').css({ gridColumn: '1 / -1', margin: '0 0 6px 0' });
+                                    form.find('#nuevo_codigo_postal, #guardar-direccion').css({ gridColumn: '1 / -1', width: '100%' });
                                     $('<div id="direccion-form-container" style="margin-top: 30px; padding: 15px; border: 1px solid #ccc; background: #f9f9f9;">' +
                                         '<h4>Añadir Nueva Dirección</h4>' +
                                         '<input type="text" id="nueva_direccion" placeholder="Dirección" style="width: 100%; padding: 8px; margin-bottom: 10px;">' +
