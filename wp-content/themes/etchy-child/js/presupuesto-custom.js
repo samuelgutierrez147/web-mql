@@ -10,144 +10,202 @@ const encuadernaciones = [
     'TAPA_DURA_COSI'
 ];
 
-var configMultiplos = [['RUSTICA_PUR', 16, 2, 1000], ['GRAPA', 8, 4, 64], ['ESPIRAL', 16, 2, 800], ['WIREO', 16, 2, 600], ['TAPA_DURA_PUR', 32, 2, 1000], ['TAPA_DURA_ESPIRAL', 16, 2, 670], ['TAPA_DURA_WIRE_O', 16, 2, 500], ['TAPA_DURA_COSI', 32, 2, 1000], ['RUSTICA_COSIDA', 16, 2, 1000]]
+var configMultiplos = [
+    ['RUSTICA_PUR', 16, 2, 1000],
+    ['GRAPA', 8, 4, 64],
+    ['ESPIRAL', 16, 2, 800],
+    ['WIREO', 16, 2, 600],
+    ['TAPA_DURA_PUR', 32, 2, 1000],
+    ['TAPA_DURA_ESPIRAL', 16, 2, 670],
+    ['TAPA_DURA_WIRE_O', 16, 2, 500],
+    ['TAPA_DURA_COSI', 32, 2, 1000],
+    ['RUSTICA_COSIDA', 16, 2, 1000]
+];
 
-//PARA MOSTRAR U OCULTAR LA ENCUADERNACION
-document.addEventListener("DOMContentLoaded", function () {
-    let pathname = window.location.pathname,
-        lastSegment = pathname.split('/').filter(Boolean).pop();
-    if (lastSegment !== 'personalizado') {
-        let encuadernacionDiv = jQuery('[data-id="e_encu"]');
+jQuery(function ($) {
 
-        let encu = getEncuFromPathName(lastSegment),
-            encu_checkbox = encuadernacionDiv.find('input[type="checkbox"][value="' + encu + '"]');
+    // ======================================================
+    // Helpers
+    // ======================================================
 
-        if (encu_checkbox.length === 0)
-            encu_checkbox = encuadernacionDiv.find('input[type="radio"][value="' + encu + '"]');
+    function getEncuFromPathName(encuadernacionSlug) {
+        var slugSinEncuadernacion = String(encuadernacionSlug || "")
+            .replace("encuadernacion-", "")
+            .replace(/-/g, "_")
+            .toUpperCase();
 
-        let parent_div = encu_checkbox.closest('[id^="yith-wapo-option"]'),
-            hidden_elements_product = ['Interior 2', 'Sobrecubiertas', 'Faja', 'Marcapáginas', 'Desplegable'];
+        let encuadernacion = (typeof encuadernaciones !== "undefined" && Array.isArray(encuadernaciones))
+            ? encuadernaciones.find(function (item) {
+                return String(item).toUpperCase().includes(slugSinEncuadernacion);
+            })
+            : slugSinEncuadernacion;
 
-        jQuery.each(hidden_elements_product, function (index, value) {
-            let checkbox_elements = jQuery('input[type="checkbox"][value="' + value + '"]');
+        // Mantengo tu validación
+        if (typeof validacionPaginas === "function") {
+            validacionPaginas(slugSinEncuadernacion);
+        }
 
-            if (checkbox_elements.length === 0)
-                checkbox_elements = jQuery('input[type="radio"][value="' + value + '"]');
+        if (slugSinEncuadernacion === "TAPA_DURA_LOMO_REDONDO" || slugSinEncuadernacion === "TAPA_DURA_LOMO_CUADRADO") {
+            encuadernacion = "TAPA_DURA_COSI";
+        }
 
-            if (checkbox_elements.length) {
-                let div_checkbox = checkbox_elements.closest('[id^="yith-wapo-addon"]');
-                div_checkbox.addClass('no-visible');
+        return encuadernacion || slugSinEncuadernacion;
+    }
+
+    function applyGuardasRule(encuValue) {
+        if (!encuValue || encuValue === "default") return;
+
+        validacionPaginas(encuValue);
+
+        const $check_guardas = $('input[type="checkbox"][value="Guardas"]');
+        const $div_guardas = $check_guardas.closest('[id^="yith-wapo-addon"]');
+
+        // Mostrar el addon Guardas
+        $div_guardas.css("display", "");
+        $div_guardas.find(".label_price span.required").remove();
+
+        // TAPA_DURA_* => obligatorio
+        if (String(encuValue).startsWith("TAPA_DURA_")) {
+            $check_guardas.attr("required", "required");
+            $check_guardas.removeAttr("disabled");
+            $div_guardas.find(".label_price").append('<span class="required">*</span>');
+        } else {
+            $check_guardas.removeAttr("required");
+            $check_guardas.attr("disabled", "disabled");
+            $div_guardas.find(".label_price span.required").remove();
+        }
+    }
+
+    function validacionPaginas(encu) {
+        let input_paginas = jQuery('input[id$="e_paginas"]'),
+            minPaginas = 0,
+            multiploPaginas = 0,
+            maxPaginas = 0;
+
+        jQuery.each(configMultiplos, function (keyConfig, config) {
+            if (config[0] === encu) {
+                minPaginas = config[1];
+                multiploPaginas = config[2];
+                maxPaginas = config[3];
             }
         });
 
-        parent_div.addClass('selected');
-        encu_checkbox.trigger("click");
-        encuadernacionDiv.addClass("no-visible");
+        input_paginas.each(function () {
+            jQuery(this).attr("max", maxPaginas);
+            jQuery(this).attr("min", minPaginas);
+            jQuery(this).attr({"step": multiploPaginas});
 
-        //OCULTAR GUARDAS Y ENCUADERNACIÓN
-        if (encu === 'RUSTICA_PUR' || encu === 'RUSTICA_COSIDA') {
-            let check_guardas = jQuery('input[type="checkbox"][value="Guardas"]');
-            let div_check_guardas = check_guardas.closest('[id^="yith-wapo-addon"]');
-
-            div_check_guardas.addClass('no-visible');
-            check_guardas.removeAttr('required');
-        }
-    } else {
-        jQuery(document).on('click', 'input[type="checkbox"][id^="yith-wapo-7-"]', function (event) {
-
-            validacionPaginas(this.value);
-
-            let check_guardas = jQuery('input[type="checkbox"][value="Guardas"]');
-            let div_check_guardas = check_guardas.closest('[id^="yith-wapo-addon"]');
-            //TAPA DURA PUR, TAPA DURA ESPIRAL, TAPA DURA WIREO, TAPA DURA COSIDO HILO OBLIGATORIO
-            div_check_guardas.css('display', '');
-            div_check_guardas.find('.label_price span.required').remove();
-            if (this.value.startsWith('TAPA_DURA_')) {
-                check_guardas.attr('required', 'required');
-                check_guardas.removeAttr('disabled');
-                div_check_guardas.find('.label_price').append('<span class="required">*</span>');
-            } else {
-                check_guardas.removeAttr('required');
-                check_guardas.attr('disabled', 'disabled');
-                div_check_guardas.find('.label_price span.required').remove();
-            }
-
+            let div_input = jQuery(this).closest('.yith-wapo-addon');
+            div_input.attr("data-numbers-max", maxPaginas);
+            div_input.attr("data-numbers-min", minPaginas);
+            div_input.attr("data-numbers-step", multiploPaginas);
         });
     }
-});
 
-function getEncuFromPathName(encuadernacionSlug) {
-    var slugSinEncuadernacion = encuadernacionSlug.replace('encuadernacion-', '').replace(/-/g, '_').toUpperCase();
-    let encuadernacion = encuadernaciones.find(function (item) {
-        return item.toUpperCase().includes(slugSinEncuadernacion);
-    });
+    // ======================================================
+    // INICIO lógica Encuadernación
+    // ======================================================
 
-    validacionPaginas(slugSinEncuadernacion);
+    const pathname = window.location.pathname || "";
+    const lastSegment = pathname.split("/").filter(Boolean).pop() || "";
 
-    if (slugSinEncuadernacion === 'TAPA_DURA_LOMO_REDONDO' || slugSinEncuadernacion === 'TAPA_DURA_LOMO_CUADRADO')
-        encuadernacion = 'TAPA_DURA_COSI';
+    const $encuAddon = $('[data-id="e_encu"]'); // addon completo (sea label o select)
 
-    return encuadernacion;
-}
+    if ($encuAddon.length) {
+        if (lastSegment !== "personalizado") {
 
-function validacionPaginas(encu) {
-    //VALIDACION PAGINAS
-    let input_paginas = jQuery('input[id$="e_paginas"]'),
-        minPaginas = 0,
-        multiploPaginas = 0,
-        maxPaginas = 0;
+            const encu = getEncuFromPathName(lastSegment);
 
-    jQuery.each(configMultiplos, function (keyConfig, config) {
-        if (config[0] === encu) {
-            minPaginas = config[1];
-            multiploPaginas = config[2];
-            maxPaginas = config[3];
+            // Ocultar elementos del producto
+            const hidden_elements_product = ["Interior 2", "Sobrecubiertas", "Faja", "Marcapáginas", "Desplegable"];
+
+            $.each(hidden_elements_product, function (_, value) {
+                let $inputs = $('input[type="checkbox"][value="' + value + '"]');
+                if (!$inputs.length) $inputs = $('input[type="radio"][value="' + value + '"]');
+
+                if ($inputs.length) {
+                    $inputs.closest('[id^="yith-wapo-addon"]').addClass("no-visible");
+                }
+            });
+
+            // Detectar si es SELECT
+            const $select = $encuAddon.find('select#e_encu, select[name="yith_wapo[][e_encu]"]');
+
+            if ($select.length) {
+                // SELECT
+                $select.val(encu);
+
+                // disparar varios por compatibilidad
+                $select.trigger("change");
+                $select.trigger("input");
+                $select.triggerHandler("change");
+
+                // si quieres “ocultar” el addon en no-personalizado:
+                $encuAddon.addClass("no-visible");
+            } else {
+                // CHECKBOX/RADIO (label)
+                let $input = $encuAddon.find('input[type="checkbox"][value="' + encu + '"]');
+                if (!$input.length) $input = $encuAddon.find('input[type="radio"][value="' + encu + '"]');
+
+                if ($input.length) {
+                    $input.closest('[id^="yith-wapo-option"]').addClass("selected");
+                    $input.trigger("click");
+                }
+
+                $encuAddon.addClass("no-visible");
+            }
+
+            // OCULTAR GUARDAS si corresponde
+            if (encu === "RUSTICA_PUR" || encu === "RUSTICA_COSIDA") {
+                const $check_guardas = $('input[type="checkbox"][value="Guardas"]');
+                const $div_guardas = $check_guardas.closest('[id^="yith-wapo-addon"]');
+
+                $div_guardas.addClass("no-visible");
+                $check_guardas.removeAttr("required");
+            }
+
+        } else {
+            // /personalizado
+
+            // Inputs (checkbox/radio) del addon 7
+            $(document).on('click change', 'input[id^="yith-wapo-7-"][type="checkbox"], input[id^="yith-wapo-7-"][type="radio"]', function () {
+                applyGuardasRule(this.value);
+            });
+
+            // Select del addon 7
+            $(document).on("change", 'select#e_encu, select[name="yith_wapo[][e_encu]"]', function () {
+                applyGuardasRule(this.value);
+            });
         }
-    });
+    }
 
-    input_paginas.each(function () {
-        jQuery(this).attr("max", maxPaginas);
-        jQuery(this).attr("min", minPaginas);
-        jQuery(this).attr({
-            "step": multiploPaginas
-        });
-        let div_input = jQuery(this).closest('.yith-wapo-addon');
-        div_input.attr("data-numbers-max", maxPaginas);
-        div_input.attr("data-numbers-min", minPaginas);
-        div_input.attr("data-numbers-step", multiploPaginas);
-    });
-}
+    // ======================================================
+    // RESTO DE TU CÓDIGO (sin tocar)
+    // ======================================================
 
-jQuery(document).ready(function ($) {
     $("input[name*='e_tipo_impresion']").on("change", function () {
-        // Obtener el nombre del input y extraer el número anterior a "e_tipo_impresion"
         var name = $(this).attr("name");
         var regex = /\[\d+e_tipo_impresion\]/;
         var match = name.match(regex);
 
         if (match) {
-            var number = match[0].split("e_tipo_impresion")[0].slice(1); // Extraemos el número
+            var number = match[0].split("e_tipo_impresion")[0].slice(1);
 
             if (number) {
-                // Buscar todos los inputs de e_tipo_papel con el mismo número
                 var relatedInputs = $("input[name*='e_tipo_papel'][name*='" + number + "']");
 
-                // Desactivar todos los inputs relacionados si están activos
                 relatedInputs.each(function () {
-                    // Desmarcar el radio
                     $(this).prop("checked", false);
-
-                    // Eliminar el atributo 'checked'
                     $(this).removeAttr("checked");
-
-                    // Quitar la clase 'selected' del contenedor padre
                     $(this).closest(".yith-wapo-option").removeClass("selected");
                 });
             }
         }
     });
+
     $('[data-id="8e_encu_wr_color_otro"], [data-id="8e_encu_es_color_otro"]').css('display', 'none').find('input').prop('disabled', true);
-    $('#8e_encu_wr_color, #8e_encu_es_color').on('change', function() {
+
+    $('#8e_encu_wr_color, #8e_encu_es_color').on('change', function () {
         let selectedId = $(this).attr('id');
         let relatedField = $('[data-id="' + selectedId + '_otro"]');
 
@@ -157,35 +215,32 @@ jQuery(document).ready(function ($) {
             relatedField.css('display', 'none');
         }
     });
-    $(document).on('input', 'input#titulo', function () {
-        let addon = $(this).closest('.yith-wapo-addon'); // Encuentra el contenedor del addon
-        let title = addon.find('.wapo-addon-title'); // Encuentra el título del addon
-        let option = addon.find('.yith-wapo-option'); // Encuentra la opción asociada
 
-        // Elimina cualquier mensaje de error existente y las clases
+    $(document).on('input', 'input#titulo', function () {
+        let addon = $(this).closest('.yith-wapo-addon');
+        let title = addon.find('.wapo-addon-title');
+        let option = addon.find('.yith-wapo-option');
+
         addon.find('.required-error').remove();
         title.removeClass('wapo-error');
         option.removeClass('required-color');
 
-        // Verifica si el campo está vacío
         if ($(this).val().trim() === '') {
-            // Si está vacío, agrega el mensaje de error y las clases de nuevo
             addon.append('<div class="required-error"><small class="required-message" style="color: red;">Esta opción es obligatoria.</small></div>');
             title.addClass('wapo-error');
             option.addClass('required-color');
         }
     });
+
     $('#isbn').on('change', function () {
         let isbn = $(this).val();
         let $messageContainer = $('#isbn-message');
 
-        // Crear contenedor de mensaje si no existe
         if ($messageContainer.length === 0) {
             $messageContainer = $('<div id="isbn-message" style="margin-top: 10px; font-weight: bold;"></div>');
             $(this).after($messageContainer);
         }
 
-        // Validar el ISBN y mostrar el mensaje
         if (isbn.trim() === '') {
             $messageContainer.text('El campo ISBN no puede estar vacío.').css('color', 'red');
         } else if (validateISBN13(isbn)) {
@@ -194,18 +249,17 @@ jQuery(document).ready(function ($) {
             $messageContainer.text('El ISBN-13 no es válido.').css('color', 'red');
         }
     });
-    // Manejar TODOS los checkboxes de YITH
+
     $(document).on('change', '.yith-wapo-option-value[type="checkbox"]', function () {
         if (!this.checked) return;
 
         const id = this.id;
         const valor = this.value;
 
-        const prefijo = id.split('_')[0]; // 2e o 4e
+        const prefijo = id.split('_')[0];
 
-        // Mapeo de mensajes por prefijo + valor
         const mensajes = {
-            '2e': { // CUBIERTA
+            '2e': {
                 'Barniz': {
                     titulo: "BARNIZ UVI (RESERVA) - CUBIERTA",
                     texto: "Su pedido queda pendiente de revisar si el porcentaje de la reserva UVI está dentro del estándar (reserva del 25 %). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
@@ -223,7 +277,7 @@ jQuery(document).ready(function ($) {
                     texto: "Su pedido queda pendiente de revisar si el tamaño del cliché está dentro del estándar (50 x 50 mm). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
                 }
             },
-            '4e': { // SOBRECUBIERTA
+            '4e': {
                 'Barniz': {
                     titulo: "BARNIZ UVI (RESERVA) - SOBRECUBIERTA",
                     texto: "Su pedido queda pendiente de revisar si el porcentaje de la reserva UVI está dentro del estándar (reserva del 25 %). Mandaremos un e-mail de confirmación una vez revisado por nuestro departamento de validación y así poder aceptar la oferta."
@@ -258,28 +312,90 @@ jQuery(document).ready(function ($) {
         }
     });
 
-
     function validateISBN13(isbn) {
-        // Eliminar cualquier guión o espacio
         isbn = isbn.replace(/[\s-]/g, '');
+        if (!/^\d{13}$/.test(isbn)) return false;
 
-        // Comprobar que tiene 13 dígitos
-        if (!/^\d{13}$/.test(isbn)) {
-            return false;
-        }
-
-        // Calcular el checksum
         let sum = 0;
         for (let i = 0; i < 12; i++) {
             let digit = parseInt(isbn.charAt(i));
             sum += (i % 2 === 0) ? digit : digit * 3;
         }
         let checksum = (10 - (sum % 10)) % 10;
-
-        // Comprobar que el último dígito coincide con el checksum
         return checksum === parseInt(isbn.charAt(12));
     }
+
 });
+
+jQuery(function ($) {
+
+    // Encuadernación REAL (debe seguir siendo LABEL para que la lógica condicional funcione)
+    const $addon = $('[data-id="e_encu"].yith-wapo-addon-type-label');
+    if (!$addon.length) return;
+
+    const proxyId = 'e_encu_proxy_select';
+    if ($('#' + proxyId).length) return; // evitar duplicados
+
+    const $options = $addon.find('[id^="yith-wapo-option"]');
+    if (!$options.length) return;
+
+    // Crear SELECT proxy
+    const $select = $('<select/>', { id: proxyId, class: 'yith-wapo-encu-proxy' });
+    $select.append($('<option/>', { value: '', text: 'Seleccionar una opción' }));
+
+    // Rellenar opciones leyendo el LABEL real
+    $options.each(function () {
+        const $opt = $(this);
+        const $input = $opt.find('input.yith-wapo-option-value').first();
+        if (!$input.length) return;
+
+        const val = $input.val();
+        const text = ($opt.find('.label_price label').first().text() || val).trim();
+
+        const $o = $('<option/>', { value: val, text: text });
+
+        // Si está seleccionado en label, reflejar en el select
+        if ($input.is(':checked') || $opt.hasClass('selected')) {
+            $o.prop('selected', true);
+        }
+
+        $select.append($o);
+    });
+
+    // Insertar el SELECT al principio del addon
+    $addon.find('.options-container').first()
+        .prepend($('<div class="encu-proxy-wrap"/>').append($select));
+
+    // Ocultar visualmente las tarjetas del label, pero mantener inputs para la lógica
+    $addon.addClass('encu-proxy-enabled');
+
+    // Cuando cambie el select, “clickeamos” el input label equivalente (esto dispara YITH + lógica)
+    function selectLabelValue(val) {
+        if (!val) return;
+
+        const $input = $addon.find('input.yith-wapo-option-value[value="' + val + '"]').first();
+        if (!$input.length) return;
+
+        // Evitar toggle raro si ya está seleccionado
+        const $wrapOpt = $input.closest('[id^="yith-wapo-option"]');
+        const alreadySelected = $input.is(':checked') || $wrapOpt.hasClass('selected');
+        if (alreadySelected) return;
+
+        $input.trigger('click'); // clave: esto es lo que hace que YITH dispare su lógica condicional
+    }
+
+    $select.on('change', function () {
+        selectLabelValue(this.value);
+    });
+
+    // Si alguien clickea el label (por JS o por cualquier motivo), sincronizamos el select
+    $addon.on('click change', 'input.yith-wapo-option-value', function () {
+        const v = $(this).val();
+        if (v) $select.val(v);
+    });
+
+});
+
 
 /*jQuery(document).ready(function ($) {
     $('form.cart').on('submit', function (e) {
