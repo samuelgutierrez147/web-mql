@@ -432,6 +432,18 @@ jQuery(function ($) {
         placeholder: 'Seleccionar un formato'
     });
 
+    // =========================================================
+    // 3) ORIENTACIÓN (addon data-id="orientacion")
+    // =========================================================
+    createYithLabelProxySelect({
+        dataId: 'orientacion',
+        proxyId: 'orientacion_proxy_select',
+        wrapClass: 'orientacion-proxy-wrap',
+        enabledClass: 'orientacion-proxy-enabled',
+        selectClass: 'yith-wapo-orientacion-proxy',
+        placeholder: 'Seleccionar una orientación'
+    });
+
 });
 
 
