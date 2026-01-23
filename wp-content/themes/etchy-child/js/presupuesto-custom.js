@@ -452,9 +452,9 @@ jQuery(function ($) {
     const $block = $('#yith-wapo-block-1');
     if (!$block.length) return;
 
-    // ---------------------------------------------------------
-    // Helpers visibilidad "real" (respeta tu clase no-visible)
-    // ---------------------------------------------------------
+    // -------------------------
+    // Visibilidad real
+    // -------------------------
     function isReallyVisible($el) {
         if (!$el.length) return false;
         if ($el.hasClass('no-visible')) return false;
@@ -462,9 +462,9 @@ jQuery(function ($) {
         return $el.is(':visible');
     }
 
-    // ---------------------------------------------------------
-    // Placeholder para poder devolver addons a su sitio original
-    // ---------------------------------------------------------
+    // -------------------------
+    // Placeholder para devolver addons a su sitio original
+    // -------------------------
     function ensurePlaceholder($addon) {
         if ($addon.data('wapoPh')) return;
         const $ph = $('<span class="wapo-ph" aria-hidden="true" style="display:none"></span>');
@@ -473,7 +473,6 @@ jQuery(function ($) {
     }
 
     function restoreAll() {
-        // devolver addons a su posición original
         $block.children('.yith-wapo-addon').each(function () {
             const $a = $(this);
             const $ph = $a.data('wapoPh');
@@ -483,14 +482,16 @@ jQuery(function ($) {
             $a.removeData('wapoGrouped');
         });
 
-        // borrar fieldsets anteriores
         $block.children('.wapo-fieldset').remove();
     }
 
+    // -------------------------
+    // Token "15-0", "21-0", etc
+    // -------------------------
     function tokenFromInput($input) {
         const id = $input.attr('id') || '';
         const m = id.match(/yith-wapo-(\d+)-(\d+)/);
-        return m ? (m[1] + '-' + m[2]) : null; // "15-0"
+        return m ? (m[1] + '-' + m[2]) : null;
     }
 
     function titleFromInput($input) {
@@ -523,6 +524,61 @@ jQuery(function ($) {
         return $fs;
     }
 
+    // -------------------------
+    // ✅ CLAVE: seleccionar como humano (click en la tarjeta)
+    // -------------------------
+    function clickOptionLikeUser($input) {
+        const $opt = $input.closest('.yith-wapo-option');
+        const $target = $opt.find('.label-container-display, .label').first();
+
+        if ($target.length) {
+            $target.trigger('click'); // <- esto dispara YITH + lógica condicional
+        } else {
+            // fallback por si cambia el HTML
+            $input.prop('checked', true).trigger('change');
+            $opt.addClass('selected');
+        }
+    }
+
+    // -------------------------
+    // Obtener selección (soporta .selected aunque :checked no esté)
+    // -------------------------
+    function getSelectedInputs($acc) {
+        let $sel = $acc.find('.yith-wapo-option.selected input.yith-wapo-option-value').not(':disabled');
+        if ($sel.length) return $sel;
+
+        $sel = $acc.find('input.yith-wapo-option-value:checked').not(':disabled');
+        return $sel;
+    }
+
+    // -------------------------
+    // ✅ Auto-marcar acordeones visibles sin selección
+    // -------------------------
+    let autoSelecting = false;
+
+    function autoSelectVisibleAccordions() {
+        if (autoSelecting) return;
+        autoSelecting = true;
+
+        ACCORDION_ADDON_IDS.forEach(function (addonId) {
+            const $acc = $('#yith-wapo-addon-' + addonId);
+            if (!isReallyVisible($acc)) return;
+
+            const $selected = getSelectedInputs($acc);
+            if ($selected.length) return;
+
+            const $first = $acc.find('input.yith-wapo-option-value').not(':disabled').first();
+            if (!$first.length) return;
+
+            clickOptionLikeUser($first);
+        });
+
+        autoSelecting = false;
+    }
+
+    // -------------------------
+    // Tokens activos (lo que está seleccionado)
+    // -------------------------
     function collectActiveTokens() {
         const tokens = [];
 
@@ -530,7 +586,8 @@ jQuery(function ($) {
             const $acc = $('#yith-wapo-addon-' + addonId);
             if (!isReallyVisible($acc)) return;
 
-            $acc.find('input.yith-wapo-option-value:checked').each(function () {
+            const $selInputs = getSelectedInputs($acc);
+            $selInputs.each(function () {
                 const $inp = $(this);
                 const token = tokenFromInput($inp);
                 if (!token) return;
@@ -547,36 +604,9 @@ jQuery(function ($) {
         return tokens;
     }
 
-    // ---------------------------------------------------------
-    // ✅ NUEVO: auto-seleccionar 1ª opción en acordeones visibles (si están sin selección)
-    // ---------------------------------------------------------
-    let autoSelecting = false;
-
-    function autoSelectVisibleAccordions() {
-        if (autoSelecting) return;
-        autoSelecting = true;
-
-        ACCORDION_ADDON_IDS.forEach(function (addonId) {
-            const $acc = $('#yith-wapo-addon-' + addonId);
-            if (!isReallyVisible($acc)) return;
-
-            const $checked = $acc.find('input.yith-wapo-option-value:checked');
-            if ($checked.length) return;
-
-            const $first = $acc.find('input.yith-wapo-option-value').not(':disabled').first();
-            if (!$first.length) return;
-
-            // Dispara la lógica de YITH igual que un click real
-            $first.trigger('click');
-            $first.trigger('change');
-        });
-
-        autoSelecting = false;
-    }
-
-    // ---------------------------------------------------------
-    // Rebuild de fieldsets
-    // ---------------------------------------------------------
+    // -------------------------
+    // Rebuild fieldsets
+    // -------------------------
     function rebuildGroups() {
         restoreAll();
 
@@ -599,7 +629,7 @@ jQuery(function ($) {
             $directAddons.each(function () {
                 const $a = $(this);
 
-                // No mover los acordeones
+                // No mover acordeones
                 const id = $a.attr('id') || '';
                 const isAccordion = ACCORDION_ADDON_IDS.some(n => id === ('yith-wapo-addon-' + n));
                 if (isAccordion) return;
@@ -623,33 +653,31 @@ jQuery(function ($) {
         }, 0);
     }
 
-    // ---------------------------------------------------------
-    // INIT: esperar a que YITH pinte y luego:
-    // 1) auto-select acordeones visibles
-    // 2) rebuild
-    // ---------------------------------------------------------
-    setTimeout(function () {
-        autoSelectVisibleAccordions();
-        setTimeout(rebuildGroups, 0);
-    }, 150);
+    // -------------------------
+    // Scheduler (deja a YITH respirar antes de reordenar)
+    // -------------------------
+    function scheduleRebuild() {
+        // 1) auto-select acordeones visibles
+        // 2) espera a que YITH aplique condicionales
+        // 3) rebuild
+        setTimeout(function () {
+            autoSelectVisibleAccordions();
+            setTimeout(rebuildGroups, 200);
+        }, 120);
+    }
 
-    // ---------------------------------------------------------
-    // Cuando cambias algo en acordeones:
-    // 1) deja que YITH aplique lógica
-    // 2) auto-select si han aparecido acordeones nuevos visibles sin selección
-    // 3) rebuild
-    // ---------------------------------------------------------
-    $block.on('change', 'input.yith-wapo-option-value', function () {
+    // Init
+    scheduleRebuild();
+
+    // Si cambia una opción en un acordeón -> re-evaluar
+    $block.on('change click', 'input.yith-wapo-option-value', function () {
         const $inp = $(this);
         const $parentAddon = $inp.closest('.yith-wapo-addon');
         const parentId = $parentAddon.attr('id') || '';
         const isAccordion = ACCORDION_ADDON_IDS.some(n => parentId === ('yith-wapo-addon-' + n));
         if (!isAccordion) return;
 
-        setTimeout(function () {
-            autoSelectVisibleAccordions();
-            setTimeout(rebuildGroups, 0);
-        }, 0);
+        scheduleRebuild();
     });
 
 });
