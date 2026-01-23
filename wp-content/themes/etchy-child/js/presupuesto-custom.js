@@ -525,22 +525,6 @@ jQuery(function ($) {
     }
 
     // -------------------------
-    // ✅ CLAVE: seleccionar como humano (click en la tarjeta)
-    // -------------------------
-    function clickOptionLikeUser($input) {
-        const $opt = $input.closest('.yith-wapo-option');
-        const $target = $opt.find('.label-container-display, .label').first();
-
-        if ($target.length) {
-            $target.trigger('click'); // <- esto dispara YITH + lógica condicional
-        } else {
-            // fallback por si cambia el HTML
-            $input.prop('checked', true).trigger('change');
-            $opt.addClass('selected');
-        }
-    }
-
-    // -------------------------
     // Obtener selección (soporta .selected aunque :checked no esté)
     // -------------------------
     function getSelectedInputs($acc) {
@@ -551,34 +535,6 @@ jQuery(function ($) {
         return $sel;
     }
 
-    // -------------------------
-    // ✅ Auto-marcar acordeones visibles sin selección
-    // -------------------------
-    let autoSelecting = false;
-
-    function autoSelectVisibleAccordions() {
-        if (autoSelecting) return;
-        autoSelecting = true;
-
-        ACCORDION_ADDON_IDS.forEach(function (addonId) {
-            const $acc = $('#yith-wapo-addon-' + addonId);
-            if (!isReallyVisible($acc)) return;
-
-            const $selected = getSelectedInputs($acc);
-            if ($selected.length) return;
-
-            const $first = $acc.find('input.yith-wapo-option-value').not(':disabled').first();
-            if (!$first.length) return;
-
-            clickOptionLikeUser($first);
-        });
-
-        autoSelecting = false;
-    }
-
-    // -------------------------
-    // Tokens activos (lo que está seleccionado)
-    // -------------------------
     function collectActiveTokens() {
         const tokens = [];
 
@@ -604,9 +560,6 @@ jQuery(function ($) {
         return tokens;
     }
 
-    // -------------------------
-    // Rebuild fieldsets
-    // -------------------------
     function rebuildGroups() {
         restoreAll();
 
@@ -643,7 +596,7 @@ jQuery(function ($) {
             });
         });
 
-        // Oculta fieldsets sin nada visible dentro
+        // Oculta fieldsets vacíos
         setTimeout(function () {
             $block.children('.wapo-fieldset').each(function () {
                 const $fs = $(this);
@@ -654,19 +607,15 @@ jQuery(function ($) {
     }
 
     // -------------------------
-    // Scheduler (deja a YITH respirar antes de reordenar)
+    // Scheduler (espera a YITH)
     // -------------------------
+    let rebuildTimer = null;
     function scheduleRebuild() {
-        // 1) auto-select acordeones visibles
-        // 2) espera a que YITH aplique condicionales
-        // 3) rebuild
-        setTimeout(function () {
-            autoSelectVisibleAccordions();
-            setTimeout(rebuildGroups, 200);
-        }, 120);
+        clearTimeout(rebuildTimer);
+        rebuildTimer = setTimeout(rebuildGroups, 250);
     }
 
-    // Init
+    // Init: NO auto-seleccionamos nada. Solo agrupamos si ya hay selecciones.
     scheduleRebuild();
 
     // Si cambia una opción en un acordeón -> re-evaluar
