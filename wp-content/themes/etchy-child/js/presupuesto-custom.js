@@ -446,6 +446,183 @@ jQuery(function ($) {
 
 });
 
+jQuery(function ($) {
+
+    // ✅ IDs de tus acordeones
+    const ACCORDION_ADDON_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 71];
+
+    // ✅ Bloque WAPO (si usas otro, cámbialo aquí)
+    const $block = $('#yith-wapo-block-1');
+    if (!$block.length) return;
+
+    // =========================================================
+    // Helpers
+    // =========================================================
+    function ensurePlaceholder($addon) {
+        if ($addon.data('wapoPh')) return;
+        const $ph = $('<span class="wapo-ph" aria-hidden="true" style="display:none"></span>');
+        $ph.insertBefore($addon);
+        $addon.data('wapoPh', $ph);
+    }
+
+    function restoreAll() {
+        // 1) Restaurar addons movidos a su sitio original
+        $block.children('.yith-wapo-addon').each(function () {
+            const $a = $(this);
+            const $ph = $a.data('wapoPh');
+            if ($ph && $ph.length) {
+                // Si ya no está donde toca, lo devolvemos
+                if ($a.prev()[0] !== $ph[0]) $a.insertAfter($ph);
+            }
+            $a.removeData('wapoGrouped');
+        });
+
+        // 2) Eliminar fieldsets anteriores
+        $block.children('.wapo-fieldset').remove();
+    }
+
+    function tokenFromInput($input) {
+        // id típico: yith-wapo-15-0
+        const id = $input.attr('id') || '';
+        const m = id.match(/yith-wapo-(\d+)-(\d+)/);
+        return m ? (m[1] + '-' + m[2]) : null; // "15-0"
+    }
+
+    function titleFromInput($input) {
+        const $opt = $input.closest('[id^="yith-wapo-option"]');
+        const t = ($opt.find('.label_price label').first().text() || $input.val() || '').trim();
+        return t || 'Opciones';
+    }
+
+    function addonDependsOnToken($addon, token) {
+        const raw = ($addon.attr('data-conditional_rule_addon') || '');
+        if (!raw) return false;
+        return raw.split('|').includes(token);
+    }
+
+    function ensureFieldsetAfter($afterEl, token, title) {
+        let $fs = $block.children('.wapo-fieldset[data-token="' + token + '"]');
+        if ($fs.length) {
+            $fs.find('legend').text(title);
+            return $fs;
+        }
+
+        $fs = $('<fieldset/>', {
+            class: 'wapo-fieldset',
+            'data-token': token
+        })
+            .append($('<legend/>', { text: title }))
+            .append($('<div/>', { class: 'wapo-fieldset__grid' }));
+
+        // lo insertamos justo debajo del acordeón/elemento indicado
+        $fs.insertAfter($afterEl);
+
+        return $fs;
+    }
+
+    function collectActiveTokens() {
+        const tokens = [];
+
+        ACCORDION_ADDON_IDS.forEach(function (addonId) {
+            const $acc = $('#yith-wapo-addon-' + addonId);
+            if (!$acc.length) return;
+
+            // inputs marcados dentro del acordeón (checkbox o radio)
+            $acc.find('input.yith-wapo-option-value:checked').each(function () {
+                const $inp = $(this);
+                const token = tokenFromInput($inp);
+                if (!token) return;
+
+                tokens.push({
+                    addonId: addonId,
+                    token: token,
+                    title: titleFromInput($inp),
+                    $acc: $acc
+                });
+            });
+        });
+
+        return tokens;
+    }
+
+    function rebuildGroups() {
+        restoreAll();
+
+        const active = collectActiveTokens();
+        if (!active.length) return;
+
+        // Para mantener el orden y que cada fieldset vaya debajo de su acordeón
+        const lastInsertAfterByAddon = {};
+
+        // Colección de addons “movibles” = hijos directos del bloque
+        const $directAddons = $block.children('.yith-wapo-addon');
+
+        active.forEach(function (item) {
+            const addonId = item.addonId;
+            const token = item.token;
+
+            // Insertamos el fieldset debajo del acordeón (o debajo del último fieldset de ese mismo acordeón)
+            const $baseAfter = lastInsertAfterByAddon[addonId] || item.$acc;
+            const $fs = ensureFieldsetAfter($baseAfter, token, item.title);
+            const $grid = $fs.find('.wapo-fieldset__grid');
+
+            // Actualizamos “último insertado” para ese acordeón
+            lastInsertAfterByAddon[addonId] = $fs;
+
+            // Mover addons dependientes (que no sean los acordeones)
+            $directAddons.each(function () {
+                const $a = $(this);
+
+                // No mover los acordeones
+                const id = $a.attr('id') || '';
+                const isAccordion = ACCORDION_ADDON_IDS.some(n => id === ('yith-wapo-addon-' + n));
+                if (isAccordion) return;
+
+                // ¿depende de este token?
+                if (!addonDependsOnToken($a, token)) return;
+
+                // Evita que el mismo addon se meta en 2 fieldsets a la vez
+                if ($a.data('wapoGrouped')) return;
+
+                ensurePlaceholder($a);
+                $grid.append($a);
+                $a.data('wapoGrouped', token);
+            });
+        });
+
+        // Opcional: ocultar fieldsets vacíos (si todo dentro está oculto por YITH)
+        setTimeout(function () {
+            $block.children('.wapo-fieldset').each(function () {
+                const $fs = $(this);
+                const $visibleChild = $fs.find('.wapo-fieldset__grid > .yith-wapo-addon:visible').first();
+                $fs.toggle(!!$visibleChild.length);
+            });
+        }, 0);
+    }
+
+    // =========================================================
+    // Listeners: cuando cambie una opción de cualquier acordeón
+    // =========================================================
+    // (delegado al bloque para que funcione aunque YITH re-renderice)
+    $block.on('change', 'input.yith-wapo-option-value', function () {
+        const $inp = $(this);
+        const $parentAddon = $inp.closest('.yith-wapo-addon');
+        const parentId = $parentAddon.attr('id') || '';
+
+        // Solo reconstruimos si el cambio viene de uno de los acordeones
+        const isAccordion = ACCORDION_ADDON_IDS.some(n => parentId === ('yith-wapo-addon-' + n));
+        if (!isAccordion) return;
+
+        // reconstruye (después de que YITH aplique su lógica)
+        setTimeout(rebuildGroups, 0);
+    });
+
+    // Init
+    rebuildGroups();
+
+});
+
+
 
 
 /*jQuery(document).ready(function ($) {
