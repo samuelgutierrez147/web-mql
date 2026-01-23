@@ -446,7 +446,7 @@ jQuery(function ($) {
 
 });
 
-jQuery(function ($) {
+/*jQuery(function ($) {
 
     const ACCORDION_ADDON_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 71];
     const $block = $('#yith-wapo-block-1');
@@ -629,7 +629,7 @@ jQuery(function ($) {
         scheduleRebuild();
     });
 
-});
+});*/
 
 
 /*jQuery(document).ready(function ($) {
