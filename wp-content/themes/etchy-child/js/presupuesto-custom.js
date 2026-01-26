@@ -446,6 +446,95 @@ jQuery(function ($) {
 
 });
 
+jQuery(function ($) {
+
+    const ACCORDION_ADDON_IDS = [15,16,17,18,19,20,21,22,71];
+    const $block = $('#yith-wapo-block-1');
+    if (!$block.length) return;
+
+    const USER_TOUCHED_KEY = 'wapoUserTouched';
+
+    // Selector de TODOS los addons objetivo
+    const ADDON_SELECTOR = ACCORDION_ADDON_IDS
+        .map(id => '#yith-wapo-addon-' + id)
+        .join(',');
+
+    function isAddonActivable($addon){
+        if (!$addon.length) return false;
+        if ($addon.hasClass('no-visible')) return false;
+        if ($addon.css('display') === 'none') return false;
+        return true;
+    }
+
+    function isAlreadySelected($addon){
+        const $opt = $addon.find('[id^="yith-wapo-option"]').first();
+        const $inp = $opt.find('input.yith-wapo-option-value').first();
+        return ($opt.hasClass('selected') || ($inp.length && $inp.is(':checked')));
+    }
+
+    function userTouched($addon){
+        return !!$addon.data(USER_TOUCHED_KEY);
+    }
+
+    function clickAccordion($addon){
+        const $clickTarget =
+            $addon.find('.label-container-display').first().length ? $addon.find('.label-container-display').first()
+                : $addon.find('[id^="yith-wapo-option"]').first().length ? $addon.find('[id^="yith-wapo-option"]').first()
+                    : $addon;
+
+        $clickTarget.trigger('click');
+    }
+
+    function autoSelectVisibleAccordions(){
+        ACCORDION_ADDON_IDS.forEach(function(id){
+            const $addon = $('#yith-wapo-addon-' + id);
+
+            if (!isAddonActivable($addon)) return;
+
+            // ✅ CLAVE: si el usuario ya interactuó con este addon, no lo auto-marques jamás
+            if (userTouched($addon)) return;
+
+            if (isAlreadySelected($addon)) return;
+
+            clickAccordion($addon);
+        });
+    }
+
+    // --- Marcar como "tocado por el usuario" cuando interactúe ---
+    // (Así, si lo desmarca, NO se re-marca solo)
+    $block.on('click change', ADDON_SELECTOR + ' .label-container-display, ' + ADDON_SELECTOR + ' input.yith-wapo-option-value', function () {
+        $(this).closest('.yith-wapo-addon')
+            .data(USER_TOUCHED_KEY, true)
+            .attr('data-user-touched', '1'); // opcional, para debug
+    });
+
+    // ---- Ejecutar al cargar ----
+    setTimeout(autoSelectVisibleAccordions, 300);
+    setTimeout(autoSelectVisibleAccordions, 900);
+
+    // ---- Re-ejecutar cuando cambie algo por lógica de YITH ----
+    let tmr = null;
+    function schedule(){
+        clearTimeout(tmr);
+        tmr = setTimeout(autoSelectVisibleAccordions, 250);
+    }
+
+    // OJO: aquí escuchamos cambios generales porque la lógica condicional puede mostrar/hidear addons
+    $block.on('change', 'input.yith-wapo-option-value, select.yith-wapo-option-value', schedule);
+
+    const obs = new MutationObserver(function(muts){
+        for (const m of muts){
+            if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style')){
+                schedule();
+                break;
+            }
+        }
+    });
+
+    obs.observe($block[0], { subtree: true, attributes: true });
+
+});
+
 /*jQuery(function ($) {
 
     const ACCORDION_ADDON_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 71];
