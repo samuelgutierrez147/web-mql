@@ -535,6 +535,189 @@ jQuery(function ($) {
 
 });
 
+jQuery(function ($) {
+
+    const ACCORDION_IDS = [15,16,17,18,19,20,21,22,71];
+    const $block = $('#yith-wapo-block-1');
+    if (!$block.length) return;
+
+    const SECTION_CLASS = 'wapo-section';
+    const GRID_CLASS    = 'wapo-section-grid';
+    const WRAP_ID       = 'wapo-sections-wrap';
+
+    function getAccordionLabel(id){
+        const $addon = $block.find('#yith-wapo-addon-' + id).first();
+        if (!$addon.length) return 'Sección ' + id;
+
+        let txt = ($addon.find('.label_price label').first().text() || '').trim();
+        if (!txt) txt = ($addon.find('.wapo-addon-title span').first().text() || '').trim();
+        return txt || ('Sección ' + id);
+    }
+
+    // Visible “real” (no dependas de :visible)
+    function isAddonShownByYith($a){
+        if (!$a || !$a.length) return false;
+        if ($a.hasClass('no-visible')) return false;
+        if ($a.is('[hidden]')) return false;
+
+        const style = String($a.attr('style') || '');
+        if (/display\s*:\s*none/i.test(style)) return false;
+
+        return true;
+    }
+
+    // 1) contenedor único donde vivirán los fieldsets (debajo del último acordeón visible)
+    function ensureSectionsWrap(){
+        let $wrap = $('#' + WRAP_ID);
+        if ($wrap.length) return $wrap;
+
+        $wrap = $('<div/>', { id: WRAP_ID });
+
+        // buscamos el último acordeón EXISTENTE en el DOM (y si está visible mejor)
+        let $last = $();
+        ACCORDION_IDS.forEach(id => {
+            const $a = $block.find('#yith-wapo-addon-' + id).first();
+            if ($a.length) $last = $a;
+        });
+
+        if ($last.length) $wrap.insertAfter($last);
+        else $block.append($wrap);
+
+        return $wrap;
+    }
+
+    function ensureSection(id){
+        const $wrap = ensureSectionsWrap();
+        const selector = 'fieldset.' + SECTION_CLASS + '[data-section-for="' + id + '"]';
+        let $fs = $wrap.children(selector);
+
+        if (!$fs.length){
+            $fs = $('<fieldset/>', { class: SECTION_CLASS, 'data-section-for': id })
+                .append($('<legend/>').text(getAccordionLabel(id)))
+                .append($('<div/>', { class: GRID_CLASS }));
+            $wrap.append($fs);
+        } else {
+            $fs.children('legend').text(getAccordionLabel(id));
+        }
+
+        // siempre ancho completo para tu grid 1/3
+        $fs.css({
+            gridColumn: '1 / -1',
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
+        });
+
+        $fs.children('.' + GRID_CLASS).css({
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
+        });
+
+        return $fs;
+    }
+
+    // mapa "15-0" => 15 etc (por si usas reglas condicionadas a 15-0)
+    function buildKeyMap(){
+        const map = {};
+        ACCORDION_IDS.forEach(id => {
+            const $addon = $block.find('#yith-wapo-addon-' + id).first();
+            if (!$addon.length) return;
+
+            $addon.find('input.yith-wapo-option-value').each(function(){
+                const m = String(this.id || '').match(/yith-wapo-(\d+)-(\d+)/);
+                if (!m) return;
+                map[m[1] + '-' + m[2]] = id;
+            });
+        });
+        return map;
+    }
+
+    function matchAccordionForAddon($addon, keyMap){
+        const raw = String($addon.attr('data-conditional_rule_addon') || '').trim();
+        if (!raw) return null;
+
+        const rules = raw.split('|').map(s => s.trim()).filter(Boolean);
+        for (const r of rules){
+            if (keyMap[r]) return keyMap[r];
+        }
+        return null;
+    }
+
+    function rebuildSections(){
+        const keyMap = buildKeyMap();
+
+        // A) asegura wrapper + fieldsets en orden fijo (15..71)
+        const $wrap = ensureSectionsWrap();
+        ACCORDION_IDS.forEach(id => ensureSection(id));
+
+        // B) mueve SOLO los addons activos a su sección (sin tocar los acordeones)
+        $block.find('.yith-wapo-addon').each(function(){
+            const $addon = $(this);
+
+            const m = String($addon.attr('id') || '').match(/yith-wapo-addon-(\d+)/);
+            if (!m) return;
+            const addonId = parseInt(m[1], 10);
+
+            // no movemos los acordeones 15,16,17...
+            if (ACCORDION_IDS.includes(addonId)) return;
+
+            const targetAcc = matchAccordionForAddon($addon, keyMap);
+            if (!targetAcc) return;
+
+            // si YITH lo oculta => no lo movemos
+            if (!isAddonShownByYith($addon)) return;
+
+            const $fs = $wrap.children('fieldset.' + SECTION_CLASS + '[data-section-for="' + targetAcc + '"]').first();
+            if (!$fs.length) return;
+
+            const $grid = $fs.children('.' + GRID_CLASS);
+            if ($addon.parent().is($grid)) return;
+
+            $grid.append($addon);
+        });
+
+        // C) mostrar/ocultar fieldsets según si tienen hijos activos
+        $wrap.children('fieldset.' + SECTION_CLASS).each(function(){
+            const $fs = $(this);
+            const $grid = $fs.children('.' + GRID_CLASS);
+
+            const anyActive = $grid.children('.yith-wapo-addon').toArray().some(el => isAddonShownByYith($(el)));
+            $fs.toggle(anyActive);
+        });
+
+        // D) el wrap solo se muestra si hay alguna sección visible
+        const anySectionVisible = $wrap.children('fieldset.' + SECTION_CLASS + ':visible').length > 0;
+        $wrap.toggle(anySectionVisible);
+    }
+
+    let t = null;
+    function schedule(){
+        clearTimeout(t);
+        t = setTimeout(rebuildSections, 150);
+    }
+
+    setTimeout(rebuildSections, 600);
+    setTimeout(rebuildSections, 1400);
+
+    $block.on('change', 'input.yith-wapo-option-value, select.yith-wapo-option-value', schedule);
+
+    const obs = new MutationObserver(function(muts){
+        for (const m of muts){
+            if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style')){
+                schedule();
+                break;
+            }
+        }
+    });
+
+    obs.observe($block[0], { subtree: true, attributes: true });
+
+});
+
+
 /*jQuery(function ($) {
 
     const ACCORDION_ADDON_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 71];
