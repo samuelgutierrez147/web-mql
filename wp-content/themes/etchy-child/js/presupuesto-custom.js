@@ -353,8 +353,8 @@ jQuery(function ($) {
         if (!$options.length) return;
 
         // Crear SELECT proxy
-        const $select = $('<select/>', { id: cfg.proxyId, class: cfg.selectClass });
-        $select.append($('<option/>', { value: '', text: cfg.placeholder || 'Seleccionar una opción' }));
+        const $select = $('<select/>', {id: cfg.proxyId, class: cfg.selectClass});
+        $select.append($('<option/>', {value: '', text: cfg.placeholder || 'Seleccionar una opción'}));
 
         // Rellenar opciones leyendo el LABEL real
         $options.each(function () {
@@ -365,7 +365,7 @@ jQuery(function ($) {
             const val = $input.val();
             const text = ($opt.find('.label_price label').first().text() || val).trim();
 
-            const $o = $('<option/>', { value: val, text: text });
+            const $o = $('<option/>', {value: val, text: text});
 
             // Si está seleccionado en label, reflejar en el select
             if ($input.is(':checked') || $opt.hasClass('selected')) {
@@ -377,7 +377,7 @@ jQuery(function ($) {
 
         // Insertar el SELECT al principio del addon
         $addon.find('.options-container').first()
-            .prepend($('<div/>', { class: cfg.wrapClass }).append($select));
+            .prepend($('<div/>', {class: cfg.wrapClass}).append($select));
 
         // Marcar el addon como “proxy enabled” (por si lo usas en CSS)
         $addon.addClass(cfg.enabledClass);
@@ -448,7 +448,7 @@ jQuery(function ($) {
 
 jQuery(function ($) {
 
-    const ACCORDION_ADDON_IDS = [15,16,17,18,19,20,21,22,71];
+    const ACCORDION_ADDON_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 23, 71];
     const $block = $('#yith-wapo-block-1');
     if (!$block.length) return;
 
@@ -459,24 +459,24 @@ jQuery(function ($) {
         .map(id => '#yith-wapo-addon-' + id)
         .join(',');
 
-    function isAddonActivable($addon){
+    function isAddonActivable($addon) {
         if (!$addon.length) return false;
         if ($addon.hasClass('no-visible')) return false;
         if ($addon.css('display') === 'none') return false;
         return true;
     }
 
-    function isAlreadySelected($addon){
+    function isAlreadySelected($addon) {
         const $opt = $addon.find('[id^="yith-wapo-option"]').first();
         const $inp = $opt.find('input.yith-wapo-option-value').first();
         return ($opt.hasClass('selected') || ($inp.length && $inp.is(':checked')));
     }
 
-    function userTouched($addon){
+    function userTouched($addon) {
         return !!$addon.data(USER_TOUCHED_KEY);
     }
 
-    function clickAccordion($addon){
+    function clickAccordion($addon) {
         const $clickTarget =
             $addon.find('.label-container-display').first().length ? $addon.find('.label-container-display').first()
                 : $addon.find('[id^="yith-wapo-option"]').first().length ? $addon.find('[id^="yith-wapo-option"]').first()
@@ -485,8 +485,8 @@ jQuery(function ($) {
         $clickTarget.trigger('click');
     }
 
-    function autoSelectVisibleAccordions(){
-        ACCORDION_ADDON_IDS.forEach(function(id){
+    function autoSelectVisibleAccordions() {
+        ACCORDION_ADDON_IDS.forEach(function (id) {
             const $addon = $('#yith-wapo-addon-' + id);
 
             if (!isAddonActivable($addon)) return;
@@ -514,7 +514,8 @@ jQuery(function ($) {
 
     // ---- Re-ejecutar cuando cambie algo por lógica de YITH ----
     let tmr = null;
-    function schedule(){
+
+    function schedule() {
         clearTimeout(tmr);
         tmr = setTimeout(autoSelectVisibleAccordions, 250);
     }
@@ -522,30 +523,30 @@ jQuery(function ($) {
     // OJO: aquí escuchamos cambios generales porque la lógica condicional puede mostrar/hidear addons
     $block.on('change', 'input.yith-wapo-option-value, select.yith-wapo-option-value', schedule);
 
-    const obs = new MutationObserver(function(muts){
-        for (const m of muts){
-            if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style')){
+    const obs = new MutationObserver(function (muts) {
+        for (const m of muts) {
+            if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style')) {
                 schedule();
                 break;
             }
         }
     });
 
-    obs.observe($block[0], { subtree: true, attributes: true });
+    obs.observe($block[0], {subtree: true, attributes: true});
 
 });
 
 jQuery(function ($) {
 
-    const ACCORDION_IDS = [15,16,17,18,19,20,21,22,71];
+    const ACCORDION_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 23, 71];
     const $block = $('#yith-wapo-block-1');
     if (!$block.length) return;
 
     const SECTION_CLASS = 'wapo-section';
-    const GRID_CLASS    = 'wapo-section-grid';
-    const WRAP_ID       = 'wapo-sections-wrap';
+    const GRID_CLASS = 'wapo-section-grid';
+    const WRAP_ID = 'wapo-sections-wrap';
 
-    function getAccordionLabel(id){
+    function getAccordionLabel(id) {
         const $addon = $block.find('#yith-wapo-addon-' + id).first();
         if (!$addon.length) return 'Sección ' + id;
 
@@ -555,7 +556,7 @@ jQuery(function ($) {
     }
 
     // Visible “real” (no dependas de :visible)
-    function isAddonShownByYith($a){
+    function isAddonShownByYith($a) {
         if (!$a || !$a.length) return false;
         if ($a.hasClass('no-visible')) return false;
         if ($a.is('[hidden]')) return false;
@@ -567,11 +568,11 @@ jQuery(function ($) {
     }
 
     // 1) contenedor único donde vivirán los fieldsets (debajo del último acordeón visible)
-    function ensureSectionsWrap(){
+    function ensureSectionsWrap() {
         let $wrap = $('#' + WRAP_ID);
         if ($wrap.length) return $wrap;
 
-        $wrap = $('<div/>', { id: WRAP_ID });
+        $wrap = $('<div/>', {id: WRAP_ID});
 
         // buscamos el último acordeón EXISTENTE en el DOM (y si está visible mejor)
         let $last = $();
@@ -586,15 +587,15 @@ jQuery(function ($) {
         return $wrap;
     }
 
-    function ensureSection(id){
+    function ensureSection(id) {
         const $wrap = ensureSectionsWrap();
         const selector = 'fieldset.' + SECTION_CLASS + '[data-section-for="' + id + '"]';
         let $fs = $wrap.children(selector);
 
-        if (!$fs.length){
-            $fs = $('<fieldset/>', { class: SECTION_CLASS, 'data-section-for': id })
+        if (!$fs.length) {
+            $fs = $('<fieldset/>', {class: SECTION_CLASS, 'data-section-for': id})
                 .append($('<legend/>').text(getAccordionLabel(id)))
-                .append($('<div/>', { class: GRID_CLASS }));
+                .append($('<div/>', {class: GRID_CLASS}));
             $wrap.append($fs);
         } else {
             $fs.children('legend').text(getAccordionLabel(id));
@@ -620,13 +621,13 @@ jQuery(function ($) {
     }
 
     // mapa "15-0" => 15 etc (por si usas reglas condicionadas a 15-0)
-    function buildKeyMap(){
+    function buildKeyMap() {
         const map = {};
         ACCORDION_IDS.forEach(id => {
             const $addon = $block.find('#yith-wapo-addon-' + id).first();
             if (!$addon.length) return;
 
-            $addon.find('input.yith-wapo-option-value').each(function(){
+            $addon.find('input.yith-wapo-option-value').each(function () {
                 const m = String(this.id || '').match(/yith-wapo-(\d+)-(\d+)/);
                 if (!m) return;
                 map[m[1] + '-' + m[2]] = id;
@@ -635,18 +636,18 @@ jQuery(function ($) {
         return map;
     }
 
-    function matchAccordionForAddon($addon, keyMap){
+    function matchAccordionForAddon($addon, keyMap) {
         const raw = String($addon.attr('data-conditional_rule_addon') || '').trim();
         if (!raw) return null;
 
         const rules = raw.split('|').map(s => s.trim()).filter(Boolean);
-        for (const r of rules){
+        for (const r of rules) {
             if (keyMap[r]) return keyMap[r];
         }
         return null;
     }
 
-    function rebuildSections(){
+    function rebuildSections() {
         const keyMap = buildKeyMap();
 
         // A) asegura wrapper + fieldsets en orden fijo (15..71)
@@ -654,7 +655,7 @@ jQuery(function ($) {
         ACCORDION_IDS.forEach(id => ensureSection(id));
 
         // B) mueve SOLO los addons activos a su sección (sin tocar los acordeones)
-        $block.find('.yith-wapo-addon').each(function(){
+        $block.find('.yith-wapo-addon').each(function () {
             const $addon = $(this);
 
             const m = String($addon.attr('id') || '').match(/yith-wapo-addon-(\d+)/);
@@ -680,7 +681,7 @@ jQuery(function ($) {
         });
 
         // C) mostrar/ocultar fieldsets según si tienen hijos activos
-        $wrap.children('fieldset.' + SECTION_CLASS).each(function(){
+        $wrap.children('fieldset.' + SECTION_CLASS).each(function () {
             const $fs = $(this);
             const $grid = $fs.children('.' + GRID_CLASS);
 
@@ -694,7 +695,8 @@ jQuery(function ($) {
     }
 
     let t = null;
-    function schedule(){
+
+    function schedule() {
         clearTimeout(t);
         t = setTimeout(rebuildSections, 150);
     }
@@ -704,19 +706,270 @@ jQuery(function ($) {
 
     $block.on('change', 'input.yith-wapo-option-value, select.yith-wapo-option-value', schedule);
 
-    const obs = new MutationObserver(function(muts){
-        for (const m of muts){
-            if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style')){
+    const obs = new MutationObserver(function (muts) {
+        for (const m of muts) {
+            if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style')) {
                 schedule();
                 break;
             }
         }
     });
 
-    obs.observe($block[0], { subtree: true, attributes: true });
+    obs.observe($block[0], {subtree: true, attributes: true});
 
 });
 
+jQuery(function ($) {
+
+    const $form = $('form.cart');
+    const $out  = $('#generar-presupuesto');
+    if (!$form.length || !$out.length) return;
+
+    const DEFAULT_SELECT_VALUES = new Set(['', 'default']);
+
+    // Acordeones / disparadores que NO deben ir al resumen
+    const SKIP_SUMMARY_ADDON_IDS = new Set([15,16,17,18,19,20,21,22,71]);
+
+    function isVisibleAddon($addon) {
+        return $addon.length && $addon.is(':visible') && !$addon.hasClass('no-visible');
+    }
+
+    function getAddonNumericId($addon){
+        const m = String($addon.attr('id') || '').match(/yith-wapo-addon-(\d+)/);
+        return m ? parseInt(m[1], 10) : null;
+    }
+
+    function shouldSkipInSummary($addon){
+        const id = getAddonNumericId($addon);
+        if (id && SKIP_SUMMARY_ADDON_IDS.has(id)) return true;
+        if ($addon.hasClass('yith-wapo-addon-type-label')) return true; // labels = disparadores
+        return false;
+    }
+
+    function getSectionTitle($addon) {
+        const $fs = $addon.closest('fieldset.wapo-section');
+        if ($fs.length) {
+            const t = ($fs.children('legend').first().text() || '').trim();
+            if (t) return t;
+        }
+        // Si no está en fieldset, NO mostramos sección.
+        return '';
+    }
+
+    function getAddonTitle($addon) {
+        let t = ($addon.find('.wapo-addon-title span').first().text() || '').trim();
+        if (!t) t = ($addon.find('.label_price label').first().text() || '').trim();
+        if (!t) t = ($addon.attr('data-id') || $addon.attr('id') || '').trim();
+        return t || 'Campo';
+    }
+
+    function getSelectedTextForOptionInput($input) {
+        const $opt = $input.closest('.yith-wapo-option');
+        let txt = ($opt.find('.yith-wapo-addon-label').first().text() || '').trim();
+        if (!txt) txt = ($opt.find('.label_price label').first().text() || '').trim();
+        if (!txt) txt = ($opt.find('label').first().text() || '').trim();
+        return txt || ($input.val() || '').trim();
+    }
+
+    function isPlaceholderOption($opt){
+        const val = ($opt.val() || '').toString().trim();
+        const txt = ($opt.text() || '').toString().trim().toLowerCase();
+
+        if (!val || val === 'default') return true;
+        if (txt.includes('seleccionar') || txt.includes('selecciona') || txt.includes('elige')) return true;
+
+        // placeholders típicos de tu web con value NULL
+        if (val === 'NULL' && (txt.includes('tipo') || txt.includes('seleccion'))) return true;
+
+        return false;
+    }
+
+    function normalizeValue(v){
+        v = (v ?? '').toString().trim();
+        if (!v) return '';
+        if (DEFAULT_SELECT_VALUES.has(v)) return '';
+        return v;
+    }
+
+    function readAddonValue($addon) {
+        if (!isVisibleAddon($addon)) return '';
+
+        // 0) PROXY SELECTS
+        const $proxySelect = $addon
+            .find('.formato-proxy-wrap select, .encu-proxy-wrap select, .orientacion-proxy-wrap select, select[class*="proxy"]')
+            .first();
+
+        if ($proxySelect.length && $proxySelect.is(':visible')) {
+            const $opt = $proxySelect.find('option:selected').first();
+            if ($opt.length && !isPlaceholderOption($opt)) {
+                const t = ($opt.text() || '').trim();
+                return normalizeValue(t || $proxySelect.val());
+            }
+            return '';
+        }
+
+        // 1) SELECT normal WAPO
+        const $select = $addon.find('select.yith-wapo-option-value').first();
+        if ($select.length && $select.is(':visible')) {
+            const $opt = $select.find('option:selected').first();
+            if ($opt.length && !isPlaceholderOption($opt)) {
+                const t = ($opt.text() || '').trim();
+                return normalizeValue(t || $select.val());
+            }
+            return '';
+        }
+
+        // 2) CHECKBOX
+        const $checks = $addon.find('input.yith-wapo-option-value[type="checkbox"]:checked');
+        if ($checks.length) {
+            const vals = $checks.map(function () {
+                return getSelectedTextForOptionInput($(this));
+            }).get().map(normalizeValue).filter(Boolean);
+            return vals.length ? vals.join(', ') : '';
+        }
+
+        // 3) RADIO
+        let $radio = $addon.find('input.yith-wapo-option-value[type="radio"]:checked').first();
+        if (!$radio.length) {
+            $radio = $addon.find('.yith-wapo-option.selection-single.selected input.yith-wapo-option-value[type="radio"]').first();
+        }
+        if ($radio.length) {
+            const txt = getSelectedTextForOptionInput($radio);
+            return normalizeValue(txt || $radio.val());
+        }
+
+        // 4) TEXT/NUMBER/TEXTAREA
+        const $field = $addon.find(
+            'input.yith-wapo-option-value[type="text"], input.yith-wapo-option-value[type="number"], textarea.yith-wapo-option-value'
+        ).first();
+
+        if ($field.length && $field.is(':visible')) {
+            return normalizeValue($field.val());
+        }
+
+        return '';
+    }
+
+    function buildSummary() {
+        const groups = new Map(); // sectionTitle -> items[]
+        const noSectionItems = []; // items sin sección
+
+        $form.find('.yith-wapo-addon').each(function () {
+            const $addon = $(this);
+
+            if (!isVisibleAddon($addon)) return;
+            if (shouldSkipInSummary($addon)) return;
+
+            const value = readAddonValue($addon);
+            if (!value) return; // ✅ NO meter vacíos
+
+            const sectionTitle = getSectionTitle($addon); // '' si no hay fieldset
+            const fieldTitle   = getAddonTitle($addon);
+
+            const key = String(getAddonNumericId($addon) || $addon.attr('id') || $addon.attr('data-id') || fieldTitle);
+
+            const item = { key, label: fieldTitle, value };
+
+            if (!sectionTitle) {
+                // sin sección
+                const idx = noSectionItems.findIndex(x => x.key === key);
+                if (idx === -1) noSectionItems.push(item);
+                else noSectionItems[idx] = item;
+                return;
+            }
+
+            if (!groups.has(sectionTitle)) groups.set(sectionTitle, []);
+            const arr = groups.get(sectionTitle);
+
+            const idx = arr.findIndex(x => x.key === key);
+            if (idx === -1) arr.push(item);
+            else arr[idx] = item;
+        });
+
+        // Cantidad WooCommerce (si quieres mostrarla siempre, quita la condición)
+        const $qty = $form.find('input.qty').first();
+        if ($qty.length) {
+            const q = normalizeValue($qty.val());
+            if (q && q !== '1') {
+                noSectionItems.push({ key: 'qty', label: 'Cantidad', value: q });
+            }
+        }
+
+        const hasAnything = noSectionItems.length || groups.size;
+        if (!hasAnything) {
+            $out.html('<div class="wapo-summary-empty">Rellena el formulario para generar el resumen.</div>');
+            return;
+        }
+
+        let html = '<div class="wapo-summary">';
+
+        // 1) Primero los campos sin sección (sin título RESUMEN)
+        if (noSectionItems.length) {
+            html += `<ul class="wapo-summary__list">`;
+            html += noSectionItems.map(it => `
+        <li class="wapo-summary__item">
+          <span class="wapo-summary__label">${escapeHtml(it.label)}:</span>
+          <span class="wapo-summary__value">${escapeHtml(it.value)}</span>
+        </li>
+      `).join('');
+            html += `</ul>`;
+        }
+
+        // 2) Luego las secciones por fieldset
+        for (const [secTitle, items] of groups.entries()) {
+            if (!items.length) continue;
+            html += `
+        <div class="wapo-summary__section">
+          <div class="wapo-summary__title">${escapeHtml(secTitle)}</div>
+          <ul class="wapo-summary__list">
+            ${items.map(it => `
+              <li class="wapo-summary__item">
+                <span class="wapo-summary__label">${escapeHtml(it.label)}:</span>
+                <span class="wapo-summary__value">${escapeHtml(it.value)}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+        }
+
+        html += '</div>';
+        $out.html(html);
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", "&#039;");
+    }
+
+    let t = null;
+    function schedule() {
+        clearTimeout(t);
+        t = setTimeout(buildSummary, 120);
+    }
+
+    setTimeout(buildSummary, 600);
+    setTimeout(buildSummary, 1200);
+
+    $form.on('change input', 'input, select, textarea', schedule);
+
+    const $watch = $('#yith-wapo-block-1');
+    if ($watch.length) {
+        const obs = new MutationObserver(function (muts) {
+            for (const m of muts) {
+                if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style')) {
+                    schedule();
+                    break;
+                }
+            }
+        });
+        obs.observe($watch[0], { subtree: true, attributes: true });
+    }
+});
 
 /*jQuery(function ($) {
 

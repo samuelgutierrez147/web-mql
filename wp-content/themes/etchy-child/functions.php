@@ -298,6 +298,10 @@ function handle_tabla_precios_controller()
     $dataOptimus = getDataOptimusToProcessOrder($yith_wapo_data);
     $priceRequest = getPricePresupuestoToOptimus($dataOptimus, $codOptimus, $fechaEstimada);
 
+    echo "<pre>";
+    var_dump($priceRequest);
+    exit;
+
     // Cambiar
     $precio_calculado = reset($priceRequest)['price'];
 
@@ -1030,7 +1034,7 @@ add_action('woocommerce_before_single_product', 'redirect_non_logged_users_to_lo
 function getConfigUrlOptimus($optimusUri)
 {
     $urlBase = "http://81.42.209.224:8080/optwebsvcs/";
-    $configDbOptimus = "pruebas";
+    $configDbOptimus = "masquelibros";
     return $urlBase . $optimusUri . '?db=' . $configDbOptimus;
 }
 
@@ -1910,6 +1914,29 @@ function transformateDataToErp($yith_wapo_data)
         }
         $target['titulo'] = removeCharacters($target['titulo']);
     });
+
+    //NUEVO - AÑADIMOS TIPO IMPRESION
+    $dataToDb = aplicarLogicaKeysEncontradas($dataToDb, 'e_elem', function (&$dataToDb, $findKey) {
+        if ($findKey !== null) {
+            $target =& $dataToDb[$findKey];
+        } else {
+            $target =& $dataToDb;
+        }
+
+        foreach (array_keys($target) as $key) {
+            if (preg_match('/^(\d+)e_elem$/', $key, $m)) {
+                $num = (int)$m[1];
+                $tipoKey = $num . 'e_tipo_imp';
+
+                // Si ya está marcado como "NO IMPRES HOJA", lo respetamos.
+                if (isset($target[$tipoKey]) && $target[$tipoKey] === 'NO IMPRES HOJA') {
+                    continue;
+                }
+
+                $target[$tipoKey] = (in_array($num, [2, 4], true)) ? 'TONER' : 'INKJET';
+            }
+        }
+    }, true);
 
     $titulo2 = '';
     $dataToDb = aplicarLogicaKeysEncontradas($dataToDb, 'titulo_2', function (&$dataToDb, $findKey) use (&$titulo2) {
