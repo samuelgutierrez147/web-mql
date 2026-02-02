@@ -52,16 +52,6 @@ h1, h2, h3, h4, h5, h6, span, p, li, .h1, .h2, .h3, .h4, .h5, .h6, .span, .p, .a
 	color:black;
 }
 
-input[type=email], input[type=number], input[type=password], input[type=search], input[type=tel], input[type=text], input[type=url]{
-	font-family: "Red Hat Display", Sans-serif !important;
-    font-size: 18px !important;
-    font-weight: 400;
-	color:black;
-	margin-top:0px !important;
-	margin-bottom:5px !important;
-	border-bottom: 1px solid #E2E2E2;
-}
-
 textarea{
 	font-family: "Red Hat Display", Sans-serif !important;
     font-size: 18px !important;
@@ -146,53 +136,53 @@ button[type=submit].qodef-btn-wave-hover .qodef-btn-masked{
 
 /* CSS COOKIES */
 
-button.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show:after { 
-	font-family: "Font Awesome 5 Free"; 
-	font-weight: 900; content: "\f564"; 
-	vertical-align: middle; 
-	margin-left: 1px; 
-	color: black; 
-	font-size: 25px !important; 
-} 
+button.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show:after {
+	font-family: "Font Awesome 5 Free";
+	font-weight: 900; content: "\f564";
+	vertical-align: middle;
+	margin-left: 1px;
+	color: black;
+	font-size: 25px !important;
+}
 
 button.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show::after {
 	display:inline-block !important;
-} 
-
-.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show { 
-	font-size:0px; 
-	right:0 !important; 
-	height:50px !important; 
-	border-radius:12px 0 0 0 !important; 
-	bottom:0 !important; 
-} 
-
-#cmplz-document { 
-	max-width:100%; width:100%; 
-} 
-#cmplz-document a { 
-	color:black; 
-} 
-#cmplz-document a:hover { 
-	color:black; 
-} 
-#cmplz-document p, #cmplz-document li, #cmplz-manage-consent-container.cmplz-manage-consent-container .cmplz-categories { 
-	font-family:"Red Hat Display"; font-size:16px; font-weight:400; color:black !important; 
-} 
-#cmplz-document h2 { 
-	font-family:"Red Hat Display"; font-size:22px; font-weight:700; color:black !important; 
-} 
-#cmplz-document h3 { 
-	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important; 
-} 
-#cmplz-document h4 { 
-	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important; 
 }
-#cmplz-document h5 { 
-	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important; 
-} 
-#cmplz-document h6 { 
-	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important; 
+
+.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show {
+	font-size:0px;
+	right:0 !important;
+	height:50px !important;
+	border-radius:12px 0 0 0 !important;
+	bottom:0 !important;
+}
+
+#cmplz-document {
+	max-width:100%; width:100%;
+}
+#cmplz-document a {
+	color:black;
+}
+#cmplz-document a:hover {
+	color:black;
+}
+#cmplz-document p, #cmplz-document li, #cmplz-manage-consent-container.cmplz-manage-consent-container .cmplz-categories {
+	font-family:"Red Hat Display"; font-size:16px; font-weight:400; color:black !important;
+}
+#cmplz-document h2 {
+	font-family:"Red Hat Display"; font-size:22px; font-weight:700; color:black !important;
+}
+#cmplz-document h3 {
+	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important;
+}
+#cmplz-document h4 {
+	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important;
+}
+#cmplz-document h5 {
+	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important;
+}
+#cmplz-document h6 {
+	font-family:"Red Hat Display"; font-size:20px; font-weight:700; color:black !important;
 }
 
 .gt_switcher-popup.glink.nturl.notranslate{
@@ -362,8 +352,8 @@ div.label-container-display img{
 	.elementor-swiper-button.elementor-swiper-button-prev, .elementor-swiper-button.elementor-swiper-button-next{
     	display:none !important;
     }
-    
-    
+
+
 }
 
 .yith-wapo-option.selection-single .label_container .label.position-above .inside{
@@ -373,7 +363,6 @@ div.label-container-display img{
 
 #yith-wapo-block-1 .required{
 	font-size: 1em;
-	vertical-align: super;
 	color: red;
 	margin-left: 2px;
 	height:0px;
@@ -523,12 +512,13 @@ div.label-container-display > div > div.label_price {
 }
 
 
-select.yith-wapo-option-value{
-	background-color:white !important;
-	border:1px solid black;
-	color:black;
-	border-radius:5px;
-	padding-right:20px;
+select.yith-wapo-option-value,.yith-wapo-option-value[type="text"],.yith-wapo-option-value[type="number"]{
+	background: #fff !important;
+	color: #111 !important;
+
+	border: 2px solid #c7c7c7 !important;
+	border-radius:5px !important;
+	padding-right:20px !important;
 }
 
 .hidden-labels {
@@ -636,4 +626,948 @@ select.yith-wapo-option-value{
 	max-height: 200px;         /* opcional: límite de alto */
 	object-fit: contain;       /* por si hay max-height */
 	display: block;
+}
+
+
+/** PERSONALIZADO MQL */
+
+.elementor-posts-container .elementor-post__thumbnail img {
+	width: 100%;
+	height: 300px;
+	object-fit: cover;
+}
+
+.elementor-element-f7d85cf .elementor-widget-image-box img,
+.elementor-element-16c3f57 .elementor-widget-image-box img,
+.elementor-element-648220a .elementor-widget-image-box img,
+.elementor-element-09756cb .elementor-widget-image-box img,
+.elementor-element-4c9c2ab .elementor-widget-image-box img {
+	width: 100%;
+	height: 300px; /* Ajusta esta altura según tus necesidades */
+	object-fit: cover;
+}
+
+/* Eliminar bordes y hacer la tabla más minimalista */
+.woocommerce-table.woocommerce-table--order-details.shop_table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 10px; /* Espacio entre filas */
+}
+
+/* Estilos para la cabecera de la tabla (th) */
+.woocommerce-table.woocommerce-table--order-details.shop_table thead tr {
+	background: none; /* Sin fondo */
+}
+
+.woocommerce-table.woocommerce-table--order-details.shop_table thead th {
+	text-align: left;
+	font-weight: bold;
+	font-size: 16px;
+	padding-bottom: 12px;
+	border-bottom: 2px solid #ddd; /* Separación entre header y registros */
+}
+
+/* Estilos para las filas de productos */
+.woocommerce-table.woocommerce-table--order-details.shop_table tbody tr {
+	background: none;
+	box-shadow: none;
+	transition: background 0.3s ease-in-out;
+}
+
+/* Celdas dentro del cuerpo de la tabla */
+.woocommerce-table.woocommerce-table--order-details.shop_table tbody td {
+	padding: 10px 0;
+	font-size: 14px;
+	border-bottom: 1px solid #eee; /* Línea sutil entre productos */
+}
+
+/* Resaltar los totales */
+.woocommerce-table.woocommerce-table--order-details.shop_table tfoot th {
+	font-size: 14px;
+	padding-top: 15px;
+	text-align: left;
+}
+
+/* Estilos para los nombres de productos */
+.woocommerce-table__product-name a {
+	color: #333;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.elementor-widget-woocommerce-my-account .e-my-account-tab:not(.e-my-account-tab__dashboard--custom) .woocommerce .shop_table .button{
+	margin-left: 5px;
+}
+
+/* ESTILOS PAGINAS SUBIR ARCHIVOS */
+.upload-container {
+	max-width: 100%;
+	margin: 50px auto;
+	text-align: center;
+	padding: 20px;
+	background:transparent;
+}
+
+.upload-container h2 {
+	margin-bottom: 20px;
+	font-size: 24px;
+	font-weight: bold;
+	color: #333;
+}
+
+.file-label {
+	font-size: 16px;
+	display: block;
+	margin-bottom: 10px;
+	font-weight: 500;
+	color: #555;
+}
+
+input[type="file"] {
+	display: block;
+	margin: 10px auto;
+	padding: 12px;
+	font-size: 16px;
+	width: 100%;
+	max-width: 400px;
+	border-radius: 8px;
+	transition: border-color 0.3s ease-in-out;
+}
+
+button {
+	background-color: #0073aa;
+	color: white;
+	border: none;
+	padding: 12px 20px;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 16px;
+	width: 100%;
+	max-width: 300px;
+	margin-top: 20px;
+	transition: background-color 0.3s ease-in-out;
+}
+
+button:hover {
+	background-color: #005f87;
+}
+
+#uploadMessage {
+	margin-top: 15px;
+	font-weight: bold;
+	font-size: 14px;
+	color: #0073aa;
+}
+
+/* Quitar el width inline SOLO en las miniaturas (nav) */
+.woocommerce .woo-product-gallery-slider .wpgs-nav .slick-slide {
+	width: auto !important;
+}
+
+/* Asegurar que la imagen de la miniatura se vea bien */
+.woocommerce .woo-product-gallery-slider .wpgs-nav .slick-slide img {
+	display: block;
+	width: 100px;      /* opcional: tamaño de la miniatura */
+	height: 100px;     /* opcional: cuadradas */
+	object-fit: cover; /* opcional: recorte limpio */
+}
+
+/* 1) Alto fijo del área principal */
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide {
+	height: 520px;
+}
+
+/* 2) El contenedor del zoom debe ocupar todo el alto/ancho */
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide .zoomtoo-container,
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide a.wpgs-lightbox-icon {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* 3) La imagen principal (incluida la primera wp-post-image) llena el área */
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide img.attachment-shop_single,
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide img.wp-post-image {
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: contain; /* cambia a cover si quieres que rellene recortando */
+}
+
+/* Evita que el zoomImg (capa de zoom) afecte al layout */
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide img.zoomImg {
+	width: auto !important;
+	height: auto !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide { height: 360px; }
+}
+@media (max-width: 480px) {
+	.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide { height: 280px; }
+}
+
+/* FICHA PRODUCTO **/
+/* Fondo/sección a pantalla completa aunque el theme esté boxed */
+.product-hero-full{
+	width: 100vw;
+	max-width: 100vw;
+	margin-left: calc(50% - 50vw);
+	margin-right: calc(50% - 50vw);
+}
+
+/* Contenido centrado y responsive (no fijo) */
+.product-hero-full > .elementor-container{
+	width: 100% !important;
+	max-width: 1300px;
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: 16px;
+	padding-right: 16px;
+}
+
+/* Más aire en escritorio */
+@media (min-width: 1024px){
+	.product-hero-full > .elementor-container{
+		padding-left: 40px;
+		padding-right: 40px;
+	}
+}
+
+.single-product #producto-full{
+	width: 100vw;
+	margin-left: calc(50% - 50vw);
+
+	/* “margen” lateral visual, centrado y responsive */
+	padding-left: clamp(16px, 3vw, 48px);
+	padding-right: clamp(16px, 3vw, 48px);
+}
+
+
+
+.elementor-posts-container .elementor-post__thumbnail img {
+	width: 100%;
+	height: 300px;
+	object-fit: cover;
+}
+
+.elementor-element-f7d85cf .elementor-widget-image-box img,
+.elementor-element-16c3f57 .elementor-widget-image-box img,
+.elementor-element-648220a .elementor-widget-image-box img,
+.elementor-element-09756cb .elementor-widget-image-box img,
+.elementor-element-4c9c2ab .elementor-widget-image-box img {
+	width: 100%;
+	height: 300px;
+	object-fit: cover;
+}
+
+/* Eliminar bordes y hacer la tabla más minimalista */
+.woocommerce-table.woocommerce-table--order-details.shop_table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 10px;
+}
+
+.woocommerce-table.woocommerce-table--order-details.shop_table thead tr {
+	background: none;
+}
+
+.woocommerce-table.woocommerce-table--order-details.shop_table thead th {
+	text-align: left;
+	font-weight: bold;
+	font-size: 16px;
+	padding-bottom: 12px;
+	border-bottom: 2px solid #ddd;
+}
+
+.woocommerce-table.woocommerce-table--order-details.shop_table tbody tr {
+	background: none;
+	box-shadow: none;
+	transition: background 0.3s ease-in-out;
+}
+
+.woocommerce-table.woocommerce-table--order-details.shop_table tbody td {
+	padding: 10px 0;
+	font-size: 14px;
+	border-bottom: 1px solid #eee;
+}
+
+.woocommerce-table.woocommerce-table--order-details.shop_table tfoot th {
+	font-size: 14px;
+	padding-top: 15px;
+	text-align: left;
+}
+
+.woocommerce-table__product-name a {
+	color: #333;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.elementor-widget-woocommerce-my-account
+.e-my-account-tab:not(.e-my-account-tab__dashboard--custom)
+.woocommerce .shop_table .button {
+	margin-left: 5px;
+}
+
+/* ESTILOS PAGINAS SUBIR ARCHIVOS */
+.upload-container {
+	max-width: 100%;
+	margin: 50px auto;
+	text-align: center;
+	padding: 20px;
+	background: transparent;
+}
+
+.upload-container h2 {
+	margin-bottom: 20px;
+	font-size: 24px;
+	font-weight: bold;
+	color: #333;
+}
+
+.file-label {
+	font-size: 16px;
+	display: block;
+	margin-bottom: 10px;
+	font-weight: 500;
+	color: #555;
+}
+
+input[type="file"] {
+	display: block;
+	margin: 10px auto;
+	padding: 12px;
+	font-size: 16px;
+	width: 100%;
+	max-width: 400px;
+	border-radius: 8px;
+	transition: border-color 0.3s ease-in-out;
+}
+
+button {
+	background-color: #0073aa;
+	color: white;
+	border: none;
+	padding: 12px 20px;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 16px;
+	width: 100%;
+	max-width: 300px;
+	margin-top: 20px;
+	transition: background-color 0.3s ease-in-out;
+}
+
+button:hover {
+	background-color: #005f87;
+}
+
+#uploadMessage {
+	margin-top: 15px;
+	font-weight: bold;
+	font-size: 14px;
+	color: #0073aa;
+}
+
+/* Quitar el width inline SOLO en las miniaturas (nav) */
+.woocommerce .woo-product-gallery-slider .wpgs-nav .slick-slide {
+	width: auto !important;
+}
+
+/* Asegurar que la imagen de la miniatura se vea bien */
+.woocommerce .woo-product-gallery-slider .wpgs-nav .slick-slide img {
+	display: block;
+	width: 100px;
+	height: 100px;
+	object-fit: cover;
+}
+
+/* 1) Alto fijo del área principal */
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide {
+	height: 520px;
+}
+
+/* 2) El contenedor del zoom debe ocupar todo el alto/ancho */
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide .zoomtoo-container,
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide a.wpgs-lightbox-icon {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* 3) La imagen principal llena el área */
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide img.attachment-shop_single,
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide img.wp-post-image {
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: contain;
+}
+
+/* Evita que el zoomImg afecte al layout */
+.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide img.zoomImg {
+	width: auto !important;
+	height: auto !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide { height: 360px; }
+}
+@media (max-width: 480px) {
+	.woocommerce .woo-product-gallery-slider .wpgs-for .slick-slide { height: 280px; }
+}
+
+/* =========================================
+   (ELIMINADO) FICHA PRODUCTO
+   - .product-hero-full
+   - #producto-full
+   ========================================= */
+
+/* =========================================================
+   YITH WAPO (LIMPIO Y FUNCIONAL)
+   - Grid principal: 3 columnas (1/3)
+   - Acordeones 15,16,17.. arriba en orden DOM
+   - Campos condicionales agrupados por fieldset dentro de #wapo-sections-wrap
+   ========================================================= */
+
+/* GRID PRINCIPAL */
+.single-product #yith-wapo-container #yith-wapo-block-1{
+	display: grid !important;
+	grid-template-columns: repeat(4, minmax(0, 1fr)) !important; /* 1/3 */
+	/*gap: 16px !important;*/
+	align-items: start !important;
+	grid-auto-flow: row !important; /* NO dense */
+	width: 100% !important;
+	max-width: none !important;
+}
+
+/* TODOS los addons directos: 1 celda del grid */
+.single-product #yith-wapo-container #yith-wapo-block-1 > .yith-wapo-addon{
+	grid-column: auto !important;
+	width: 70% !important;
+	max-width: none !important;
+	min-width: 0 !important;
+	margin: 0 !important;
+	float: none !important;
+	clear: none !important;
+	justify-self: stretch !important;
+}
+
+/* Tablet: 2 columnas */
+@media (max-width: 1023px){
+	.single-product #yith-wapo-container #yith-wapo-block-1{
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+/* Móvil: 1 columna */
+@media (max-width: 767px){
+	.single-product #yith-wapo-container #yith-wapo-block-1{
+		grid-template-columns: 1fr !important;
+	}
+}
+
+/* Compacto */
+.single-product{
+	--yith-wapo-label-font-size: 13px;
+	--yith-wapo-description-font-size: 11px;
+}
+.single-product #yith-wapo-container .yith-wapo-addon{
+	/*padding: 8px !important;*/
+	border-radius: 10px;
+}
+.single-product #yith-wapo-container .wapo-addon-title{
+	font-size: 14px !important;
+	line-height: 1.2 !important;
+	margin: 6px 0 !important;
+}
+
+/* Asegura 100% dentro de la columna */
+.single-product #yith-wapo-container #yith-wapo-block-1 .options-container,
+.single-product #yith-wapo-container #yith-wapo-block-1 .options,
+.single-product #yith-wapo-container #yith-wapo-block-1 .input-text-container,
+.single-product #yith-wapo-container #yith-wapo-block-1 .yith-wapo-option,
+.single-product #yith-wapo-container #yith-wapo-block-1 .yith-wapo-option-value{
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box !important;
+}
+
+.single-product #yith-wapo-container .yith-wapo-option-value{
+	font-size: 13px !important;
+	padding: 8px 8px !important;
+	min-height: 34px !important;
+}
+
+.single-product #yith-wapo-container .label-container-display{
+	padding: 6px !important;
+}
+
+/* Oculta cabecera en addons empty-title */
+.single-product #yith-wapo-container .yith-wapo-addon.empty-title .addon-header{
+	display: none !important;
+}
+
+/* No visibles */
+#yith-wapo-block-1 .yith-wapo-addon.no-visible{
+	display:none !important;
+}
+
+/* =========================================================
+   REGLAS QUE YA TENÍAS (proxy selects)
+   - las dejo igual
+   ========================================================= */
+
+/* Encuadernación proxy */
+[data-id="e_encu"].encu-proxy-enabled .options-container > .options{
+	display: none !important;
+}
+
+/* Formato proxy */
+[data-id="formato"].formato-proxy-enabled .options-container > .options{
+	display: none !important;
+}
+
+/* Formato e_pruebas */
+[data-id="e_pruebas"].epruebas-proxy-enabled .options-container > .options{
+	display: none !important;
+}
+
+/* Orientación proxy */
+.single-product [data-id="orientacion"].orientacion-proxy-enabled .options{
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px !important;
+	height: 1px !important;
+	overflow: hidden !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+.single-product .orientacion-proxy-wrap{
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.single-product .orientacion-proxy-wrap .proxy-option-image img{
+	max-width: 100%;
+	height: auto;
+	display: block;
+}
+.single-product .orientacion-proxy-wrap select.yith-wapo-orientacion-proxy{
+	width: 75% !important;
+	max-width: 100% !important;
+}
+@media (max-width: 767px){
+	.single-product .orientacion-proxy-wrap select.yith-wapo-orientacion-proxy{
+		width: 100% !important;
+	}
+}
+
+/* =========================================================
+   FIX: que el primer acordeón (15) empiece SIEMPRE en nueva fila
+   (manteniendo 1/3 => fila de 3 con 15-16-17)
+   ========================================================= */
+
+/* Desktop (3 columnas) */
+@media (min-width: 1024px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #yith-wapo-addon-15{
+		grid-column: 1 / span 1 !important;  /* empieza en col 1 => nueva fila si hace falta */
+	}
+}
+
+/* Tablet (2 columnas) */
+@media (max-width: 1023px) and (min-width: 768px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #yith-wapo-addon-15{
+		grid-column: 1 / span 1 !important;
+	}
+}
+
+/* Móvil (1 columna) */
+@media (max-width: 767px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #yith-wapo-addon-15{
+		grid-column: 1 / -1 !important;
+	}
+}
+
+/* Oculta visualmente los addons “acordeón” (15..22,71) SIN display:none
+   => siguen siendo :visible y la lógica/JS puede automarcarlos */
+#yith-wapo-addon-15,
+#yith-wapo-addon-16,
+#yith-wapo-addon-17,
+#yith-wapo-addon-18,
+#yith-wapo-addon-19,
+#yith-wapo-addon-20,
+#yith-wapo-addon-21,
+#yith-wapo-addon-22,
+#yith-wapo-addon-71{
+	position: absolute !important;
+	left: -99999px !important;
+	top: auto !important;
+	width: 1px !important;
+	height: 1px !important;
+	overflow: hidden !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+
+	/* por si el theme mete márgenes/padding */
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+}
+
+
+
+/* Inputs más grandes + borde negro + 100% del grid */
+input[type=email],
+input[type=number],
+input[type=password],
+input[type=search],
+input[type=tel],
+input[type=text],
+input[type=url]{
+	font-family: "Red Hat Display", Sans-serif !important;
+	font-size: 19px !important;          /* más grande */
+	font-weight: 500 !important;
+	color: #000 !important;
+
+	width: 100% !important;              /* se adapta al grid */
+	max-width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box !important;
+
+	margin-top: 0 !important;
+	margin-bottom: 10px !important;
+
+	padding: 14px 16px !important;       /* más alto/ancho */
+	min-height: 46px !important;         /* más alto */
+
+	background: #fff !important;
+
+	border: 2px solid #000 !important;   /* borde negro */
+	border-radius: 12px !important;
+
+	outline: none !important;
+	transition: box-shadow .15s ease, transform .05s ease;
+}
+
+/* Hover */
+input[type=email]:hover,
+input[type=number]:hover,
+input[type=password]:hover,
+input[type=search]:hover,
+input[type=tel]:hover,
+input[type=text]:hover,
+input[type=url]:hover{
+	box-shadow: 0 6px 16px rgba(0,0,0,.10) !important;
+}
+
+/* Focus (borde negro + halo suave) */
+input[type=email]:focus,
+input[type=number]:focus,
+input[type=password]:focus,
+input[type=search]:focus,
+input[type=tel]:focus,
+input[type=text]:focus,
+input[type=url]:focus{
+	box-shadow: 0 0 0 4px rgba(0,0,0,.18) !important;
+}
+
+/* Placeholder */
+input[type=email]::placeholder,
+input[type=number]::placeholder,
+input[type=password]::placeholder,
+input[type=search]::placeholder,
+input[type=tel]::placeholder,
+input[type=text]::placeholder,
+input[type=url]::placeholder{
+	color: #666;
+}
+
+/* Centrar label con checkbox (alineación vertical) */
+#yith-wapo-block-1 .checkbox-button-container{
+	display: inline-flex !important;
+	align-items: center !important;   /* centra vertical */
+	gap: 10px !important;             /* separación checkbox-texto */
+}
+
+/* Asegura que el “botón” del checkbox no descuadre */
+#yith-wapo-block-1 .checkbox-button-container .checkboxbutton{
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	line-height: 1 !important;
+}
+
+/* El input */
+#yith-wapo-block-1 .checkbox-button-container input[type="checkbox"]{
+	margin: 0 !important;
+}
+
+/* El texto del label */
+#yith-wapo-block-1 .checkbox-button-container .yith-wapo-addon-label{
+	margin: 0 !important;
+	line-height: 1.2 !important;
+	display: inline-flex !important;
+	align-items: center !important;   /* centra por si el label tiene contenido extra */
+}
+
+
+/* =========================================================
+   WRAP DE SECCIONES (fieldset)
+   - ESTE es el fix del ancho
+   ========================================================= */
+/* WRAP: 2 columnas => cada fieldset ocupa 1/2 */
+.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
+	grid-column: 1 / -1 !important; /* full row dentro del grid padre */
+	width: 100% !important;
+	min-width: 0 !important;
+
+	display: grid !important;
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important; /* ✅ 2 por fila */
+	gap: 16px !important;
+	margin-top: 5px;
+	align-items: start !important;
+}
+
+/* Cada fieldset: 1/2 (NO full) */
+.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+	grid-column: auto !important; /* ✅ permite que se ponga en 2 columnas */
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box !important;
+
+	margin: 0 !important;
+	padding: 12px 14px 14px !important;
+	border: 1px solid #e8e8e8 !important;
+	border-radius: 14px !important;
+	background: #fff;
+}
+
+.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section > legend{
+	padding: 0 10px !important;
+	font-size: 13px !important;
+	font-weight: 700 !important;
+	text-transform: uppercase;
+	letter-spacing: .02em;
+}
+
+/* Grid interno del fieldset (tu layout interno) */
+.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section > .wapo-section-grid{
+	display: grid !important;
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	gap: 16px !important;
+	width: 100% !important;
+	min-width: 0 !important;
+}
+
+/* Tablet/Móvil: 1 columna (opcional pero recomendado) */
+@media (max-width: 1023px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
+		grid-template-columns: 1fr !important;
+	}
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+		grid-column: 1 / -1 !important;
+	}
+}
+
+
+/* Dentro del fieldset, matar spans heredados */
+.single-product #yith-wapo-container #wapo-sections-wrap .wapo-section-grid > .yith-wapo-addon{
+	grid-column: auto !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0 !important;
+	margin: 0 !important;
+	float: none !important;
+	clear: none !important;
+	justify-self: stretch !important;
+	box-sizing: border-box !important;
+}
+
+/* Tablet dentro fieldset */
+@media (max-width: 1023px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section > .wapo-section-grid{
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+/* Móvil dentro fieldset */
+@media (max-width: 767px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section > .wapo-section-grid{
+		grid-template-columns: 1fr !important;
+	}
+}
+
+/* FIX selects con width inline (75%) dentro de secciones */
+.single-product #yith-wapo-container #wapo-sections-wrap .options,
+.single-product #yith-wapo-container #wapo-sections-wrap .options-container,
+.single-product #yith-wapo-container #wapo-sections-wrap select.yith-wapo-option-value,
+.single-product #yith-wapo-container #wapo-sections-wrap input.yith-wapo-option-value{
+	width: 100% !important;
+	max-width: 100% !important;
+}
+/* HASTA ARRIBA ES PARA VERLO EN FILAS */
+
+/* para verlo en 3 */
+/* Fieldset: SIEMPRE baja a fila nueva, pero se VE como 1/3 */
+/*.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
+	--wapo-gap: 16px;
+	gap: var(--wapo-gap) !important;
+}*/
+
+/*.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+	grid-column: 1 / -1 !important;
+	justify-self: start !important;
+	width: 100% !important;
+	max-width: calc((100% - (2 * var(--wapo-gap))) / 3) !important;
+
+	min-width: 100% !important;
+	box-sizing: border-box !important;
+	margin: 0 !important;
+	padding: 12px 14px 14px !important;
+
+	border: 2px solid #111 !important;
+	border-radius: 14px !important;
+}*/
+
+/* Tablet: que se vea como 1/2 */
+/*@media (max-width: 1023px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+		max-width: calc((100% - var(--wapo-gap)) / 2) !important;
+	}
+}*/
+
+/* Móvil: 1/1 */
+/*@media (max-width: 767px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+		max-width: 100% !important;
+	}
+}*/
+
+/* 1) El wrap rompe fila respecto al grid padre */
+/*.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
+	grid-column: 1 / -1 !important;
+	display: grid !important;
+	grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+	gap: 16px !important;
+	width: 100% !important;
+	min-width: 0 !important;
+	align-items: start !important;
+}*/
+
+/* 2) Cada fieldset ocupa 1/3 (6 cols => span 2) y se ponen en línea */
+/*@media (min-width: 1024px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+		grid-column: span 2 !important;
+		width: 100% !important;
+		min-width: 100% !important;
+		box-sizing: border-box !important;
+
+
+		border: 2px solid #111 !important;
+		border-radius: 14px !important;
+		padding: 12px 14px 14px !important;
+		background: #fff;
+	}
+}*/
+
+/* Tablet: 2 por fila */
+/*@media (max-width: 1023px) and (min-width: 768px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+		grid-column: auto !important;
+	}
+}*/
+
+/* Móvil: 1 por fila */
+/*@media (max-width: 767px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
+		grid-template-columns: 1fr !important;
+	}
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+		grid-column: 1 / -1 !important;
+	}
+}*/
+
+
+
+/* Botón ? al lado del título "Dirección" */
+.yith-wapo-addon[data-id="9e_ent_00_dir"] .addon-header .wapo-addon-title{
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.yith-wapo-addon[data-id="9e_ent_00_dir"] .addon-header .wapo-addon-title .dir-help-toggle{
+	width: 18px;
+	height: 18px;
+	min-width: 18px;
+	border-radius: 999px;
+	border: 1px solid #111;
+	background: #fff;
+	color: #111;
+	font-size: 12px;
+	line-height: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+}
+
+.yith-wapo-addon[data-id="9e_ent_00_dir"] .addon-header .wapo-addon-title .dir-help-toggle:hover{
+	background: #f2f2f2;
+}
+
+/* Contenedor acordeón del mini-formulario */
+#direccion-form-container.direccion-form-container{
+	margin-top: 12px;
+	border: 1px solid #cfcfcf;
+	background: #f9f9f9;
+	border-radius: 12px;
+	padding: 12px;
+}
+
+/* Grid interno (para que el acordeón pueda animar con slideDown) */
+#direccion-form-container .direccion-form-grid{
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+	align-items: start;
+}
+
+#direccion-form-container .direccion-form-grid h4{
+	grid-column: 1 / -1;
+	margin: 0 0 6px 0;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+#direccion-form-container .direccion-form-grid input,
+#direccion-form-container .direccion-form-grid select,
+#direccion-form-container .direccion-form-grid button{
+	width: 100%;
+	box-sizing: border-box;
+}
+
+#direccion-form-container .direccion-form-grid #nuevo_codigo_postal,
+#direccion-form-container .direccion-form-grid #guardar-direccion{
+	grid-column: 1 / -1;
+}
+
+/* Mobile: 1 columna */
+@media (max-width: 767px){
+	#direccion-form-container .direccion-form-grid{
+		grid-template-columns: 1fr;
+	}
 }

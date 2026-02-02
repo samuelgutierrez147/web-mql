@@ -2155,7 +2155,7 @@ button[type="submit"] span:before,
 select {
   position: relative;
   display: block;
-  height: 46px;
+  /*height: 46px;*/
   padding: 12px 23px;
   margin: 0;
   font-family: inherit;

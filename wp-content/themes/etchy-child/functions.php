@@ -581,29 +581,95 @@ function insertar_formulario_direccion_en_checkout()
 
                                 ajustarLayoutDireccion();
                                 $(window).off('resize.ajustarDireccion').on('resize.ajustarDireccion', ajustarLayoutDireccion);
-                                if ($('#direccion-form-container').length === 0) {
-                                    const form = $('#direccion-form-container');
-                                    form.css({
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                                        gap: '10px',
-                                        marginTop: '12px',
-                                        padding: '12px'
-                                    });
-                                    form.find('h4').css({ gridColumn: '1 / -1', margin: '0 0 6px 0' });
-                                    form.find('#nuevo_codigo_postal, #guardar-direccion').css({ gridColumn: '1 / -1', width: '100%' });
-                                    $('<div id="direccion-form-container" style="margin-top: 30px; padding: 15px; border: 1px solid #ccc; background: #f9f9f9;">' +
-                                        '<h4>Añadir Nueva Dirección</h4>' +
-                                        '<input type="text" id="nueva_direccion" placeholder="Dirección" style="width: 100%; padding: 8px; margin-bottom: 10px;">' +
-                                        '<select id="nueva_ciudad" style="width: 100%; padding: 8px; margin-bottom: 10px;">' +
-                                        '<option value="">Selecciona una provincia</option>' +
-                                        '</select>' +
-                                        '<input type="text" id="nuevo_codigo_postal" placeholder="Código Postal" style="width: 100%; padding: 8px; margin-bottom: 10px;">' +
-                                        '<button id="guardar-direccion" style="background: #0073aa; color: white; padding: 8px; border: none;">Guardar Dirección</button>' +
-                                        '</div>').insertAfter(selectField);
+                                // ------------- UI: botón ? + acordeón para el mini-formulario -------------
+                                function ensureDireccionMiniFormUI() {
+                                    const $addon = selectField.closest('.yith-wapo-addon');
+                                    if (!$addon.length) return;
 
-                                    cargarProvincias();
+                                    // 1) Botón ? al lado del título
+                                    const $h3 = $addon.find('.addon-header .wapo-addon-title').first();
+                                    if ($h3.length && !$h3.find('.dir-help-toggle').length) {
+                                        const $btn = $('<button/>', {
+                                            type: 'button',
+                                            class: 'dir-help-toggle',
+                                            'aria-expanded': 'false',
+                                            'aria-controls': 'direccion-form-container',
+                                            title: 'Añadir nueva dirección'
+                                        }).text('?');
+
+                                        $h3.append($btn);
+                                    }
+
+                                    // 2) Contenedor del mini-formulario (si ya existe, lo normalizamos; si no, lo creamos)
+                                    let $box = $('#direccion-form-container');
+
+                                    if (!$box.length) {
+                                        const formHtml = `
+                                          <div id="direccion-form-container" class="direccion-form-container" style="display:none;">
+                                            <div class="direccion-form-grid">
+                                              <h4>Añadir Nueva Dirección</h4>
+                                              <input type="text" id="nueva_direccion" placeholder="Dirección">
+                                              <select id="nueva_ciudad" class="yith-wapo-option-value">
+                                                <option value="">Selecciona una provincia</option>
+                                              </select>
+                                              <input type="text" id="nuevo_codigo_postal" placeholder="Código Postal">
+                                              <button id="guardar-direccion" style="background:#0073aa;color:#fff;padding:10px;border:none;border-radius:10px;">
+                                                Guardar Dirección
+                                              </button>
+                                            </div>
+                                          </div>
+                                        `;
+                                        $(formHtml).insertAfter(selectField);
+                                        $box = $('#direccion-form-container');
+
+                                        // Cargar provincias solo la primera vez que lo creamos
+                                        cargarProvincias();
+                                    } else {
+                                        // Si existe (como en tu HTML actual), quitamos estilos inline “viejos” y lo envolvemos en grid si hace falta
+                                        $box.addClass('direccion-form-container');
+                                        // OJO: mantenemos display:none para el acordeón
+                                        $box.hide();
+
+                                        if (!$box.find('.direccion-form-grid').length) {
+                                            $box.wrapInner('<div class="direccion-form-grid"></div>');
+                                        }
+                                    }
+
+                                    // Por defecto cerrado
+                                    $box.hide().attr('aria-hidden', 'true');
                                 }
+
+// Ejecutar una vez por carga de direcciones
+                                ensureDireccionMiniFormUI();
+
+
+// 3) Click del botón ? (acordeón abrir/cerrar)
+// (Pon este handler FUERA de ensure..., para no duplicarlo)
+                                $(document).off('click.dirHelpToggle').on('click.dirHelpToggle', '.dir-help-toggle', function (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+
+                                    const $btn = $(this);
+                                    const $box = $('#direccion-form-container');
+                                    if (!$box.length) return;
+
+                                    const isOpen = $btn.attr('aria-expanded') === 'true';
+
+                                    if (isOpen) {
+                                        $box.stop(true, true).slideUp(180, function () {
+                                            $box.attr('aria-hidden', 'true');
+                                        });
+                                        $btn.attr('aria-expanded', 'false');
+                                    } else {
+                                        $box.stop(true, true).slideDown(180, function () {
+                                            $box.attr('aria-hidden', 'false');
+                                            // foco al primer input
+                                            $('#nueva_direccion').trigger('focus');
+                                        });
+                                        $btn.attr('aria-expanded', 'true');
+                                    }
+                                });
+
 
                                 function cargarProvincias() {
                                     $.ajax({

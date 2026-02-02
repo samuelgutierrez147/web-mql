@@ -329,122 +329,180 @@ jQuery(function ($) {
 
 jQuery(function ($) {
 
+    const DEFAULT_SELECT_VALUES = new Set(['', 'default']);
+
     /**
-     * Crea un SELECT “proxy” para un addon YITH tipo LABEL,
-     * y al cambiar el select hace click en el input real (radio/checkbox)
-     * para que YITH dispare su lógica condicional como siempre.
-     *
-     * @param {Object} cfg
-     * @param {string} cfg.dataId      - data-id del addon (ej: "e_encu", "formato")
-     * @param {string} cfg.proxyId     - id único del select proxy
-     * @param {string} cfg.wrapClass   - clase del wrapper que insertamos
-     * @param {string} cfg.enabledClass- clase que ponemos al addon para “activar” estilos
-     * @param {string} cfg.selectClass - clase del select
-     * @param {string} cfg.placeholder - texto opción por defecto
+     * Crea un SELECT proxy para:
+     * - Addon tipo LABEL: click en el input real (radio/checkbox)
+     * - Addon tipo SELECT: cambia el <select> real + dispara change (YITH)
      */
-    function createYithLabelProxySelect(cfg) {
-        const $addon = $('[data-id="' + cfg.dataId + '"].yith-wapo-addon-type-label');
+    function createYithProxySelect(cfg) {
+        const $addon = $('[data-id="' + cfg.dataId + '"]');
         if (!$addon.length) return;
 
         // evitar duplicados
         if ($('#' + cfg.proxyId).length) return;
 
-        const $options = $addon.find('[id^="yith-wapo-option"]');
-        if (!$options.length) return;
+        const $container = $addon.find('.options-container').first();
+        if (!$container.length) return;
 
-        // Crear SELECT proxy
-        const $select = $('<select/>', {id: cfg.proxyId, class: cfg.selectClass});
-        $select.append($('<option/>', {value: '', text: cfg.placeholder || 'Seleccionar una opción'}));
+        const $select = $('<select/>', { id: cfg.proxyId, class: cfg.selectClass });
+        $select.append($('<option/>', { value: '', text: cfg.placeholder || 'Seleccionar una opción' }));
 
-        // Rellenar opciones leyendo el LABEL real
-        $options.each(function () {
-            const $opt = $(this);
-            const $input = $opt.find('input.yith-wapo-option-value').first(); // radio/checkbox
-            if (!$input.length) return;
+        // =========================================================
+        // A) ADDON TYPE: LABEL  (tarjetas + inputs hidden)
+        // =========================================================
+        if ($addon.hasClass('yith-wapo-addon-type-label')) {
+            const $options = $addon.find('[id^="yith-wapo-option"]');
+            if (!$options.length) return;
 
-            const val = $input.val();
-            const text = ($opt.find('.label_price label').first().text() || val).trim();
+            $options.each(function () {
+                const $opt = $(this);
+                const $input = $opt.find('input.yith-wapo-option-value').first(); // radio/checkbox
+                if (!$input.length) return;
 
-            const $o = $('<option/>', {value: val, text: text});
+                const val = ($input.val() || '').toString().trim();
+                if (!val) return;
 
-            // Si está seleccionado en label, reflejar en el select
-            if ($input.is(':checked') || $opt.hasClass('selected')) {
-                $o.prop('selected', true);
+                const text = ($opt.find('.label_price label').first().text() || val).trim();
+                const $o = $('<option/>', { value: val, text });
+
+                if ($input.is(':checked') || $opt.hasClass('selected')) $o.prop('selected', true);
+                $select.append($o);
+            });
+
+            $container.prepend($('<div/>', { class: cfg.wrapClass }).append($select));
+            $addon.addClass(cfg.enabledClass);
+
+            function selectLabelValue(val) {
+                if (!val) return;
+
+                const $input = $addon.find('input.yith-wapo-option-value[value="' + CSS.escape(val) + '"]').first();
+                if (!$input.length) return;
+
+                const $wrapOpt = $input.closest('[id^="yith-wapo-option"]');
+                const alreadySelected = $input.is(':checked') || $wrapOpt.hasClass('selected');
+                if (alreadySelected) return;
+
+                $input.trigger('click'); // <- YITH lógica condicional
             }
 
-            $select.append($o);
-        });
+            $select.on('change', function () {
+                selectLabelValue(this.value);
+            });
 
-        // Insertar el SELECT al principio del addon
-        $addon.find('.options-container').first()
-            .prepend($('<div/>', {class: cfg.wrapClass}).append($select));
+            // Sync si cambia por fuera
+            $addon.on('click change', 'input.yith-wapo-option-value', function () {
+                const v = ($(this).val() || '').toString().trim();
+                if (v) $select.val(v);
+            });
 
-        // Marcar el addon como “proxy enabled” (por si lo usas en CSS)
-        $addon.addClass(cfg.enabledClass);
-
-        // Click en el input real al cambiar el select (dispara lógica YITH)
-        function selectLabelValue(val) {
-            if (!val) return;
-
-            const $input = $addon.find('input.yith-wapo-option-value[value="' + val + '"]').first();
-            if (!$input.length) return;
-
-            // Evitar toggle raro si ya está seleccionado
-            const $wrapOpt = $input.closest('[id^="yith-wapo-option"]');
-            const alreadySelected = $input.is(':checked') || $wrapOpt.hasClass('selected');
-            if (alreadySelected) return;
-
-            $input.trigger('click');
+            return;
         }
 
-        $select.on('change', function () {
-            selectLabelValue(this.value);
-        });
+        // =========================================================
+        // B) ADDON TYPE: SELECT  (select real)
+        // =========================================================
+        if ($addon.hasClass('yith-wapo-addon-type-select')) {
+            const $real = $addon.find('select.yith-wapo-option-value').first();
+            if (!$real.length) return;
 
-        // Si cambia por fuera (JS/YITH), sincronizar select
-        $addon.on('click change', 'input.yith-wapo-option-value', function () {
-            const v = $(this).val();
-            if (v) $select.val(v);
-        });
+            // marca el real para poder ocultarlo por CSS sin ocultar el proxy
+            $real.addClass('yith-wapo-real-select');
+
+            // Copiar opciones (saltando default/empty)
+            $real.find('option').each(function () {
+                const v = ($(this).attr('value') || '').toString().trim();
+                const t = ($(this).text() || '').trim();
+
+                if (!v || DEFAULT_SELECT_VALUES.has(v)) return; // saltamos "default" y vacíos
+                $select.append($('<option/>', { value: v, text: t || v }));
+            });
+
+            // seleccionar el valor actual si no es default
+            const current = ($real.val() || '').toString().trim();
+            if (current && !DEFAULT_SELECT_VALUES.has(current)) $select.val(current);
+
+            $container.prepend($('<div/>', { class: cfg.wrapClass }).append($select));
+            $addon.addClass(cfg.enabledClass);
+
+            function triggerRealSelect(val) {
+                if (!val) return;
+
+                if (($real.val() || '').toString().trim() === val) return;
+
+                $real.val(val);
+
+                // Disparar eventos (jQuery + nativo) para que YITH se entere
+                $real.trigger('change').trigger('input');
+                if ($real[0]) $real[0].dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            $select.on('change', function () {
+                triggerRealSelect(this.value);
+            });
+
+            // Sync si cambia por fuera (YITH/JS)
+            $real.on('change input', function () {
+                const v = ($(this).val() || '').toString().trim();
+                if (v && !DEFAULT_SELECT_VALUES.has(v)) $select.val(v);
+                else $select.val('');
+            });
+
+            return;
+        }
     }
 
     // =========================================================
-    // 1) ENCUADERNACIÓN (addon data-id="e_encu")
+    // 1) ENCUADERNACIÓN (LABEL)
     // =========================================================
-    createYithLabelProxySelect({
+    createYithProxySelect({
         dataId: 'e_encu',
         proxyId: 'e_encu_proxy_select',
         wrapClass: 'encu-proxy-wrap',
         enabledClass: 'encu-proxy-enabled',
-        selectClass: 'yith-wapo-encu-proxy',
+        selectClass: 'yith-wapo-encu-proxy yith-wapo-option-value',
         placeholder: 'Seleccionar una opción'
     });
 
     // =========================================================
-    // 2) FORMATOS (addon data-id="formato")
+    // 2) FORMATOS (LABEL)
     // =========================================================
-    createYithLabelProxySelect({
+    createYithProxySelect({
         dataId: 'formato',
         proxyId: 'formato_proxy_select',
         wrapClass: 'formato-proxy-wrap',
         enabledClass: 'formato-proxy-enabled',
-        selectClass: 'yith-wapo-formato-proxy',
+        selectClass: 'yith-wapo-formato-proxy yith-wapo-option-value',
         placeholder: 'Seleccionar un formato'
     });
 
     // =========================================================
-    // 3) ORIENTACIÓN (addon data-id="orientacion")
+    // 3) ORIENTACIÓN (LABEL)
     // =========================================================
-    createYithLabelProxySelect({
+    createYithProxySelect({
         dataId: 'orientacion',
         proxyId: 'orientacion_proxy_select',
         wrapClass: 'orientacion-proxy-wrap',
         enabledClass: 'orientacion-proxy-enabled',
-        selectClass: 'yith-wapo-orientacion-proxy',
+        selectClass: 'yith-wapo-orientacion-proxy yith-wapo-option-value',
         placeholder: 'Seleccionar una orientación'
     });
 
+    // =========================================================
+    // 4) TIPO DE PRUEBA (SELECT)
+    // =========================================================
+    createYithProxySelect({
+        dataId: 'e_pruebas',
+        proxyId: 'e_pruebas_proxy_select',
+        wrapClass: 'epruebas-proxy-wrap',
+        enabledClass: 'epruebas-proxy-enabled',
+        selectClass: 'yith-wapo-epruebas-proxy yith-wapo-option-value',
+        placeholder: 'Seleccionar una opción'
+    });
+
 });
+
 
 jQuery(function ($) {
 
@@ -796,7 +854,7 @@ jQuery(function ($) {
 
         // 0) PROXY SELECTS
         const $proxySelect = $addon
-            .find('.formato-proxy-wrap select, .encu-proxy-wrap select, .orientacion-proxy-wrap select, select[class*="proxy"]')
+            .find('.formato-proxy-wrap select, .encu-proxy-wrap select, .orientacion-proxy-wrap select, .pruebas-proxy-wrap select select[class*="proxy"]')
             .first();
 
         if ($proxySelect.length && $proxySelect.is(':visible')) {

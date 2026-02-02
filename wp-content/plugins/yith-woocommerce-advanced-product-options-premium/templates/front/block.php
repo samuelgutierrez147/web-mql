@@ -253,6 +253,9 @@ global $product;
     } else {
 
         $grid_styles = $addon->get_grid_rules();
+        $addonIdentifier = $addon->get_setting('addon_identificador', '', false);
+        if($addonIdentifier !== '0e_paginas' && $addonIdentifier !== 'quantity')
+            $grid_styles = str_replace('grid-template-columns: repeat(1, minmax(0, 50%) );','',$grid_styles);
 
         echo '<div class="options-container' . ' ' . esc_attr($toggle_default) . '">';
         if ('' !== $addon_description) {
