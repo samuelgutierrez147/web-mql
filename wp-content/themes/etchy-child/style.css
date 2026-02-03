@@ -1352,11 +1352,21 @@ input[type=url]::placeholder{
 }
 
 .single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section > legend{
-	padding: 0 10px !important;
+	/* lo importante para que NO ocupe todo el ancho */
+	display: inline-flex !important;
+	width: auto !important;
+	max-width: max-content !important;
+
+	/* tu estilo */
+	padding: 6px 12px !important;
 	font-size: 13px !important;
-	font-weight: 700 !important;
+	font-weight: 800 !important;
 	text-transform: uppercase;
-	letter-spacing: .02em;
+	letter-spacing: .04em;
+
+	background: #111 !important;
+	color: #fff !important;
+	border: 1px solid #000 !important;
 }
 
 /* Grid interno del fieldset (tu layout interno) */
@@ -1570,4 +1580,38 @@ input[type=url]::placeholder{
 	#direccion-form-container .direccion-form-grid{
 		grid-template-columns: 1fr;
 	}
+}
+
+/* Masonry-like SOLO para los fieldsets de WAPO */
+@media (min-width: 1024px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
+		/* sustituye el grid por columns */
+		display: block !important;
+		column-count: 2;          /* 2 columnas */
+		column-gap: 16px;
+		width: 100% !important;
+	}
+
+	.single-product #yith-wapo-container
+	#yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section{
+		/* necesario para columns */
+		display: inline-block !important;
+		width: 100% !important;
+		break-inside: avoid !important;   /* evita que se parta un fieldset */
+		margin: 0 0 16px 0 !important;    /* separación vertical */
+		vertical-align: top;
+	}
+}
+
+/* Tablet/móvil: una columna (como ya haces) */
+@media (max-width: 1023px){
+	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
+		column-count: 1;
+	}
+}
+
+/* Respeta los fieldsets que YITH oculta con display:none en línea */
+.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section[style*="display: none"],
+.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section[style*="display:none"]{
+	display: none !important;
 }
