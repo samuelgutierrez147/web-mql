@@ -1093,10 +1093,10 @@ add_action('woocommerce_before_shop_loop', 'redirect_non_logged_users_to_login')
 add_action('woocommerce_before_single_product', 'redirect_non_logged_users_to_login');
 
 //CODIGO MQL
-add_filter('woocommerce_add_to_cart_validation', function ($passed, $product_id, $quantity) {
+/*add_filter('woocommerce_add_to_cart_validation', function ($passed, $product_id, $quantity) {
     wc_add_notice('Las compras están desactivadas temporalmente.', 'error');
     return false;
-}, 9999, 3);
+}, 9999, 3);*/
 
 function getConfigUrlOptimus($optimusUri)
 {
