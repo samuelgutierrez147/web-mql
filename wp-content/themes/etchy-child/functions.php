@@ -14,6 +14,9 @@ if (!function_exists('etchy_child_theme_enqueue_scripts')) {
     add_action('wp_enqueue_scripts', 'etchy_child_theme_enqueue_scripts');
 }
 
+//desactivamos cupones
+add_filter('woocommerce_coupons_enabled', '__return_false');
+
 // Incluir Bootstrap CSS
 function bootstrap_css()
 {

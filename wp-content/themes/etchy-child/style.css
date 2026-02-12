@@ -1224,20 +1224,20 @@ button:hover {
 
 
 
-/* Inputs más grandes + borde negro + 100% del grid */
-input[type=email],
-input[type=number],
-input[type=password],
-input[type=search],
-input[type=tel],
-input[type=text],
-input[type=url]{
+/* SOLO formulario de compra en página de producto */
+body.single-product .woocommerce div.product form.cart input[type="email"],
+body.single-product .woocommerce div.product form.cart input[type="number"],
+body.single-product .woocommerce div.product form.cart input[type="password"],
+body.single-product .woocommerce div.product form.cart input[type="search"],
+body.single-product .woocommerce div.product form.cart input[type="tel"],
+body.single-product .woocommerce div.product form.cart input[type="text"],
+body.single-product .woocommerce div.product form.cart input[type="url"]{
 	font-family: "Red Hat Display", Sans-serif !important;
-	font-size: 19px !important;          /* más grande */
+	font-size: 19px !important;
 	font-weight: 500 !important;
 	color: #000 !important;
 
-	width: 100% !important;              /* se adapta al grid */
+	width: 100% !important;
 	max-width: 100% !important;
 	min-width: 0 !important;
 	box-sizing: border-box !important;
@@ -1245,49 +1245,51 @@ input[type=url]{
 	margin-top: 0 !important;
 	margin-bottom: 10px !important;
 
-	padding: 14px 16px !important;       /* más alto/ancho */
-	min-height: 46px !important;         /* más alto */
+	padding: 14px 16px !important;
+	min-height: 46px !important;
 
 	background: #fff !important;
 
-	border: 2px solid #000 !important;   /* borde negro */
+	border: 2px solid #000 !important;
+	border-bottom: 2px solid #000 !important; /* pisa el border-bottom del theme */
 	border-radius: 12px !important;
 
 	outline: none !important;
+	cursor: text !important; /* el theme pone pointer */
 	transition: box-shadow .15s ease, transform .05s ease;
 }
 
 /* Hover */
-input[type=email]:hover,
-input[type=number]:hover,
-input[type=password]:hover,
-input[type=search]:hover,
-input[type=tel]:hover,
-input[type=text]:hover,
-input[type=url]:hover{
+body.single-product .woocommerce div.product form.cart input[type="email"]:hover,
+body.single-product .woocommerce div.product form.cart input[type="number"]:hover,
+body.single-product .woocommerce div.product form.cart input[type="password"]:hover,
+body.single-product .woocommerce div.product form.cart input[type="search"]:hover,
+body.single-product .woocommerce div.product form.cart input[type="tel"]:hover,
+body.single-product .woocommerce div.product form.cart input[type="text"]:hover,
+body.single-product .woocommerce div.product form.cart input[type="url"]:hover{
 	box-shadow: 0 6px 16px rgba(0,0,0,.10) !important;
 }
 
-/* Focus (borde negro + halo suave) */
-input[type=email]:focus,
-input[type=number]:focus,
-input[type=password]:focus,
-input[type=search]:focus,
-input[type=tel]:focus,
-input[type=text]:focus,
-input[type=url]:focus{
+/* Focus */
+body.single-product .woocommerce div.product form.cart input[type="email"]:focus,
+body.single-product .woocommerce div.product form.cart input[type="number"]:focus,
+body.single-product .woocommerce div.product form.cart input[type="password"]:focus,
+body.single-product .woocommerce div.product form.cart input[type="search"]:focus,
+body.single-product .woocommerce div.product form.cart input[type="tel"]:focus,
+body.single-product .woocommerce div.product form.cart input[type="text"]:focus,
+body.single-product .woocommerce div.product form.cart input[type="url"]:focus{
 	box-shadow: 0 0 0 4px rgba(0,0,0,.18) !important;
 }
 
 /* Placeholder */
-input[type=email]::placeholder,
-input[type=number]::placeholder,
-input[type=password]::placeholder,
-input[type=search]::placeholder,
-input[type=tel]::placeholder,
-input[type=text]::placeholder,
-input[type=url]::placeholder{
-	color: #666;
+body.single-product .woocommerce div.product form.cart input[type="email"]::placeholder,
+body.single-product .woocommerce div.product form.cart input[type="number"]::placeholder,
+body.single-product .woocommerce div.product form.cart input[type="password"]::placeholder,
+body.single-product .woocommerce div.product form.cart input[type="search"]::placeholder,
+body.single-product .woocommerce div.product form.cart input[type="tel"]::placeholder,
+body.single-product .woocommerce div.product form.cart input[type="text"]::placeholder,
+body.single-product .woocommerce div.product form.cart input[type="url"]::placeholder{
+	color: #666 !important;
 }
 
 /* Centrar label con checkbox (alineación vertical) */
@@ -1586,6 +1588,7 @@ input[type=url]::placeholder{
 @media (min-width: 1024px){
 	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
 		/* sustituye el grid por columns */
+		margin-top: 8px;
 		display: block !important;
 		column-count: 2;          /* 2 columnas */
 		column-gap: 16px;
