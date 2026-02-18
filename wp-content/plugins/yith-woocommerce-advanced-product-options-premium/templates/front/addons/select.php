@@ -19,7 +19,11 @@
 defined( 'YITH_WAPO' ) || exit; // Exit if accessed directly.
 
 extract($settings );
-
+$select_placeholder = trim( wp_strip_all_tags( $addon_title ?? '' ) );
+if ($select_placeholder === '') {
+    $select_placeholder = 'Seleccione';
+}
+$select_placeholder .= ' (seleccione)';
 $is_required = 'yes' === $addon_required ? 'required' : '';
 
 // Obtener el valor del campo personalizado "ID"
@@ -34,7 +38,7 @@ $custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza
         style="<?php echo esc_attr( $options_width_select_css ) ?>"
 	<?php echo esc_attr( $is_required ) ?>
 >
-<option value="default"><?php echo esc_html( apply_filters( 'yith_wapo_select_option_label', __( 'Select an option', 'yith-woocommerce-product-add-ons' ) ) ); ?></option>
+<option value="default"><?php echo esc_html( $select_placeholder ); ?></option>
 <?php
 for ( $x = 0; $x < $options_total; $x++ ) {
 	if ( file_exists( YITH_WAPO_DIR . '/templates/front/addons/select-option.php' ) ) {

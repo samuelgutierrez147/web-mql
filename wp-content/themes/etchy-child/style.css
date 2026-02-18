@@ -1589,7 +1589,7 @@ body.single-product .woocommerce div.product form.cart input[type="url"]::placeh
 @media (min-width: 1024px){
 	.single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap{
 		/* sustituye el grid por columns */
-		margin-top: 8px;
+		margin-top: 10px;
 		display: block !important;
 		column-count: 2;          /* 2 columnas */
 		column-gap: 16px;
@@ -1617,5 +1617,17 @@ body.single-product .woocommerce div.product form.cart input[type="url"]::placeh
 /* Respeta los fieldsets que YITH oculta con display:none en línea */
 .single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section[style*="display: none"],
 .single-product #yith-wapo-container #yith-wapo-block-1 > #wapo-sections-wrap > fieldset.wapo-section[style*="display:none"]{
+	display: none !important;
+}
+
+.elementor-widget-woocommerce-product-add-to-cart .wapo-addon-title span{
+	display:none;
+}
+
+.elementor-widget-woocommerce-product-add-to-cart .yith-wapo-option .yith-wapo-addon-label{
+	display:none;
+}
+
+.elementor-widget-woocommerce-product-add-to-cart .addon-header:not(:has(.dir-help-toggle)),.elementor-widget-woocommerce-product-add-to-cart .option-image{
 	display: none !important;
 }

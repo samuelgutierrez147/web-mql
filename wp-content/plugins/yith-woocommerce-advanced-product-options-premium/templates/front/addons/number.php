@@ -25,6 +25,11 @@ defined( 'YITH_WAPO' ) || exit; // Exit if accessed directly.
 
 //Settings configuration.
 extract($settings );
+// Placeholder = título del addon
+$number_placeholder = trim( wp_strip_all_tags( $addon_title ?? '' ) );
+if ($number_placeholder === '') {
+    $number_placeholder = 'Introduzca un valor';
+}
 
 $hide_options_prices = apply_filters( 'yith_wapo_hide_option_prices', $hide_option_prices, $addon );
 
@@ -94,14 +99,14 @@ $custom_id = $addon->get_setting('addon_identificador', '', false); // Reemplaza
 			?>
 
 		</div>
-		<div class="<?php echo esc_attr( apply_filters( 'yith_wapo_number_main_css_class' ,'input-number quantity' ) ); ?>">
+		<div class="<?php echo esc_attr( apply_filters( 'yith_wapo_number_main_css_class' ,'input-number' ) ); ?>">
 			<!-- INPUT -->
 			<input type="number"
 			       id="<?= esc_attr($custom_id); ?>"
 			       class="yith-wapo-option-value"
 			       name="yith_wapo[][<?= esc_attr($custom_id); ?>]"
-			       placeholder="0"
-				<?php if ( 'yes' === $number_limit ) : ?>
+                   placeholder="<?php echo esc_attr($number_placeholder); ?>"
+                    <?php if ( 'yes' === $number_limit ) : ?>
 					min="<?php echo esc_attr( $minimum_value ); ?>"
 					max="<?php echo esc_attr( $maximum_value ); ?>"
 				<?php endif; ?>

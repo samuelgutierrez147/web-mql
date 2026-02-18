@@ -462,7 +462,7 @@ jQuery(function ($) {
         wrapClass: 'encu-proxy-wrap',
         enabledClass: 'encu-proxy-enabled',
         selectClass: 'yith-wapo-encu-proxy yith-wapo-option-value',
-        placeholder: 'Seleccionar una opción'
+        placeholder: 'Seleccionar una encuadernación'
     });
 
     // =========================================================
@@ -498,7 +498,7 @@ jQuery(function ($) {
         wrapClass: 'epruebas-proxy-wrap',
         enabledClass: 'epruebas-proxy-enabled',
         selectClass: 'yith-wapo-epruebas-proxy yith-wapo-option-value',
-        placeholder: 'Seleccionar una opción'
+        placeholder: 'Seleccionar un tipo de prueba'
     });
 
 });
