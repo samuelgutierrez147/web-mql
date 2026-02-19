@@ -663,18 +663,22 @@ function insertar_formulario_direccion_en_checkout()
                 if (!$box.length) {
                     const formHtml = `
                       <div id="direccion-form-container" class="direccion-form-container" style="display:none;" aria-hidden="true">
-                        <div class="direccion-form-grid">
-                          <h4>Añadir Nueva Dirección</h4>
-                          <input type="text" id="nueva_direccion" placeholder="Dirección">
-                          <select id="nueva_ciudad" class="yith-wapo-option-value">
-                            <option value="">Selecciona una provincia</option>
-                          </select>
-                          <input type="text" id="nuevo_codigo_postal" placeholder="Código Postal">
-                          <button id="guardar-direccion" style="background:#0073aa;color:#fff;padding:10px;border:none;border-radius:10px;">
-                            Guardar Dirección
-                          </button>
+                          <div class="direccion-form-grid">
+                            <h4>Añadir Nueva Dirección</h4>
+
+                            <select id="nueva_ciudad" class="yith-wapo-option-value">
+                              <option value="">Selecciona una provincia</option>
+                            </select>
+
+                            <input type="text" id="nuevo_codigo_postal" placeholder="Código Postal">
+
+                            <input type="text" id="nueva_direccion" placeholder="Dirección">
+
+                            <button id="guardar-direccion" style="background:#0073aa;color:#fff;padding:10px;border:none;border-radius:10px;">
+                              Guardar Dirección
+                            </button>
+                          </div>
                         </div>
-                      </div>
                     `;
                     $(formHtml).insertAfter($select);
                     $box = $('#direccion-form-container');

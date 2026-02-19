@@ -1652,3 +1652,34 @@ body.single-product .woocommerce div.product form.cart input[type="url"]::placeh
 	padding: 0;
 	cursor: pointer;
 }
+.direccion-form-grid{
+	display: grid !important;
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	gap: 10px !important;
+}
+
+.direccion-form-grid h4{
+	grid-column: 1 / -1 !important;
+	margin: 0 0 6px 0 !important;
+}
+
+/* ✅ Provincia y CP a 50/50 */
+.direccion-form-grid #nueva_ciudad,
+.direccion-form-grid #nuevo_codigo_postal{
+	grid-column: span 1 !important;   /* o grid-column: auto !important; */
+	width: 100% !important;
+	min-width: 0 !important;
+}
+
+/* ✅ Dirección abajo 100% */
+.direccion-form-grid #nueva_direccion{
+	grid-column: 1 / -1 !important;
+	width: 100% !important;
+	min-width: 0 !important;
+}
+
+/* ✅ Botón 100% */
+.direccion-form-grid #guardar-direccion{
+	grid-column: 1 / -1 !important;
+	width: 100% !important;
+}
