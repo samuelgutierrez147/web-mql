@@ -555,255 +555,336 @@ function obtener_direcciones_usuario()
 add_action('wp_footer', 'insertar_formulario_direccion_en_checkout');
 function insertar_formulario_direccion_en_checkout()
 {
-    if (is_product()) {
-        ?>
-        <script type="text/javascript">
-            jQuery(document).ready(function ($) {
-                function cargarDirecciones() {
-                    $.ajax({
-                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
-                        type: 'POST',
-                        data: {action: 'get_user_addresses'},
-                        dataType: 'json',
-                        success: function (response) {
-                            let selectField = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
+    if (!is_product()) return;
+    ?>
+    <style>
+        /* Botón ? en legend */
+        fieldset.wapo-section > legend{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dir-help-toggle{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:18px;
+            height:18px;
+            border-radius:999px;
+            border:1px solid #111;
+            background:#fff;
+            color:#111;
+            font-size:12px;
+            line-height:1;
+            padding:0;
+            cursor:pointer;
+        }
+        .dir-help-toggle:focus{ outline:2px solid #111; outline-offset:2px; }
 
-                            if (selectField.length > 0) {
-                                function ajustarLayoutDireccion() {
-                                    const addon = selectField.closest('.yith-wapo-addon').get(0);
-                                    if (!addon) return;
+        /* Mini-form */
+        .direccion-form-container{
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            border-radius: 12px;
+        }
+        .direccion-form-grid{
+            display:grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .direccion-form-grid h4{
+            grid-column: 1 / -1;
+            margin: 0 0 6px 0;
+        }
+        .direccion-form-grid #nuevo_codigo_postal,
+        .direccion-form-grid #guardar-direccion{
+            grid-column: 1 / -1;
+        }
+        .direccion-form-grid input,
+        .direccion-form-grid select{
+            width:100%;
+        }
+    </style>
 
-                                    if (window.matchMedia('(min-width: 1024px)').matches) {
-                                        addon.style.setProperty('grid-column', 'span 4', 'important'); // 2/3
-                                        addon.style.setProperty('order', '30', 'important');
-                                    } else {
-                                        addon.style.setProperty('grid-column', '1 / -1', 'important'); // full en tablet/móvil
-                                        addon.style.setProperty('order', '30', 'important');
-                                    }
-                                }
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
 
-                                ajustarLayoutDireccion();
-                                $(window).off('resize.ajustarDireccion').on('resize.ajustarDireccion', ajustarLayoutDireccion);
-                                // ------------- UI: botón ? + acordeón para el mini-formulario -------------
-                                function ensureDireccionMiniFormUI() {
-                                    const $addon = selectField.closest('.yith-wapo-addon');
-                                    if (!$addon.length) return;
+            // ---------- helpers ----------
+            function getDireccionSelect(){
+                return $('select[name="yith_wapo[][9e_ent_00_dir]"]');
+            }
 
-                                    // 1) Botón ? al lado del título
-                                    const $h3 = $addon.find('.addon-header .wapo-addon-title').first();
-                                    if ($h3.length && !$h3.find('.dir-help-toggle').length) {
-                                        const $btn = $('<button/>', {
-                                            type: 'button',
-                                            class: 'dir-help-toggle',
-                                            'aria-expanded': 'false',
-                                            'aria-controls': 'direccion-form-container',
-                                            title: 'Añadir nueva dirección'
-                                        }).text('?');
+            // ✅ UI: botón en legend + mini-form (NO rompe si YITH re-renderiza)
+            function ensureDireccionMiniFormUI() {
+                const $select = getDireccionSelect();
+                if (!$select.length) return;
 
-                                        $h3.append($btn);
-                                    }
+                const $addon = $select.closest('.yith-wapo-addon');
+                if (!$addon.length) return;
 
-                                    // 2) Contenedor del mini-formulario (si ya existe, lo normalizamos; si no, lo creamos)
-                                    let $box = $('#direccion-form-container');
+                const $fs = $addon.closest('fieldset.wapo-section');
+                const $legend = $fs.children('legend').first();
+                if (!$legend.length) return;
 
-                                    if (!$box.length) {
-                                        const formHtml = `
-                                          <div id="direccion-form-container" class="direccion-form-container" style="display:none;">
-                                            <div class="direccion-form-grid">
-                                              <h4>Añadir Nueva Dirección</h4>
-                                              <input type="text" id="nueva_direccion" placeholder="Dirección">
-                                              <select id="nueva_ciudad" class="yith-wapo-option-value">
-                                                <option value="">Selecciona una provincia</option>
-                                              </select>
-                                              <input type="text" id="nuevo_codigo_postal" placeholder="Código Postal">
-                                              <button id="guardar-direccion" style="background:#0073aa;color:#fff;padding:10px;border:none;border-radius:10px;">
-                                                Guardar Dirección
-                                              </button>
-                                            </div>
-                                          </div>
-                                        `;
-                                        $(formHtml).insertAfter(selectField);
-                                        $box = $('#direccion-form-container');
+                // Mantener estado si el formulario estaba abierto
+                const $existingBox = $('#direccion-form-container');
+                const wasOpen = $existingBox.length ? $existingBox.is(':visible') : false;
 
-                                        // Cargar provincias solo la primera vez que lo creamos
-                                        cargarProvincias();
-                                    } else {
-                                        // Si existe (como en tu HTML actual), quitamos estilos inline “viejos” y lo envolvemos en grid si hace falta
-                                        $box.addClass('direccion-form-container');
-                                        // OJO: mantenemos display:none para el acordeón
-                                        $box.hide();
+                // Quitar botón antiguo si estuviese en el h3 (evitar duplicados)
+                $addon.find('.addon-header .dir-help-toggle').remove();
 
-                                        if (!$box.find('.direccion-form-grid').length) {
-                                            $box.wrapInner('<div class="direccion-form-grid"></div>');
-                                        }
-                                    }
-
-                                    // Por defecto cerrado
-                                    $box.hide().attr('aria-hidden', 'true');
-                                }
-
-// Ejecutar una vez por carga de direcciones
-                                ensureDireccionMiniFormUI();
-
-
-// 3) Click del botón ? (acordeón abrir/cerrar)
-// (Pon este handler FUERA de ensure..., para no duplicarlo)
-                                $(document).off('click.dirHelpToggle').on('click.dirHelpToggle', '.dir-help-toggle', function (e) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-
-                                    const $btn = $(this);
-                                    const $box = $('#direccion-form-container');
-                                    if (!$box.length) return;
-
-                                    const isOpen = $btn.attr('aria-expanded') === 'true';
-
-                                    if (isOpen) {
-                                        $box.stop(true, true).slideUp(180, function () {
-                                            $box.attr('aria-hidden', 'true');
-                                        });
-                                        $btn.attr('aria-expanded', 'false');
-                                    } else {
-                                        $box.stop(true, true).slideDown(180, function () {
-                                            $box.attr('aria-hidden', 'false');
-                                            // foco al primer input
-                                            $('#nueva_direccion').trigger('focus');
-                                        });
-                                        $btn.attr('aria-expanded', 'true');
-                                    }
-                                });
-
-
-                                function cargarProvincias() {
-                                    $.ajax({
-                                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
-                                        type: 'POST',
-                                        data: {action: 'get_provincias'},
-                                        dataType: 'json',
-                                        success: function (response) {
-                                            if (response.success) {
-                                                let selectCiudad = $('#nueva_ciudad');
-
-                                                selectCiudad.empty();
-                                                selectCiudad.append('<option value="">Selecciona una provincia</option>');
-
-                                                $.each(response.data, function (index, provincia) {
-                                                    selectCiudad.append('<option value="' + provincia.codigo + '">' + provincia.nombre + '</option>');
-                                                });
-
-                                                selectCiudad.trigger('change'); // Forzar actualización si usa Select2
-                                            }
-                                        }
-                                    });
-                                }
-
-                                if (response.success && response.data.no_address) {
-                                    selectField.empty();
-                                    selectField.append('<option value="">No tienes direcciones guardadas</option>');
-                                    selectField.show();
-                                } else {
-                                    selectField.empty();
-                                    selectField.append('<option value="">Selecciona una dirección</option>');
-
-                                    $.each(response.data.addresses, function (index, address) {
-                                        selectField.append('<option value="' + address.id + '">' + address.label + '</option>');
-                                    });
-
-                                    selectField.trigger('change');
-                                    selectField.show();
-                                }
-                            }
-                        }
-                    });
+                // Normalizar legend (evita que al append se ensucie el texto)
+                if (!$legend.find('.legend-title').length) {
+                    const txt = $legend.text().trim();
+                    $legend.empty().append($('<span/>', { class: 'legend-title', text: txt }));
                 }
 
-                cargarDirecciones();
+                // Crear botón si no existe
+                if (!$legend.find('.dir-help-toggle').length) {
+                    $legend.append(
+                        $('<button/>', {
+                            type: 'button',
+                            class: 'dir-help-toggle',
+                            'aria-expanded': wasOpen ? 'true' : 'false',
+                            'aria-controls': 'direccion-form-container',
+                            title: 'Añadir nueva dirección'
+                        }).text('?')
+                    );
+                } else {
+                    // Si ya existe, sincroniza aria con estado real
+                    $legend.find('.dir-help-toggle').attr('aria-expanded', wasOpen ? 'true' : 'false');
+                }
 
-                $(document).on('click', '#guardar-direccion', function (e) {
-                    e.preventDefault();
+                // Crear/normalizar el mini-formulario
+                let $box = $('#direccion-form-container');
 
-                    let nuevaDireccion = $('#nueva_direccion').val().trim();
-                    let nuevaCiudad = $('#nueva_ciudad').val().trim();
-                    let nuevoCodigoPostal = $('#nuevo_codigo_postal').val().trim();
+                if (!$box.length) {
+                    const formHtml = `
+                      <div id="direccion-form-container" class="direccion-form-container" style="display:none;" aria-hidden="true">
+                        <div class="direccion-form-grid">
+                          <h4>Añadir Nueva Dirección</h4>
+                          <input type="text" id="nueva_direccion" placeholder="Dirección">
+                          <select id="nueva_ciudad" class="yith-wapo-option-value">
+                            <option value="">Selecciona una provincia</option>
+                          </select>
+                          <input type="text" id="nuevo_codigo_postal" placeholder="Código Postal">
+                          <button id="guardar-direccion" style="background:#0073aa;color:#fff;padding:10px;border:none;border-radius:10px;">
+                            Guardar Dirección
+                          </button>
+                        </div>
+                      </div>
+                    `;
+                    $(formHtml).insertAfter($select);
+                    $box = $('#direccion-form-container');
 
-                    if (nuevaDireccion === '' || nuevaCiudad === '' || nuevoCodigoPostal === '') {
-                        alert('Por favor, completa todos los campos.');
-                        return;
+                    // cargar provincias sólo si lo creamos ahora
+                    cargarProvincias();
+                } else {
+                    $box.addClass('direccion-form-container');
+                    if (!$box.find('.direccion-form-grid').length) {
+                        $box.wrapInner('<div class="direccion-form-grid"></div>');
                     }
+                }
 
-                    Swal.fire({
-                        title: '<strong>Guardando dirección...</strong>',
-                        html: '<p>Por favor, espera un momento.</p>',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
+                // Restaurar estado (si estaba abierto, no lo cierres)
+                if (wasOpen) {
+                    $box.show().attr('aria-hidden', 'false');
+                } else {
+                    $box.hide().attr('aria-hidden', 'true');
+                }
+            }
+
+            // ✅ Delegado: click del botón ?
+            $(document).off('click.dirHelpToggle').on('click.dirHelpToggle', '.dir-help-toggle', function (e) {
+                e.preventDefault();
+
+                const $btn = $(this);
+                const $box = $('#direccion-form-container');
+                if (!$box.length) return;
+
+                const isOpen = $box.is(':visible');
+
+                if (isOpen) {
+                    $box.stop(true, true).slideUp(180, function () {
+                        $box.attr('aria-hidden', 'true');
                     });
+                    $btn.attr('aria-expanded', 'false');
+                } else {
+                    $box.stop(true, true).slideDown(180, function () {
+                        $box.attr('aria-hidden', 'false');
+                        $('#nueva_direccion').trigger('focus');
+                    });
+                    $btn.attr('aria-expanded', 'true');
+                }
+            });
 
-                    $.ajax({
-                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
-                        type: 'POST',
-                        data: {
-                            action: 'guardar_nueva_direccion',
-                            direccion: nuevaDireccion,
-                            ciudad: nuevaCiudad,
-                            codigo_postal: nuevoCodigoPostal
-                        },
-                        dataType: 'json',
-                        success: function (response) {
-                            if (response.success) {
-                                Swal.close();
+            // ✅ Observa cambios de YITH y reinyecta UI (evita “desaparece”)
+            (function initDirHelpObserver(){
+                if (window.__dirHelpObserver) return;
 
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: '<strong>Dirección guardada correctamente</strong>',
-                                    html: `<p>La nueva dirección se ha añadido a la lista.</p>`,
-                                    confirmButtonText: 'Aceptar',
-                                    width: '600px'
-                                });
+                const node = document.querySelector('#yith-wapo-container') || document.body;
+                window.__dirHelpObserver = new MutationObserver(function(){
+                    ensureDireccionMiniFormUI();
+                });
+                window.__dirHelpObserver.observe(node, { childList: true, subtree: true });
+            })();
 
-                                let selectField = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
+            function ajustarLayoutDireccion() {
+                const $select = getDireccionSelect();
+                if (!$select.length) return;
 
-                                // Agregar la nueva dirección al select y seleccionarla automáticamente
-                                let nuevaOpcion = `<option value="${response.data.id}" selected>
-                                    ${response.data.direccion}, ${response.data.ciudad} (${response.data.codigo_postal})
-                                   </option>`;
-                                selectField.append(nuevaOpcion);
-                                selectField.trigger('change');
+                const addon = $select.closest('.yith-wapo-addon').get(0);
+                if (!addon) return;
 
-                                selectField.show();
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: '<strong>Error al guardar la dirección</strong>',
-                                    html: '<p>Ha ocurrido un problema al guardar la dirección. Inténtalo de nuevo.</p>',
-                                    confirmButtonText: 'Aceptar',
-                                    width: '600px'
-                                });
-                            }
-                        },
-                        error: function () {
-                            // Cerramos el Swal de carga por si sigue abierto
+                if (window.matchMedia('(min-width: 1024px)').matches) {
+                    addon.style.setProperty('grid-column', 'span 4', 'important'); // 2/3
+                    addon.style.setProperty('order', '30', 'important');
+                } else {
+                    addon.style.setProperty('grid-column', '1 / -1', 'important'); // full en tablet/móvil
+                    addon.style.setProperty('order', '30', 'important');
+                }
+            }
+
+            function cargarProvincias() {
+                $.ajax({
+                    url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                    type: 'POST',
+                    data: {action: 'get_provincias'},
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            const $selectCiudad = $('#nueva_ciudad');
+                            if (!$selectCiudad.length) return;
+
+                            $selectCiudad.empty().append('<option value="">Selecciona una provincia</option>');
+                            $.each(response.data, function (index, provincia) {
+                                $selectCiudad.append('<option value="' + provincia.codigo + '">' + provincia.nombre + '</option>');
+                            });
+                            $selectCiudad.trigger('change');
+                        }
+                    }
+                });
+            }
+
+            function cargarDirecciones() {
+                $.ajax({
+                    url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                    type: 'POST',
+                    data: {action: 'get_user_addresses'},
+                    dataType: 'json',
+                    success: function (response) {
+                        const $select = getDireccionSelect();
+                        if (!$select.length) return;
+
+                        ajustarLayoutDireccion();
+                        $(window).off('resize.ajustarDireccion').on('resize.ajustarDireccion', ajustarLayoutDireccion);
+
+                        // Rellenar select
+                        if (response.success && response.data.no_address) {
+                            $select.empty().append('<option value="">No tienes direcciones guardadas</option>').show();
+                        } else {
+                            $select.empty().append('<option value="">Selecciona una dirección</option>');
+                            $.each(response.data.addresses || [], function (index, address) {
+                                $select.append('<option value="' + address.id + '">' + address.label + '</option>');
+                            });
+                            $select.trigger('change').show();
+                        }
+
+                        // Inyectar UI (y repetir tras repintados)
+                        ensureDireccionMiniFormUI();
+                        setTimeout(ensureDireccionMiniFormUI, 50);
+                        setTimeout(ensureDireccionMiniFormUI, 300);
+                    }
+                });
+            }
+
+            // Cargar direcciones al iniciar
+            cargarDirecciones();
+
+            // Guardar nueva dirección
+            $(document).on('click', '#guardar-direccion', function (e) {
+                e.preventDefault();
+
+                const nuevaDireccion = $('#nueva_direccion').val().trim();
+                const nuevaCiudad = $('#nueva_ciudad').val().trim();
+                const nuevoCodigoPostal = $('#nuevo_codigo_postal').val().trim();
+
+                if (!nuevaDireccion || !nuevaCiudad || !nuevoCodigoPostal) {
+                    alert('Por favor, completa todos los campos.');
+                    return;
+                }
+
+                Swal.fire({
+                    title: '<strong>Guardando dirección...</strong>',
+                    html: '<p>Por favor, espera un momento.</p>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                $.ajax({
+                    url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                    type: 'POST',
+                    data: {
+                        action: 'guardar_nueva_direccion',
+                        direccion: nuevaDireccion,
+                        ciudad: nuevaCiudad,
+                        codigo_postal: nuevoCodigoPostal
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
                             Swal.close();
 
-                            // Swal de error cuando falla la petición AJAX
+                            Swal.fire({
+                                icon: 'success',
+                                title: '<strong>Dirección guardada correctamente</strong>',
+                                html: `<p>La nueva dirección se ha añadido a la lista.</p>`,
+                                confirmButtonText: 'Aceptar',
+                                width: '600px'
+                            });
+
+                            const $select = getDireccionSelect();
+                            if ($select.length) {
+                                const nuevaOpcion = `<option value="${response.data.id}" selected>
+                                    ${response.data.direccion}, ${response.data.ciudad} (${response.data.codigo_postal})
+                                </option>`;
+                                $select.append(nuevaOpcion).trigger('change').show();
+                            }
+
+                            // Mantener UI
+                            ensureDireccionMiniFormUI();
+                        } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: '<strong>Error de conexión</strong>',
-                                html: '<p>No se ha podido contactar con el servidor. Revisa tu conexión e inténtalo de nuevo.</p>',
+                                title: '<strong>Error al guardar la dirección</strong>',
+                                html: '<p>Ha ocurrido un problema al guardar la dirección. Inténtalo de nuevo.</p>',
                                 confirmButtonText: 'Aceptar',
                                 width: '600px'
                             });
                         }
-                    });
+                    },
+                    error: function () {
+                        Swal.close();
+                        Swal.fire({
+                            icon: 'error',
+                            title: '<strong>Error de conexión</strong>',
+                            html: '<p>No se ha podido contactar con el servidor. Revisa tu conexión e inténtalo de nuevo.</p>',
+                            confirmButtonText: 'Aceptar',
+                            width: '600px'
+                        });
+                    }
                 });
             });
-        </script>
-        <?php
-    }
+
+        });
+    </script>
+    <?php
 }
+
 
 add_action('wp_ajax_guardar_nueva_direccion', 'guardar_nueva_direccion');
 function guardar_nueva_direccion()
@@ -1897,13 +1978,13 @@ function dataFormatted($yith_wapo_data)
 
             // Procesar acabados 2e y 4e
             if ($key === '2e_acabados_check') {
-                $acabados_map = ['2e_barn','2e_esta', '2e_troq', '2e_golp'];
+                $acabados_map = ['2e_barn', '2e_esta', '2e_troq', '2e_golp'];
                 $key = $acabados_map[$counters['acabados2e']++] ?? end($acabados_map);
                 $value = 1;
             }
 
             if ($key === '4e_acabados_check') {
-                $acabados_map = ['4e_barn','4e_esta', '4e_troq', '4e_golp'];
+                $acabados_map = ['4e_barn', '4e_esta', '4e_troq', '4e_golp'];
                 $key = $acabados_map[$counters['acabados4e']++] ?? end($acabados_map);
                 $value = 1;
             }

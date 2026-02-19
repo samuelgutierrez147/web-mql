@@ -1631,3 +1631,24 @@ body.single-product .woocommerce div.product form.cart input[type="url"]::placeh
 .elementor-widget-woocommerce-product-add-to-cart .addon-header:not(:has(.dir-help-toggle)),.elementor-widget-woocommerce-product-add-to-cart .option-image{
 	display: none !important;
 }
+
+/* Legend “en pastilla” y con el botón al lado */
+#wapo-sections-wrap fieldset.wapo-section > legend{
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+}
+
+/* Botón ? pequeñito */
+#wapo-sections-wrap fieldset.wapo-section > legend .dir-help-toggle{
+	width: 18px;
+	height: 18px;
+	border-radius: 999px;
+	border: 1px solid #fff;
+	background: transparent;
+	color: #fff;
+	font-size: 12px;
+	line-height: 1;
+	padding: 0;
+	cursor: pointer;
+}
