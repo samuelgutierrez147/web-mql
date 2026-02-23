@@ -3,6 +3,7 @@
     <jobTemplateCode>PL_STD_PEDIDO</jobTemplateCode>
     <customerCode></customerCode>
     <addressNumber></addressNumber>
+    <divisionNumber>1</divisionNumber>
     <emailAddress></emailAddress>
     <repCode>FELIPE</repCode>
     <origCode>WEB_MQL</origCode>
