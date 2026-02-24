@@ -211,7 +211,6 @@ button.cmplz-btn.cmplz-manage-consent.manage-consent-1.cmplz-show::after {
 /* CSS MI CUENTA */
 
 .elementor-widget-woocommerce-checkout-page a, .elementor-widget-woocommerce-my-account a{
-	color:#000000 !important;
 	font-weight:700;
 }
 
@@ -1682,4 +1681,297 @@ body.single-product .woocommerce div.product form.cart input[type="url"]::placeh
 .direccion-form-grid #guardar-direccion{
 	grid-column: 1 / -1 !important;
 	width: 100% !important;
+}
+
+/* ===========================
+   THANK YOU (WooCommerce) - soft UI
+   =========================== */
+
+.thankyou-wrap{
+	width: 100%;
+	max-width: 1100px;
+	margin: 24px auto;
+	padding: 0 16px;
+	box-sizing: border-box;
+	font-family: "Red Hat Display", Sans-serif;
+}
+
+/* Variables suaves */
+.thankyou-wrap{
+	--ty-border: #e6e6e6;
+	--ty-border-strong: #d9d9d9;
+	--ty-text: #1f2937;
+	--ty-muted: #6b7280;
+	--ty-bg: #ffffff;
+	--ty-soft: #f7f7f8;
+	--ty-shadow: 0 10px 30px rgba(0,0,0,.06);
+	--ty-shadow-sm: 0 6px 18px rgba(0,0,0,.05);
+	--ty-radius: 16px;
+}
+
+/* HERO */
+.thankyou-hero{
+	border: 1px solid var(--ty-border);
+	border-radius: var(--ty-radius);
+	padding: 18px 18px;
+	background: linear-gradient(180deg, #ffffff 0%, #fbfbfc 100%);
+	box-shadow: var(--ty-shadow-sm);
+	margin-bottom: 16px;
+}
+
+.thankyou-hero__row{
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.thankyou-hero__title h1{
+	margin: 0 0 6px 0;
+	font-size: 22px;
+	line-height: 1.2;
+	color: var(--ty-text);
+}
+
+.thankyou-hero__title p{
+	margin: 0;
+	color: var(--ty-muted);
+	font-size: 14px;
+}
+
+/* Badge estado (sutil) */
+.thankyou-hero__badge{
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+	border-radius: 999px;
+	border: 1px solid var(--ty-border-strong);
+	background: #fff;
+	white-space: nowrap;
+	font-size: 13px;
+	color: var(--ty-text);
+	box-shadow: 0 4px 14px rgba(0,0,0,.05);
+}
+
+.thankyou-badge__dot{
+	width: 10px;
+	height: 10px;
+	border-radius: 999px;
+	background: #9ca3af; /* neutral */
+}
+
+/* Estados: solo acento, sin bordes agresivos */
+.thankyou-hero.status-compra .thankyou-badge__dot{ background:#22c55e; }
+.thankyou-hero.status-compra .thankyou-hero__badge{ border-color: rgba(34,197,94,.35); }
+
+.thankyou-hero.status-pending .thankyou-badge__dot{ background:#f59e0b; }
+.thankyou-hero.status-pending .thankyou-hero__badge{ border-color: rgba(245,158,11,.35); }
+
+.thankyou-hero.status-failed .thankyou-badge__dot{ background:#ef4444; }
+.thankyou-hero.status-failed .thankyou-hero__badge{ border-color: rgba(239,68,68,.35); }
+
+/* GRID */
+.thankyou-grid{
+	display: grid;
+	grid-template-columns: 1fr 1.4fr;
+	gap: 16px;
+	align-items: start;
+}
+
+@media (max-width: 900px){
+	.thankyou-grid{ grid-template-columns: 1fr; }
+	.thankyou-hero__row{ flex-direction: column; }
+	.thankyou-hero__badge{ align-self: flex-start; }
+}
+
+/* CARD */
+.thankyou-card{
+	border: 1px solid var(--ty-border);
+	border-radius: var(--ty-radius);
+	background: var(--ty-bg);
+	padding: 14px 14px 16px;
+	box-shadow: var(--ty-shadow-sm);
+}
+
+.thankyou-card__head{
+	margin-bottom: 10px;
+}
+
+.thankyou-card__head--row{
+	display:flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.thankyou-card h2{
+	margin: 0;
+	font-size: 14px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	color: var(--ty-text);
+}
+
+.thankyou-card__sub{
+	font-size: 12px;
+	color: var(--ty-muted);
+}
+
+/* KV */
+.thankyou-kv{
+	display: grid;
+	gap: 10px;
+}
+
+.thankyou-kv__row{
+	display:flex;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 12px;
+	border: 1px solid var(--ty-border);
+	border-radius: 14px;
+	background: var(--ty-soft);
+}
+
+.thankyou-kv__k{
+	color: var(--ty-muted);
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.thankyou-kv__v{
+	color: var(--ty-text);
+	font-size: 13px;
+	font-weight: 700;
+	text-align: right;
+}
+
+/* TABLA */
+.thankyou-table-wrap{
+	width: 100%;
+	overflow-x: auto;
+}
+
+.thankyou-table{
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 10px;
+}
+
+.thankyou-table thead th{
+	text-align: left;
+	font-weight: 800;
+	font-size: 12px;
+	padding: 0 10px 8px;
+	border-bottom: 1px solid var(--ty-border);
+	color: var(--ty-muted);
+	text-transform: uppercase;
+	letter-spacing: .04em;
+}
+
+.thankyou-table tbody tr{
+	background: var(--ty-soft);
+}
+
+.thankyou-table tbody td{
+	padding: 12px 10px;
+	font-size: 13px;
+	color: var(--ty-text);
+	border-top: 1px solid var(--ty-border);
+	border-bottom: 1px solid var(--ty-border);
+}
+
+.thankyou-table tbody td:first-child{
+	border-left: 1px solid var(--ty-border);
+	border-top-left-radius: 14px;
+	border-bottom-left-radius: 14px;
+}
+
+.thankyou-table tbody td:last-child{
+	border-right: 1px solid var(--ty-border);
+	border-top-right-radius: 14px;
+	border-bottom-right-radius: 14px;
+}
+
+.th-right{ text-align:right; }
+.td-product{ font-weight: 700; }
+
+/* Totales */
+.thankyou-totals{
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px dashed var(--ty-border);
+	display: grid;
+	gap: 8px;
+}
+
+.thankyou-totals__row{
+	display:flex;
+	justify-content: space-between;
+	gap: 10px;
+	font-size: 13px;
+	color: var(--ty-text);
+}
+
+.thankyou-totals__k{ color: var(--ty-muted); font-weight: 700; }
+.thankyou-totals__v{ font-weight: 800; text-align:right; }
+
+/* BOTONES */
+.thankyou-actions{
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+	margin-top: 16px;
+}
+
+@media (max-width: 700px){
+	.thankyou-actions{
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
+
+.thankyou-btn{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	gap: 8px;
+	padding: 12px 14px;
+	border-radius: 14px;
+	text-decoration:none !important;
+	font-weight: 800;
+	font-size: 14px;
+	border: 1px solid var(--ty-border-strong);
+	transition: transform .06s ease, background .15s ease, box-shadow .15s ease;
+	box-shadow: 0 6px 18px rgba(0,0,0,.06);
+}
+
+.thankyou-btn:hover{
+	transform: translateY(-1px);
+	box-shadow: 0 10px 24px rgba(0,0,0,.10);
+}
+
+.thankyou-btn--primary{
+	background: #111827; /* gris oscuro agradable */
+	color:#fff !important;
+	border-color: rgba(17,24,39,.15);
+}
+
+.thankyou-btn--ghost{
+	background:#fff;
+	color: var(--ty-text) !important;
+}
+
+/* Error */
+.thankyou-error{
+	margin: 18px 0;
+	padding: 14px;
+	border: 1px solid rgba(239,68,68,.35);
+	border-radius: 16px;
+	background: #fff1f2;
+	color: var(--ty-text);
+	font-weight: 700;
+	box-shadow: var(--ty-shadow-sm);
 }
