@@ -117,15 +117,27 @@ jQuery(function ($) {
             const encu = getEncuFromPathName(lastSegment);
 
             // Ocultar elementos del producto
-            const hidden_elements_product = ["Interior 2", "Sobrecubiertas", "Faja", "Marcapáginas", "Desplegable"];
+            const hidden_elements_product = ["Interior 2", "Sobrecubiertas", "Faja", "Marcapáginas", "Desplegable", "Encuadernación"];
 
             $.each(hidden_elements_product, function (_, value) {
                 let $inputs = $('input[type="checkbox"][value="' + value + '"]');
                 if (!$inputs.length) $inputs = $('input[type="radio"][value="' + value + '"]');
 
-                if ($inputs.length) {
-                    $inputs.closest('[id^="yith-wapo-addon"]').addClass("no-visible");
-                }
+                if (!$inputs.length) return;
+
+                $inputs.each(function () {
+                    const $input = $(this);
+                    const $addon = $input.closest('[id^="yith-wapo-addon"]');
+
+                    // Solo para Encuadernación: marcar antes de ocultar
+                    if (value === "Encuadernación") {
+                        if (!$input.is(':checked')) {
+                            $input.trigger('click');
+                        }
+                    }
+
+                    $addon.addClass("no-visible").css("display", "none");
+                });
             });
 
             // Detectar si es SELECT
@@ -156,7 +168,7 @@ jQuery(function ($) {
             }
 
             // OCULTAR GUARDAS si corresponde
-            if (encu === "RUSTICA_PUR" || encu === "RUSTICA_COSIDA") {
+            if (encu !== "TAPA_DURA_PUR" || encu !== "TAPA_DURA_WIRE_O") {
                 const $check_guardas = $('input[type="checkbox"][value="Guardas"]');
                 const $div_guardas = $check_guardas.closest('[id^="yith-wapo-addon"]');
 

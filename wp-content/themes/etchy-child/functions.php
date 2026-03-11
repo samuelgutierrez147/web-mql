@@ -1576,7 +1576,7 @@ function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
     exit;*/
 
     $dataXml = $data->asXML();
-    $curlResult = sendXmlOptimus($data->asXML(), 'enqbuilder');
+    $curlResult = sendXmlOptimus($dataXml, 'enqbuilder');
     if (filter_var($curlResult->success, FILTER_VALIDATE_BOOLEAN)) {
         $dataPres = [
             'isbn' => $dataPresupuesto['jobVariable']['ep_isbn'] ?? '',
