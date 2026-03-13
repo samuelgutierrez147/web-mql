@@ -1107,65 +1107,150 @@ function obtener_yith_wapo_del_carrito()
     return null;
 }
 
-add_action('woocommerce_checkout_update_order_meta', 'cambiar_estado_y_asignar_codigo_pedido', 10, 1);
-function cambiar_estado_y_asignar_codigo_pedido($order_id)
+/**
+ * Solo prepara / guarda datos del checkout si lo necesitas.
+ * NO crea nada en Optimus aquí.
+ */
+add_action('woocommerce_checkout_update_order_meta', 'mql_guardar_datos_checkout_para_optimus', 10, 1);
+function mql_guardar_datos_checkout_para_optimus($order_id)
 {
     if (!$order_id) {
         return;
     }
 
-    $order = new WC_Order($order_id);
-    $dataDb = getDataOptimusToProcessOrder(obtener_yith_wapo_del_carrito());
-    $fechaEstimada = getFechaEstimada();
-    $total = $order->get_total();
-    $user_id = $order->get_user_id();
-
-    if ($user_id) {
-        $codOptimusUser = get_user_meta($user_id, 'api_id', true);
-    } else {
-        $codOptimusUser = null; // o algún valor por defecto si fue compra como invitado
-    }
-
-    // Procesar pedido en Optimus
-    $datosPedidoOptimus = addPresupuestoToOptimus($dataDb, $fechaEstimada, $total);
-
-    if (!$datosPedidoOptimus['success']) {
-        $order->update_status('failed', __('Error en Optimus: ' . $datosPedidoOptimus['error_message'], 'woocommerce'));
-        $order->add_order_note(__('Error en Optimus: ' . $datosPedidoOptimus['error_message'], 'woocommerce'));
-
-        // Notificar por correo
-        wc_mail(
-            get_option('admin_email'),
-            __('Error en pedido WooCommerce', 'woocommerce'),
-            'El pedido #' . $order_id . ' no pudo ser procesado en Optimus. Motivo: ' . $datosPedidoOptimus['error_message']
-        );
+    $order = wc_get_order($order_id);
+    if (!$order) {
         return;
     }
 
-    $subject = 'Nuevo presupuesto';
-    $message = "
-            Aviso de nuevo presupuesto, estos son los datos:
-            Codigo presupuesto wordpress: " . $order_id . ",
-            Codigo pedido: " . $datosPedidoOptimus['cod_pedido_optimus'] . ",
-            Codigo oferta: " . $datosPedidoOptimus['enq_number'] . ",
-            Cliente: " . $codOptimusUser . "
-        ";
-    $headers = ['Content-Type: text/plain; charset=UTF-8'];
-    wp_mail('soporte@masquelibrosdigital.com', $subject, $message, $headers);
+    // Si necesitas dejar trazabilidad:
+    $order->add_order_note('Pedido creado en WooCommerce. Pendiente de confirmación de pago.');
+}
 
-    // Guardar en metadatos
+add_action('woocommerce_payment_complete', 'mql_procesar_pedido_optimus_tras_pago', 20, 1);
+function mql_procesar_pedido_optimus_tras_pago($order_id)
+{
+    if (!$order_id) {
+        return;
+    }
+
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        return;
+    }
+
+    // Evita duplicados
+    if (get_post_meta($order_id, '_optimus_processed', true)) {
+        // Si ya fue procesado, solo aseguramos el estado final si quieres
+        if ($order->get_status() !== 'archivos-subidos') {
+            $order->update_status('wc-archivos-subidos', __('Pago confirmado y archivos subidos.', 'woocommerce'));
+        }
+        return;
+    }
+
+    // Solo continuar si realmente está pagado
+    if (!$order->is_paid()) {
+        $order->add_order_note('Intento de envío a Optimus cancelado: el pedido todavía no figura como pagado.');
+        return;
+    }
+
+    $user_id = $order->get_user_id();
+    $codOptimusUser = $user_id ? get_user_meta($user_id, 'api_id', true) : null;
+
+    // Leer configuración desde el pedido, no desde el carrito
+    $yith_wapo_data = mql_obtener_yith_desde_pedido($order);
+
+    if (empty($yith_wapo_data)) {
+        $order->update_status('failed', __('No se encontraron datos YITH en el pedido.', 'woocommerce'));
+        $order->add_order_note(__('No se encontraron datos YITH en el pedido para enviar a Optimus.', 'woocommerce'));
+
+        wc_mail(
+            get_option('admin_email'),
+            __('Error en pedido WooCommerce', 'woocommerce'),
+            'El pedido #' . $order_id . ' no pudo ser procesado en Optimus porque no se encontraron datos YITH en el pedido.'
+        );
+
+        return;
+    }
+
+    $dataDb = getDataOptimusToProcessOrder($yith_wapo_data);
+    $fechaEstimada = getFechaEstimada();
+    $total = $order->get_total();
+
+    // Crear oferta/pedido en Optimus SOLO tras pago exitoso
+    $datosPedidoOptimus = addPresupuestoToOptimus($dataDb, $fechaEstimada, $total);
+
+    if (empty($datosPedidoOptimus['success'])) {
+        $error_message = !empty($datosPedidoOptimus['error_message']) ? $datosPedidoOptimus['error_message'] : 'Error desconocido al crear el pedido en Optimus.';
+
+        $order->update_status('failed', __('Error en Optimus: ' . $error_message, 'woocommerce'));
+        $order->add_order_note(__('Error en Optimus: ' . $error_message, 'woocommerce'));
+
+        wc_mail(
+            get_option('admin_email'),
+            __('Error en pedido WooCommerce', 'woocommerce'),
+            'El pedido #' . $order_id . ' no pudo ser procesado en Optimus. Motivo: ' . $error_message
+        );
+
+        return;
+    }
+
     update_post_meta($order_id, '_optimus_enq_number', sanitize_text_field($datosPedidoOptimus['enq_number']));
     update_post_meta($order_id, '_optimus_cod_pedido', sanitize_text_field($datosPedidoOptimus['cod_pedido_optimus']));
+    update_post_meta($order_id, '_optimus_processed', 1);
 
-    // Agregar notas al pedido
-    $order->add_order_note('Pedido enviado a Optimus.');
+    $subject = 'Nuevo presupuesto';
+    $message = "
+Aviso de nuevo presupuesto, estos son los datos:
+Codigo presupuesto wordpress: " . $order_id . ",
+Codigo pedido: " . $datosPedidoOptimus['cod_pedido_optimus'] . ",
+Codigo oferta: " . $datosPedidoOptimus['enq_number'] . ",
+Cliente: " . $codOptimusUser . "
+";
+    $headers = array('Content-Type: text/plain; charset=UTF-8');
+    wp_mail('soporte@masquelibrosdigital.com', $subject, $message, $headers);
+
+    $order->add_order_note('Pago confirmado. Pedido enviado a Optimus.');
     $order->add_order_note('ENQ Number: ' . $datosPedidoOptimus['enq_number']);
     $order->add_order_note('COD Pedido Optimus: ' . $datosPedidoOptimus['cod_pedido_optimus']);
 
-    // Filtro para cambiar el número de pedido
-    add_filter('woocommerce_order_number', function ($order_number, $order) use ($order_id) {
-        return get_post_meta($order_id, '_optimus_cod_pedido', true) ?: $order_number;
-    }, 10, 2);
+    // Estado final deseado tras pago correcto + procesamiento correcto
+    $order->update_status('wc-archivos-subidos', __('Pago confirmado, pedido enviado a Optimus y archivos subidos.', 'woocommerce'));
+}
+
+function mql_obtener_yith_desde_pedido($order)
+{
+    if (!$order instanceof WC_Order) {
+        return null;
+    }
+
+    foreach ($order->get_items() as $item_id => $item) {
+        $meta_data = $item->get_meta_data();
+
+        foreach ($meta_data as $meta) {
+            $key = $meta->key;
+            $value = $meta->value;
+
+            // Ajusta estas claves según cómo YITH esté guardando realmente los datos
+            if ($key === 'yith_wapo_options' || $key === '_yith_wapo_options') {
+                return $value;
+            }
+        }
+    }
+
+    return null;
+}
+
+add_action('woocommerce_checkout_create_order_line_item', 'mql_guardar_yith_en_linea_pedido', 10, 4);
+function mql_guardar_yith_en_linea_pedido($item, $cart_item_key, $values, $order)
+{
+    if (isset($values['yith_wapo_options']) && !empty($values['yith_wapo_options'])) {
+        $item->add_meta_data('yith_wapo_options', $values['yith_wapo_options'], true);
+    }
+
+    if (isset($values['_yith_wapo_options']) && !empty($values['_yith_wapo_options'])) {
+        $item->add_meta_data('_yith_wapo_options', $values['_yith_wapo_options'], true);
+    }
 }
 
 function redirect_non_logged_users_to_login()
@@ -1591,7 +1676,7 @@ function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
                 'cod_pedido_optimus' => $codOptimus['cod_pedido_optimus']
             ];
         } else {
-            return ['success' => false, 'type' => 'pedido', 'error_message' => $codOptimus['mensaje']];
+            return ['success' => false, 'type' => 'pedido', 'error_message' => $codOptimus['message']];
         }
     }
     return ['success' => false, 'type' => 'oferta', 'error_message' => $curlResult->error];
@@ -3036,13 +3121,6 @@ add_action('init', function () {
 add_filter('wc_order_statuses', function ($order_statuses) {
     $order_statuses['wc-archivos-subidos'] = __('Archivos subidos', 'woocommerce');
     return $order_statuses;
-});
-
-add_action('woocommerce_payment_complete', function ($order_id) {
-    $order = wc_get_order($order_id);
-    if ($order && $order->get_payment_method() === 'redsys') { // Asegúrate de que 'redsys' sea el ID de la pasarela
-        $order->update_status('wc-archivos-subidos', __('Pedido en espera de archivos.', 'woocommerce'));
-    }
 });
 
 function markSuccessful($cantidadFinal, $fechaEstimada, $dataPres)
