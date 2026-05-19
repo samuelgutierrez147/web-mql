@@ -3761,6 +3761,7 @@ add_action('wp_footer', function () {
             const ENDPOINT = <?php echo json_encode($endpoint); ?>;
 
             let welcomeShown = false;
+            let waitingForAnotherQuestion = false;
 
             function showWelcomeMessage() {
                 if (welcomeShown) return;
@@ -3768,7 +3769,7 @@ add_action('wp_footer', function () {
 
                 append(
                     'bot',
-                    '¡Buenas! Soy el asistente virtual de Masquelibros. Puedo ayudarte con dudas sobre impresión, encuadernación, papel, formatos, tiradas o presupuestos. ¿En qué puedo ayudarte?'
+                    'Bienvenido, le habla el asistente virtual de Masquelibros. Por favor, díganos qué producto quiere consultar.'
                 );
             }
 
@@ -3787,14 +3788,23 @@ add_action('wp_footer', function () {
             }
 
             function togglePanel() {
-                if (panel.hidden || !panel.classList.contains('open')) openPanel(); else closePanel();
+                if (panel.hidden || !panel.classList.contains('open')) {
+                    openPanel();
+                } else {
+                    closePanel();
+                }
             }
 
             launcher.addEventListener('click', togglePanel);
             closeBtn.addEventListener('click', closePanel);
+
             miniBtn.addEventListener('click', () => {
                 panel.classList.toggle('open');
-                if (panel.classList.contains('open')) input.focus();
+
+                if (panel.classList.contains('open')) {
+                    showWelcomeMessage();
+                    input.focus();
+                }
             });
 
             function esc(s) {
@@ -3810,34 +3820,41 @@ add_action('wp_footer', function () {
             function append(role, text) {
                 const wrap = document.createElement('div');
                 wrap.className = 'mql-msg ' + (role === 'user' ? 'mql-user' : 'mql-bot');
+
                 wrap.innerHTML =
                     `<div class="mql-badge ${role === 'user' ? 'user' : 'bot'}">${role === 'user' ? 'Tú' : 'IA Masquelibros'}</div>
          <div class="mql-bubble">${esc(text)}</div>`;
+
                 log.appendChild(wrap);
                 log.scrollTop = log.scrollHeight;
             }
 
-            // Mensaje de bienvenida automático del chat
-            let mqlWelcomeShown = false;
+            function appendHTML(role, html) {
+                const wrap = document.createElement('div');
+                wrap.className = 'mql-msg ' + (role === 'user' ? 'mql-user' : 'mql-bot');
 
-            function showMqlWelcome() {
-                if (mqlWelcomeShown) return;
-                mqlWelcomeShown = true;
+                // allowlist muy básica de etiquetas/atributos:
+                const allowed = /<(\/?(div|ul|ol|li|span|strong|b|em|i|a|br))( [^>]*?)?>/gi;
 
-                append(
-                    'bot',
-                    '¡Buenas! Soy el asistente virtual de Masquelibros. Puedo ayudarte con dudas sobre impresión, encuadernación, papel, formatos, tiradas o presupuestos. ¿En qué puedo ayudarte?'
-                );
+                const safe = html
+                    .replace(/<\/?script[^>]*?>/gi, '')
+                    .replace(/ on\w+="[^"]*"/gi, '')
+                    .replace(/javascript:/gi, '')
+                    .replace(/<[^>]+>/g, m => m.match(allowed) ? m : '');
+
+                wrap.innerHTML =
+                    `<div class="mql-badge bot">IA Masquelibros</div>
+         <div class="mql-bubble">${safe}</div>`;
+
+                log.appendChild(wrap);
+                log.scrollTop = log.scrollHeight;
             }
-
-            // Mostrar saludo al arrancar el asistente
-            showMqlWelcome();
 
             function appendLoading() {
                 const wrap = document.createElement('div');
                 wrap.className = 'mql-msg mql-bot';
                 wrap.id = 'mql-loading';
-                wrap.innerHTML = `<div class="mql-badge bot">Bot</div><div class="mql-bubble">…</div>`;
+                wrap.innerHTML = `<div class="mql-badge bot">IA Masquelibros</div><div class="mql-bubble">…</div>`;
                 log.appendChild(wrap);
                 log.scrollTop = log.scrollHeight;
             }
@@ -3847,42 +3864,112 @@ add_action('wp_footer', function () {
                 if (n) n.remove();
             }
 
+            function normalizeText(text) {
+                return (text || '')
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .trim();
+            }
+
+            function isNegativeAnswer(text) {
+                const t = normalizeText(text);
+
+                return /^(no|no gracias|nada mas|nada más|ninguna|ninguna mas|ninguna más|eso es todo|ya esta|ya está|listo|ok no)$/i.test(t);
+            }
+
+            function isPositiveOnlyAnswer(text) {
+                const t = normalizeText(text);
+
+                return /^(si|sí|vale|ok|claro|otra|otra consulta|tengo otra duda|quiero otra consulta)$/i.test(t);
+            }
+
+            function askAnotherQuestion() {
+                waitingForAnotherQuestion = true;
+                append('bot', '¿Alguna otra consulta?');
+            }
+
+            function sayGoodbyeAndClose() {
+                append('bot', 'De acuerdo, pase buen día.');
+
+                setTimeout(() => {
+                    closePanel();
+                }, 1400);
+            }
+
             async function ask(msg) {
                 append('user', msg);
+
+                /*
+                 * Si el usuario está contestando a "¿Alguna otra consulta?"
+                 * y dice que no, no llamamos al servidor: nos despedimos y cerramos.
+                 */
+                if (waitingForAnotherQuestion && isNegativeAnswer(msg)) {
+                    waitingForAnotherQuestion = false;
+                    sayGoodbyeAndClose();
+                    return;
+                }
+
+                /*
+                 * Si dice solo "sí", "vale", "otra", etc.,
+                 * volvemos a pedirle qué producto quiere consultar.
+                 */
+                if (waitingForAnotherQuestion && isPositiveOnlyAnswer(msg)) {
+                    waitingForAnotherQuestion = false;
+                    append('bot', 'Perfecto, dígame qué producto quiere consultar.');
+                    return;
+                }
+
+                /*
+                 * Si estaba en "¿Alguna otra consulta?" pero escribe directamente
+                 * una nueva duda o producto, lo tratamos como una nueva búsqueda.
+                 */
+                waitingForAnotherQuestion = false;
+
                 appendLoading();
                 sendBtn.disabled = true;
+
                 try {
                     const res = await fetch(ENDPOINT, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({message: msg})
                     });
+
                     const data = await res.json();
                     removeLoading();
+
                     if (data.reply_html) {
                         appendHTML('bot', data.reply_html);
+                        askAnotherQuestion();
                     } else if (data.reply) {
                         append('bot', data.reply);
+                        askAnotherQuestion();
                     } else if (data.error) {
                         append('bot', data.error);
+                        askAnotherQuestion();
                     } else {
-                        append('bot', 'Ahora mismo no he podido responder. Prueba de nuevo en unos minutos.');
+                        append('bot', 'Ahora mismo no he podido responder. Pruebe de nuevo en unos minutos.');
+                        askAnotherQuestion();
                     }
 
                 } catch (e) {
                     removeLoading();
-                    append('bot', 'Error de red. Inténtalo de nuevo.');
+                    append('bot', 'Error de red. Inténtelo de nuevo.');
                 } finally {
                     sendBtn.disabled = false;
+                    input.focus();
                 }
             }
 
             sendBtn.addEventListener('click', () => {
                 const msg = input.value.trim();
                 if (!msg) return;
+
                 input.value = '';
                 ask(msg);
             });
+
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -3893,25 +3980,6 @@ add_action('wp_footer', function () {
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && !panel.hidden) closePanel();
             });
-
-            function appendHTML(role, html) {
-                const wrap = document.createElement('div');
-                wrap.className = 'mql-msg ' + (role === 'user' ? 'mql-user' : 'mql-bot');
-                // allowlist muy básica de etiquetas/atributos:
-                const allowed = /<(\/?(div|ul|ol|li|span|strong|b|em|i|a|br))( [^>]*?)?>/gi;
-                const safe = html
-                    .replace(/<\/?script[^>]*?>/gi, '')           // fuera scripts
-                    .replace(/ on\w+="[^"]*"/gi, '')               // fuera onClick...
-                    .replace(/javascript:/gi, '')                  // fuera javascript:
-                    .replace(/<[^>]+>/g, m => m.match(allowed) ? m : ''); // filtra tags no permitidas
-
-                wrap.innerHTML =
-                    `<div class="mql-badge bot">Bot</div>
-     <div class="mql-bubble">${safe}</div>`;
-                log.appendChild(wrap);
-                log.scrollTop = log.scrollHeight;
-            }
-
         })();
     </script>
     <!-- //MQL Chat Floating -->
