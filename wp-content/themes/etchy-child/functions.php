@@ -3663,46 +3663,77 @@ add_action('wp_enqueue_scripts', function () {
 }
 
 .mql-chat-footer{
-  display: flex;
-  align-items: center;      /* centra verticalmente input y botón */
-  gap: 6px;
-  padding: 8px;
-  border-top: 1px solid rgba(0,0,0,.08);
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  border-top: 1px solid rgba(0,0,0,.08) !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
 }
 
 #mql-chat-input{
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #ced4da;
-  background: #fff;
-  color: #212529;
-  font-size: 16px;          /* texto más grande */
-  line-height: 1.4;         /* ayuda al alineado */
-}
-@media (prefers-color-scheme: dark){
-  #mql-chat-input{
-    background:#121212;
-    color:#eaeaea;
-    border-color:#333;
-  }
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid #ced4da !important;
+  background: #fff !important;
+  color: #212529 !important;
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
 }
 
 #mql-chat-send{
-  width: 36px;
-  height: 36px;             /* mismo alto que el input */
-  border-radius: 50%;
-  border: 0;
-  background: #0d6efd;
-  color: #fff;
-  margin-top: 0px !important;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;      /* centra icono vertical */
-  justify-content: center;  /* centra icono horizontal */
+  flex: 0 0 44px !important;
+  width: 44px !important;
+  height: 42px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: #0d6efd !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
 }
-#mql-chat-send[disabled]{ opacity:.6; cursor:not-allowed; }
+
+#mql-chat-send i{
+  font-size: 16px !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+}
+
+#mql-chat-send:hover{
+  filter: brightness(1.08) !important;
+}
+
+#mql-chat-send:disabled{
+  opacity: .6 !important;
+  cursor: not-allowed !important;
+}
+
+@media (prefers-color-scheme: dark){
+  .mql-chat-footer{
+    background: #121212 !important;
+    border-top-color: #333 !important;
+  }
+
+  #mql-chat-input{
+    background: #1b1b1b !important;
+    color: #eaeaea !important;
+    border-color: #444 !important;
+  }
+}
 
 .mql-list-wrap { margin: 4px 0 6px; }
 .mql-list-title { font-weight: 600; margin-bottom: 6px; }
@@ -3742,9 +3773,14 @@ add_action('wp_footer', function () {
             </div>
             <div id="mql-chat-log" class="mql-chat-body" tabindex="0" aria-live="polite"></div>
             <div class="mql-chat-footer">
-                <input id="mql-chat-input" type="text"
-                       placeholder="<?php esc_attr_e('Ej: quiero imprimir un libro en tapa blanda…', 'mql'); ?>"
-                <button id="mql-chat-send" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button>
+                <input
+                        id="mql-chat-input"
+                        type="text"
+                        placeholder="<?php esc_attr_e('Escriba aquí su consulta…', 'mql'); ?>"
+                        autocomplete="off">
+                <button id="mql-chat-send" type="button" aria-label="Enviar mensaje">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -3756,6 +3792,11 @@ add_action('wp_footer', function () {
             const log = document.getElementById('mql-chat-log');
             const input = document.getElementById('mql-chat-input');
             const sendBtn = document.getElementById('mql-chat-send');
+
+            if (!input || !sendBtn) {
+                console.error('MQL Chat: no se encontró el input o el botón de enviar.');
+                return;
+            }
             const closeBtn = document.getElementById('mql-close');
             const miniBtn = document.getElementById('mql-minimize');
             const ENDPOINT = <?php echo json_encode($endpoint); ?>;
@@ -3962,18 +4003,23 @@ add_action('wp_footer', function () {
                 }
             }
 
-            sendBtn.addEventListener('click', () => {
+            function sendCurrentMessage() {
                 const msg = input.value.trim();
-                if (!msg) return;
+                if (!msg || sendBtn.disabled) return;
 
                 input.value = '';
                 ask(msg);
+            }
+
+            sendBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                sendCurrentMessage();
             });
 
-            input.addEventListener('keydown', (e) => {
+            input.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    sendBtn.click();
+                    sendCurrentMessage();
                 }
             });
 
