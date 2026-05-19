@@ -3743,7 +3743,7 @@ add_action('wp_footer', function () {
             <div id="mql-chat-log" class="mql-chat-body" tabindex="0" aria-live="polite"></div>
             <div class="mql-chat-footer">
                 <input id="mql-chat-input" type="text"
-                       placeholder="<?php esc_attr_e('Escribe tu pregunta…', 'mql'); ?>"/>
+                       placeholder="<?php esc_attr_e('Ej: quiero imprimir un libro en tapa blanda…', 'mql'); ?>"
                 <button id="mql-chat-send" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
@@ -3760,10 +3760,23 @@ add_action('wp_footer', function () {
             const miniBtn = document.getElementById('mql-minimize');
             const ENDPOINT = <?php echo json_encode($endpoint); ?>;
 
+            let welcomeShown = false;
+
+            function showWelcomeMessage() {
+                if (welcomeShown) return;
+                welcomeShown = true;
+
+                append(
+                    'bot',
+                    '¡Buenas! Soy el asistente virtual de Masquelibros. Puedo ayudarte con dudas sobre impresión, encuadernación, papel, formatos, tiradas o presupuestos. ¿En qué puedo ayudarte?'
+                );
+            }
+
             function openPanel() {
                 panel.hidden = false;
                 setTimeout(() => panel.classList.add('open'), 10);
                 launcher.setAttribute('aria-expanded', 'true');
+                showWelcomeMessage();
                 input.focus();
             }
 
