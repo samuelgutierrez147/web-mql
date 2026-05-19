@@ -3340,62 +3340,134 @@ function mql_search_by_title_contains(array $needles, $limit = 20, $categorySlug
 function mql_chat_handler(WP_REST_Request $req)
 {
     $msg = trim((string)($req->get_param('message') ?? ''));
-    if ($msg === '') return new WP_REST_Response(['error' => 'Mensaje vacío'], 400);
 
-    // API key desde entorno o wp-config.php (recomendado)
+    if ($msg === '') {
+        return new WP_REST_Response([
+            'reply' => 'Escribe una pregunta para poder ayudarte.'
+        ], 200);
+    }
+
+    /*
+     * Límite básico por IP para evitar abuso del endpoint.
+     * Ajusta 20 y 5 minutos si quieres más o menos margen.
+     */
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $rate_key = 'mql_chat_rl_' . md5($ip);
+    $rate_count = (int) get_transient($rate_key);
+
+    if ($rate_count >= 20) {
+        return new WP_REST_Response([
+            'reply' => 'Has hecho muchas consultas seguidas. Espera unos minutos y vuelve a intentarlo.'
+        ], 200);
+    }
+
+    set_transient($rate_key, $rate_count + 1, 5 * MINUTE_IN_SECONDS);
+
+    // API key desde entorno o wp-config.php
     $api_key = getenv('OPENAI_API_KEY');
-    if (!$api_key && defined('OPENAI_API_KEY')) $api_key = OPENAI_API_KEY;
-    if (!$api_key) return new WP_REST_Response(['error' => 'Falta API key'], 500);
+    if (!$api_key && defined('OPENAI_API_KEY')) {
+        $api_key = OPENAI_API_KEY;
+    }
 
     // ---------- DETECCIÓN INTENCIÓN ----------
-    $isProductIntent = preg_match('/(libro|libros|impresi[oó]n|encuadernaci[oó]n|tapa|papel|formato|tirada|precio|cat[aá]logo|stock|recomienda|recomendaci[oó]n|cotizaci[oó]n|presupuesto|espiral|wire-?o|grapa(?:do)?|cosido|pur|r[uú]stica|rustica)/i', $msg);
+    $isProductIntent = preg_match(
+        '/(libro|libros|impresi[oó]n|encuadernaci[oó]n|tapa|papel|formato|tirada|precio|cat[aá]logo|stock|recomienda|recomendaci[oó]n|cotizaci[oó]n|presupuesto|espiral|wire-?o|grapa(?:do)?|cosido|pur|r[uú]stica|rustica)/i',
+        $msg
+    );
 
     $found = [];
+
     if ($isProductIntent && class_exists('WooCommerce')) {
-        // 1) Buscar por TÍTULO CONTIENE (AND de needles)
         $needles = mql_extract_needles($msg);
         $found = mql_search_by_title_contains($needles, 30, null, false);
 
-        // 2) (Opcional) Si no hay resultados, puedes llamar a tu búsqueda general anterior:
-        // if (empty($found)) { $found = mql_catalog_search($msg, ['limit' => 12, 'stock' => false]); }
+        // Si quieres activar también la búsqueda general, descomenta esta parte:
+        // if (empty($found)) {
+        //     $found = mql_catalog_search($msg, ['limit' => 12, 'stock' => false]);
+        // }
     }
 
-    // ---------- SI HAY PRODUCTOS: DEVOLVEMOS HTML BONITO (solo título enlazado) ----------
+    // ---------- SI HAY PRODUCTOS: DEVOLVEMOS HTML ----------
     if (!empty($found)) {
         $items = [];
+
         foreach ($found as $p) {
             $pl = mql_product_to_payload($p);
+
             $items[] = sprintf(
                 '<li class="mql-item"><a href="%s" target="_blank" rel="noopener" class="mql-item-link"><strong>%s</strong></a></li>',
                 esc_url($pl['link']),
                 esc_html($pl['name'])
             );
         }
+
         $html = '<div class="mql-list-wrap">
                     <div class="mql-list-title">Opciones disponibles en catálogo:</div>
                     <ul class="mql-list">' . implode("\n", $items) . '</ul>
                  </div>';
-        return ['reply_html' => $html];
+
+        return new WP_REST_Response(['reply_html' => $html], 200);
     }
 
-    // ---------- SI NO HAY PRODUCTOS: IA con reglas (sin inventar) ----------
+    /*
+     * Si la intención era de catálogo y no hay coincidencias,
+     * evitamos gastar llamada a OpenAI. Esto reduce mucho los 429.
+     */
+    if ($isProductIntent) {
+        return new WP_REST_Response([
+            'reply' => 'No he encontrado una coincidencia clara en el catálogo. Prueba indicando tipo de encuadernación, tamaño, número de páginas, papel o tirada.'
+        ], 200);
+    }
+
+    // Si no hay API key, responder sin romper el chat.
+    if (!$api_key) {
+        error_log('[MQL Chat] Falta OPENAI_API_KEY');
+
+        return new WP_REST_Response([
+            'reply' => 'Ahora mismo el asistente IA no está configurado. Aun así puedo ayudarte con dudas sobre impresión, encuadernación, papel, formatos o presupuesto.'
+        ], 200);
+    }
+
+    /*
+     * Caché para preguntas repetidas.
+     * Evita gastar tokens si varios usuarios preguntan lo mismo.
+     */
+    $cache_key = 'mql_chat_reply_' . md5(mb_strtolower($msg, 'UTF-8'));
+    $cached_reply = get_transient($cache_key);
+
+    if (!empty($cached_reply)) {
+        return new WP_REST_Response(['reply' => $cached_reply], 200);
+    }
+
+    // ---------- IA con reglas ----------
     $rules = mql_get_business_rules();
+
     $rules_text = "Reglas de negocio:\n- " . implode("\n- ", array_map(
             function ($k, $v) {
                 return ucfirst($k) . ": " . $v;
-            }, array_keys($rules), $rules
+            },
+            array_keys($rules),
+            $rules
         ));
-    $guardrails = "Si la intención es de catálogo, no inventes productos. Pide más detalles (tamaño, papel, tirada) si no hay coincidencias.";
+
+    $guardrails = "Si la intención es de catálogo, no inventes productos. Pide más detalles si no hay coincidencias.";
 
     $messages = [
-        ['role' => 'system', 'content' => "Eres el asistente de masquelibrosdigital.com. Responde en español, claro y conciso. No inventes datos.\n$rules_text\n$guardrails"],
-        ['role' => 'user', 'content' => $msg],
+        [
+            'role' => 'system',
+            'content' => "Eres el asistente de masquelibrosdigital.com. Responde en español, claro y conciso. No inventes datos.\n$rules_text\n$guardrails"
+        ],
+        [
+            'role' => 'user',
+            'content' => $msg
+        ],
     ];
 
     $body = [
         'model' => 'gpt-4o-mini',
         'messages' => $messages,
         'temperature' => 0.2,
+        'max_tokens' => 350,
     ];
 
     $res = wp_remote_post('https://api.openai.com/v1/chat/completions', [
@@ -3407,14 +3479,50 @@ function mql_chat_handler(WP_REST_Request $req)
         'timeout' => 30,
     ]);
 
-    if (is_wp_error($res)) return new WP_REST_Response(['error' => $res->get_error_message()], 500);
+    if (is_wp_error($res)) {
+        error_log('[MQL Chat] Error WordPress HTTP: ' . $res->get_error_message());
 
-    $code = wp_remote_retrieve_response_code($res);
-    $json = json_decode(wp_remote_retrieve_body($res), true);
-    if ($code >= 400) return new WP_REST_Response(['error' => $json['error']['message'] ?? 'Error API'], $code);
+        return new WP_REST_Response([
+            'reply' => 'Ahora mismo no puedo conectar con la IA. Puedo ayudarte igualmente si me indicas tipo de libro, páginas, tamaño, papel y tirada.'
+        ], 200);
+    }
 
-    $text = $json['choices'][0]['message']['content'] ?? 'Puedo ayudarte a configurar tu libro: tamaño, páginas, papel y tirada.';
-    return ['reply' => $text];
+    $code = (int) wp_remote_retrieve_response_code($res);
+    $raw_body = wp_remote_retrieve_body($res);
+    $json = json_decode($raw_body, true);
+
+    /*
+     * IMPORTANTE:
+     * No devolvemos 429 al navegador.
+     * Devolvemos siempre 200 con un mensaje entendible para que el chat no se rompa.
+     */
+    if ($code === 429) {
+        $api_error = $json['error']['message'] ?? 'Too Many Requests';
+        error_log('[MQL Chat] OpenAI 429: ' . $api_error);
+
+        return new WP_REST_Response([
+            'reply' => 'Ahora mismo el asistente IA está saturado o ha alcanzado su límite de uso. Prueba de nuevo en unos minutos. Mientras tanto, puedo orientarte si me dices tipo de encuadernación, páginas, formato, papel y tirada.'
+        ], 200);
+    }
+
+    if ($code >= 400) {
+        $api_error = $json['error']['message'] ?? ('Error API HTTP ' . $code);
+        error_log('[MQL Chat] OpenAI error ' . $code . ': ' . $api_error);
+
+        return new WP_REST_Response([
+            'reply' => 'Ahora mismo la IA no ha podido responder. Prueba de nuevo más tarde o indícame los datos del libro para orientarte manualmente.'
+        ], 200);
+    }
+
+    $text = $json['choices'][0]['message']['content'] ?? '';
+
+    if (trim($text) === '') {
+        $text = 'Puedo ayudarte a configurar tu libro: tamaño, páginas, papel, encuadernación y tirada.';
+    }
+
+    set_transient($cache_key, $text, 12 * HOUR_IN_SECONDS);
+
+    return new WP_REST_Response(['reply' => $text], 200);
 }
 
 /* 2) CSS: estilos del botón y panel (inline para simplificar) */
@@ -3723,11 +3831,13 @@ add_action('wp_footer', function () {
                     const data = await res.json();
                     removeLoading();
                     if (data.reply_html) {
-                        appendHTML('bot', data.reply_html);  // <-- nuevo: renderiza HTML permitido
+                        appendHTML('bot', data.reply_html);
                     } else if (data.reply) {
-                        append('bot', data.reply);           // texto normal
+                        append('bot', data.reply);
+                    } else if (data.error) {
+                        append('bot', data.error);
                     } else {
-                        append('bot', 'Lo siento, no he podido responder ahora.');
+                        append('bot', 'Ahora mismo no he podido responder. Prueba de nuevo en unos minutos.');
                     }
 
                 } catch (e) {
