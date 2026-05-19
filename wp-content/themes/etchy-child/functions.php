@@ -3817,6 +3817,22 @@ add_action('wp_footer', function () {
                 log.scrollTop = log.scrollHeight;
             }
 
+            // Mensaje de bienvenida automático del chat
+            let mqlWelcomeShown = false;
+
+            function showMqlWelcome() {
+                if (mqlWelcomeShown) return;
+                mqlWelcomeShown = true;
+
+                append(
+                    'bot',
+                    '¡Buenas! Soy el asistente virtual de Masquelibros. Puedo ayudarte con dudas sobre impresión, encuadernación, papel, formatos, tiradas o presupuestos. ¿En qué puedo ayudarte?'
+                );
+            }
+
+            // Mostrar saludo al arrancar el asistente
+            showMqlWelcome();
+
             function appendLoading() {
                 const wrap = document.createElement('div');
                 wrap.className = 'mql-msg mql-bot';
