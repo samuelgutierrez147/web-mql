@@ -4537,6 +4537,280 @@ function mql_render_presupuesto_publico()
     return ob_get_clean();
 }
 
+/* =========================================================
+ * MQL - Presupuesto público sin cuenta cliente
+ * Shortcode: [mql_presupuesto_publico]
+ * Cliente Optimus fijo: PRUEBAS
+ * ========================================================= */
+
+add_shortcode('mql_presupuesto_publico', 'mql_render_presupuesto_publico');
+
+function mql_render_presupuesto_publico()
+{
+    $GLOBALS['mql_presupuesto_publico_shortcode_loaded'] = true;
+
+    $nonce = wp_create_nonce('mql_presupuesto_publico_nonce');
+
+    ob_start();
+    ?>
+    <div id="mql-presupuesto-publico" class="mql-presupuesto-publico" data-nonce="<?php echo esc_attr($nonce); ?>">
+        <form id="mql-presupuesto-publico-form">
+            <h3>Calcula tu presupuesto</h3>
+
+            <p>
+                <label for="mql_titulo">Título / referencia</label>
+                <input id="mql_titulo" type="text" name="titulo" value="Presupuesto web" required>
+            </p>
+
+            <p>
+                <label for="mql_encu">Encuadernación</label>
+                <select id="mql_encu" name="e_encu" required>
+                    <option value="RUSTICA_PUR">Rústica PUR</option>
+                    <option value="RUSTICA_COSIDA">Rústica cosida</option>
+                    <option value="GRAPA">Grapa</option>
+                    <option value="ESPIRAL">Espiral</option>
+                    <option value="WIREO">Wire-O</option>
+                    <option value="TAPA_DURA_PUR">Tapa dura PUR</option>
+                    <option value="TAPA_DURA_COSI">Tapa dura cosida</option>
+                </select>
+            </p>
+
+            <p>
+                <label for="mql_formato">Formato</label>
+                <select id="mql_formato" name="formato" required>
+                    <option value="148/210">A5 vertical - 148 x 210 mm</option>
+                    <option value="170/240">17 x 24 cm vertical</option>
+                    <option value="210/297">A4 vertical - 210 x 297 mm</option>
+                </select>
+            </p>
+
+            <input type="hidden" name="orientacion" value="VERTICAL">
+
+            <fieldset>
+                <legend>Interior</legend>
+
+                <p>
+                    <label for="mql_paginas">Páginas interior</label>
+                    <input id="mql_paginas" type="number" name="0e_paginas" min="1" step="1" required>
+                </p>
+
+                <p>
+                    <label for="mql_papel_int">Papel interior</label>
+                    <select id="mql_papel_int" name="0e_tipo_papel" required>
+                        <option value="OF-BLC/90">Offset blanco 90 g</option>
+                        <option value="OF-BLC/80">Offset blanco 80 g</option>
+                        <option value="EST-BLC/115">Estucado blanco 115 g</option>
+                    </select>
+                </p>
+
+                <p>
+                    <label for="mql_tintas_int">Tintas interior</label>
+                    <select id="mql_tintas_int" name="0e_tintas" required>
+                        <option value="BN_CADO">B/N dos caras</option>
+                        <option value="CL_CADO">Color dos caras</option>
+                        <option value="CLCA_BNDO">Color una cara / B/N dorso</option>
+                    </select>
+                </p>
+            </fieldset>
+
+            <fieldset>
+                <legend>Cubierta</legend>
+
+                <p>
+                    <label for="mql_papel_cub">Papel cubierta</label>
+                    <select id="mql_papel_cub" name="2e_tipo_papel" required>
+                        <option value="EST-BLC/300">Estucado blanco 300 g</option>
+                        <option value="EST-BLC/350">Estucado blanco 350 g</option>
+                    </select>
+                </p>
+
+                <p>
+                    <label for="mql_tintas_cub">Tintas cubierta</label>
+                    <select id="mql_tintas_cub" name="2e_tintas" required>
+                        <option value="CL_CA">Color una cara</option>
+                        <option value="CL_CADO">Color dos caras</option>
+                        <option value="NO IMPRESO">No impreso</option>
+                    </select>
+                </p>
+
+                <p>
+                    <label for="mql_plast">Plastificado cubierta</label>
+                    <select id="mql_plast" name="2e_plast">
+                        <option value="NO_PLAST">Sin plastificado</option>
+                        <option value="BRILLO">Brillo</option>
+                        <option value="MATE">Mate</option>
+                    </select>
+                </p>
+            </fieldset>
+
+            <p>
+                <label for="mql_quantity">Cantidad</label>
+                <input id="mql_quantity" type="number" name="quantity" min="1" step="1" required>
+            </p>
+
+            <button type="submit">Calcular precio</button>
+        </form>
+
+        <div id="mql-presupuesto-publico-result" class="mql-presupuesto-publico-result"></div>
+    </div>
+    <?php
+
+    return ob_get_clean();
+}
+
+add_action('wp_footer', 'mql_presupuesto_publico_footer_assets', 99);
+
+function mql_presupuesto_publico_footer_assets()
+{
+    if (empty($GLOBALS['mql_presupuesto_publico_shortcode_loaded'])) {
+        return;
+    }
+    ?>
+    <style>
+        .mql-presupuesto-publico {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 24px;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .mql-presupuesto-publico p {
+            margin-bottom: 14px;
+        }
+
+        .mql-presupuesto-publico label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .mql-presupuesto-publico input,
+        .mql-presupuesto-publico select {
+            width: 100%;
+            padding: 10px;
+        }
+
+        .mql-presupuesto-publico fieldset {
+            margin: 20px 0;
+            padding: 16px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+        }
+
+        .mql-presupuesto-publico button {
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 10px;
+            background: #111;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .mql-presupuesto-publico-result {
+            margin-top: 20px;
+        }
+
+        .mql-ok {
+            padding: 16px;
+            border-radius: 12px;
+            background: #f0fff4;
+            border: 1px solid #b7ebc6;
+        }
+
+        .mql-error {
+            padding: 16px;
+            border-radius: 12px;
+            background: #fff0f0;
+            border: 1px solid #f0b7b7;
+        }
+    </style>
+
+    <script>
+        jQuery(function ($) {
+            var $wrapper = $('#mql-presupuesto-publico');
+            var $form = $('#mql-presupuesto-publico-form');
+            var $result = $('#mql-presupuesto-publico-result');
+
+            if (!$wrapper.length || !$form.length) {
+                return;
+            }
+
+            $form.on('submit', function (e) {
+                e.preventDefault();
+
+                $result.html('<p>Calculando presupuesto...</p>');
+
+                var formData = $form.serializeArray();
+
+                formData.push({
+                    name: 'action',
+                    value: 'mql_presupuesto_publico'
+                });
+
+                formData.push({
+                    name: 'nonce',
+                    value: $wrapper.data('nonce')
+                });
+
+                $.ajax({
+                    url: '<?php echo esc_url(admin_url('admin-ajax.php')); ?>',
+                    method: 'POST',
+                    dataType: 'json',
+                    data: $.param(formData),
+                    success: function (response) {
+                        if (!response || !response.success) {
+                            var message = 'No se ha podido calcular el presupuesto.';
+
+                            if (response && response.data && response.data.message) {
+                                message = response.data.message;
+                            }
+
+                            $result.html('<div class="mql-error">' + message + '</div>');
+                            return;
+                        }
+
+                        var data = response.data;
+                        var html = '';
+
+                        html += '<div class="mql-ok">';
+                        html += '<h4>Resultado del presupuesto</h4>';
+
+                        if (data.price !== undefined) {
+                            html += '<p><strong>Precio:</strong> ' + data.price + ' €</p>';
+                        }
+
+                        if (data.quantity !== undefined) {
+                            html += '<p><strong>Cantidad:</strong> ' + data.quantity + '</p>';
+                        }
+
+                        if (data.lomo !== undefined) {
+                            html += '<p><strong>Lomo:</strong> ' + data.lomo + ' mm</p>';
+                        }
+
+                        if (data.peso !== undefined) {
+                            html += '<p><strong>Peso:</strong> ' + data.peso + ' kg</p>';
+                        }
+
+                        if (data.cajas !== undefined) {
+                            html += '<p><strong>Cajas:</strong> ' + data.cajas + '</p>';
+                        }
+
+                        html += '</div>';
+
+                        $result.html(html);
+                    },
+                    error: function () {
+                        $result.html('<div class="mql-error">No se ha podido conectar con el servidor.</div>');
+                    }
+                });
+            });
+        });
+    </script>
+    <?php
+}
+
 add_action('wp_ajax_mql_presupuesto_publico', 'mql_presupuesto_publico_ajax');
 add_action('wp_ajax_nopriv_mql_presupuesto_publico', 'mql_presupuesto_publico_ajax');
 
@@ -4556,29 +4830,22 @@ function mql_presupuesto_publico_ajax()
         wp_send_json_error(['message' => 'Indica una cantidad y un número de páginas válido.']);
     }
 
-    /*
-     * Estructura tipo YITH WAPO:
-     * tu transformateDataToErp() espera un array de arrays con una clave por campo.
-     */
     $yith_wapo_data = [
         ['titulo' => sanitize_text_field($_POST['titulo'] ?? 'Presupuesto web')],
         ['e_encu' => sanitize_text_field($_POST['e_encu'] ?? 'RUSTICA_PUR')],
         ['formato' => sanitize_text_field($_POST['formato'] ?? '148/210')],
         ['orientacion' => sanitize_text_field($_POST['orientacion'] ?? 'VERTICAL')],
 
-        // Interior
         ['0e_elem' => 'INTERIOR'],
         ['0e_paginas' => $paginas_interior],
         ['0e_tipo_papel' => sanitize_text_field($_POST['0e_tipo_papel'] ?? 'OF-BLC/90')],
         ['0e_tintas' => sanitize_text_field($_POST['0e_tintas'] ?? 'BN_CADO')],
 
-        // Cubierta
         ['2e_elem' => 'CUBIERTA'],
         ['2e_tipo_papel' => sanitize_text_field($_POST['2e_tipo_papel'] ?? 'EST-BLC/300')],
         ['2e_tintas' => sanitize_text_field($_POST['2e_tintas'] ?? 'CL_CA')],
         ['2e_plast' => sanitize_text_field($_POST['2e_plast'] ?? 'NO_PLAST')],
 
-        // Cantidad
         ['quantity' => $cantidad],
     ];
 
@@ -4586,7 +4853,6 @@ function mql_presupuesto_publico_ajax()
         $dataOptimus = getDataOptimusToProcessOrder($yith_wapo_data);
         $fechaEstimada = getFechaEstimada();
 
-        // Cliente fijo solicitado
         $codCliente = 'PRUEBAS';
 
         $priceRequest = getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada);
