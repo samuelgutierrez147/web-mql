@@ -272,9 +272,25 @@ function getDataOptimusToProcessOrder($yith_wapo_data)
 
 function handle_tabla_precios_controller()
 {
-    if (!WC()->cart) {
+    /*
+     * MQL: el mismo controlador sirve para:
+     * - flujo normal de producto: cliente = api_id del usuario logueado
+     * - presupuesto publico: cliente fijo = PRUEBAS
+     *
+     * En el flujo publico no exigimos carrito ni guardamos precio en sesion,
+     * porque solo queremos consultar Optimus y devolver el precio.
+     */
+    $dataToDb = filter_input_array(INPUT_POST, FILTER_DEFAULT);
+    if (!is_array($dataToDb)) {
+        $dataToDb = [];
+    }
+
+    $is_public_quote = mql_is_public_quote_request($dataToDb);
+
+    if (!$is_public_quote && !WC()->cart) {
         wp_send_json_error(array('message' => 'No se ha encontrado el carrito.'));
     }
+
     /*CAMPOS A TENER EN CUENTA
         - alto_ancho_personalizado
         - 0e_tipo_papel
@@ -286,31 +302,38 @@ function handle_tabla_precios_controller()
         - encajado_entrega
     */
 
-    $dataToDb = filter_input_array(INPUT_POST, FILTER_DEFAULT);
-
     if (isset($dataToDb['yith_wapo']) && is_array($dataToDb['yith_wapo'])) {
         $yith_wapo_data = $dataToDb['yith_wapo'];
     } else {
         $yith_wapo_data = [];
     }
 
-    $current_user = wp_get_current_user();
-    $codOptimus = $current_user->api_id;
+    if (empty($yith_wapo_data)) {
+        wp_send_json_error(array('message' => 'No se han recibido datos de YITH WAPO.'));
+    }
+
+    $codOptimus = mql_get_cod_optimus_for_price_request($dataToDb);
+    if (empty($codOptimus)) {
+        wp_send_json_error(array('message' => 'No se ha encontrado codigo de cliente Optimus.'));
+    }
+
     //[MQL] - FECHA ESTIMADA
     $fechaEstimada = getFechaEstimada();
     $dataOptimus = getDataOptimusToProcessOrder($yith_wapo_data);
     $priceRequest = getPricePresupuestoToOptimus($dataOptimus, $codOptimus, $fechaEstimada);
 
-    // Cambiar
-    $precio_calculado = reset($priceRequest)['price'];
+    $precio_calculado = 0;
+    $first_price_line = is_array($priceRequest) ? reset($priceRequest) : null;
+    if (is_array($first_price_line) && isset($first_price_line['price'])) {
+        $precio_calculado = (float) $first_price_line['price'];
+    }
 
-    // CAMBIAR
-    if ($precio_calculado > 0) {
+    // Solo forzamos precio en carrito en el flujo normal.
+    if (!$is_public_quote && $precio_calculado > 0 && WC()->session) {
         WC()->session->set('precio_forzado', $precio_calculado);
     }
 
-    echo json_encode($priceRequest);
-    exit;
+    wp_send_json($priceRequest);
 }
 
 add_action('wp_ajax_tabla_precios_controller', 'handle_tabla_precios_controller');
@@ -1253,9 +1276,299 @@ function mql_guardar_yith_en_linea_pedido($item, $cart_item_key, $values, $order
     }
 }
 
+
+/* =========================================================
+ * MQL - Presupuesto publico con productos YITH WAPO
+ * Shortcode para la pagina previa: [mql_presupuesto_publico]
+ * Cliente Optimus forzado para este flujo: PRUEBAS
+ * ========================================================= */
+
+function mql_public_quote_customer_code()
+{
+    return 'PRUEBAS';
+}
+
+function mql_is_public_quote_request($data = null)
+{
+    if (is_array($data)) {
+        if (!empty($data['mql_public_quote'])) {
+            return true;
+        }
+
+        if (!empty($data['cod_optimus_forzado']) && $data['cod_optimus_forzado'] === mql_public_quote_customer_code()) {
+            return true;
+        }
+    }
+
+    if (!empty($_REQUEST['mql_public_quote']) || !empty($_REQUEST['mql_presupuesto_publico'])) {
+        return true;
+    }
+
+    if (wp_doing_ajax() && !empty($_SERVER['HTTP_REFERER'])) {
+        $referer = esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER']));
+        if (strpos($referer, 'mql_public_quote=1') !== false || strpos($referer, 'mql_presupuesto_publico=1') !== false) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function mql_get_cod_optimus_for_price_request($dataToDb = [])
+{
+    if (mql_is_public_quote_request($dataToDb)) {
+        return mql_public_quote_customer_code();
+    }
+
+    $current_user = wp_get_current_user();
+    if ($current_user && !empty($current_user->api_id)) {
+        return $current_user->api_id;
+    }
+
+    $user_id = get_current_user_id();
+    if ($user_id) {
+        $api_id = get_user_meta($user_id, 'api_id', true);
+        if (!empty($api_id)) {
+            return $api_id;
+        }
+    }
+
+    return '';
+}
+
+function mql_public_quote_product_names()
+{
+    return [
+        'Encuadernacion Rustica Pur' => 'Encuadernación Rústica Pur',
+        'Encuadernacion Rustica Cosida' => 'Encuadernación Rústica Cosida',
+        'Encuadernacion Tapa Dura Pur' => 'Encuadernación Tapa Dura Pur',
+        'Encuadernacion Grapado' => 'Encuadernación Grapado',
+        'Encuadernacion Espiral' => 'Encuadernación Espiral',
+        'Encuadernacion Wire-o' => 'Encuadernación Wire-o',
+        'Encuadernacion Tapa Dura Lomo Cuadrado' => 'Encuadernación Tapa Dura Lomo Cuadrado',
+        'Encuadernacion Tapa Dura Espiral' => 'Encuadernación Tapa Dura Espiral',
+        'Encuadernacion Tapa Dura Wire-o' => 'Encuadernación Tapa Dura Wire-o',
+        'Personalizado' => 'Personalizado',
+    ];
+}
+
+function mql_normalize_public_quote_text($text)
+{
+    $text = remove_accents((string) $text);
+    $text = strtolower($text);
+    $text = preg_replace('/[^a-z0-9]+/', '', $text);
+    return $text;
+}
+
+function mql_find_public_quote_product_by_name($wanted_name)
+{
+    if (!class_exists('WooCommerce')) {
+        return null;
+    }
+
+    $wanted_normalized = mql_normalize_public_quote_text($wanted_name);
+    $products = wc_get_products([
+        'status' => 'publish',
+        'limit' => -1,
+        'return' => 'objects',
+    ]);
+
+    foreach ($products as $product) {
+        if (!$product) {
+            continue;
+        }
+
+        if (mql_normalize_public_quote_text($product->get_name()) === $wanted_normalized) {
+            return $product;
+        }
+    }
+
+    return null;
+}
+
+function mql_get_public_quote_products()
+{
+    $result = [];
+
+    foreach (mql_public_quote_product_names() as $fallback_name => $product_name) {
+        $product = mql_find_public_quote_product_by_name($product_name);
+
+        if (!$product && $fallback_name !== $product_name) {
+            $product = mql_find_public_quote_product_by_name($fallback_name);
+        }
+
+        if (!$product) {
+            continue;
+        }
+
+        $result[] = [
+            'id' => $product->get_id(),
+            'name' => $product->get_name(),
+            'url' => add_query_arg([
+                'mql_public_quote' => 1,
+                'cod_optimus_forzado' => mql_public_quote_customer_code(),
+            ], get_permalink($product->get_id())),
+        ];
+    }
+
+    return $result;
+}
+
+add_shortcode('mql_presupuesto_publico', 'mql_render_presupuesto_publico_selector');
+function mql_render_presupuesto_publico_selector()
+{
+    $products = mql_get_public_quote_products();
+
+    ob_start();
+    ?>
+    <div class="mql-presupuesto-publico-selector">
+        <h2>Presupuesto sin cuenta de cliente</h2>
+        <p>Selecciona el tipo de producto. Abriremos su plantilla real de YITH WAPO para calcular el precio en Optimus con el cliente <strong>PRUEBAS</strong>.</p>
+
+        <p>
+            <label for="mql_tipo_producto_publico"><strong>Tipo de producto</strong></label>
+            <select id="mql_tipo_producto_publico">
+                <option value="">Selecciona un tipo de producto</option>
+                <option value="personalizacion_productos">Personalización productos</option>
+            </select>
+        </p>
+
+        <p id="mql_producto_publico_wrap" style="display:none;">
+            <label for="mql_producto_publico"><strong>Producto</strong></label>
+            <select id="mql_producto_publico">
+                <option value="">Selecciona un producto</option>
+                <?php foreach ($products as $product): ?>
+                    <option value="<?php echo esc_url($product['url']); ?>">
+                        <?php echo esc_html($product['name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </p>
+
+        <button type="button" id="mql_abrir_producto_publico" class="button" disabled>Continuar</button>
+
+        <?php if (empty($products)): ?>
+            <div class="mql-error" style="margin-top:15px;">
+                No se han encontrado productos publicados con los nombres configurados.
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <script>
+        jQuery(function ($) {
+            const $tipo = $('#mql_tipo_producto_publico');
+            const $wrap = $('#mql_producto_publico_wrap');
+            const $producto = $('#mql_producto_publico');
+            const $btn = $('#mql_abrir_producto_publico');
+
+            $tipo.on('change', function () {
+                if ($(this).val()) {
+                    $wrap.show();
+                } else {
+                    $wrap.hide();
+                    $producto.val('');
+                    $btn.prop('disabled', true);
+                }
+            });
+
+            $producto.on('change', function () {
+                $btn.prop('disabled', !$(this).val());
+            });
+
+            $btn.on('click', function () {
+                const url = $producto.val();
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .mql-presupuesto-publico-selector {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 24px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+        }
+        .mql-presupuesto-publico-selector select {
+            width: 100%;
+            max-width: 100%;
+            padding: 10px;
+        }
+        .mql-presupuesto-publico-selector button {
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .mql-error {
+            padding: 14px;
+            background: #fff0f0;
+            border: 1px solid #f0b7b7;
+            border-radius: 10px;
+        }
+    </style>
+    <?php
+
+    return ob_get_clean();
+}
+
+add_action('wp_footer', 'mql_public_quote_product_page_script', 50);
+function mql_public_quote_product_page_script()
+{
+    if (!is_product() || !mql_is_public_quote_request()) {
+        return;
+    }
+    ?>
+    <script>
+        jQuery(function ($) {
+            function mqlPreparePublicQuoteForm() {
+                const $forms = $('form.cart');
+
+                $forms.each(function () {
+                    const $form = $(this);
+
+                    if (!$form.find('input[name="mql_public_quote"]').length) {
+                        $form.append('<input type="hidden" name="mql_public_quote" value="1">');
+                    }
+
+                    if (!$form.find('input[name="cod_optimus_forzado"]').length) {
+                        $form.append('<input type="hidden" name="cod_optimus_forzado" value="<?php echo esc_js(mql_public_quote_customer_code()); ?>">');
+                    }
+                });
+            }
+
+            mqlPreparePublicQuoteForm();
+            setTimeout(mqlPreparePublicQuoteForm, 300);
+            setTimeout(mqlPreparePublicQuoteForm, 1000);
+
+            $(document).ajaxSend(function (event, jqxhr, settings) {
+                if (!settings || typeof settings.data !== 'string') {
+                    return;
+                }
+
+                if (settings.data.indexOf('action=tabla_precios_controller') !== -1) {
+                    if (settings.data.indexOf('mql_public_quote=') === -1) {
+                        settings.data += '&mql_public_quote=1';
+                    }
+                    if (settings.data.indexOf('cod_optimus_forzado=') === -1) {
+                        settings.data += '&cod_optimus_forzado=<?php echo esc_js(rawurlencode(mql_public_quote_customer_code())); ?>';
+                    }
+                }
+            });
+        });
+    </script>
+    <?php
+}
+
 function redirect_non_logged_users_to_login()
 {
     if (!is_user_logged_in() && !is_admin()) {
+        if (function_exists('mql_is_public_quote_request') && mql_is_public_quote_request()) {
+            return;
+        }
         $login_page_url = get_site_url() . '/iniciar-sesion/';
         wp_redirect($login_page_url);
         exit;
