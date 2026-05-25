@@ -281,33 +281,27 @@ function handle_tabla_precios_controller()
      * porque solo queremos consultar Optimus y devolver el precio.
      */
     $dataToDb = filter_input_array(INPUT_POST, FILTER_DEFAULT);
-
     if (!is_array($dataToDb)) {
         $dataToDb = [];
     }
 
-    $is_public_quote = (
-        function_exists('mql_is_public_quote_request') &&
-        mql_is_public_quote_request($dataToDb)
-    );
+    $is_public_quote = mql_is_public_quote_request($dataToDb);
 
-    if (!$is_public_quote && (!function_exists('WC') || !WC()->cart)) {
-        wp_send_json_error([
-            'message' => 'No se ha encontrado el carrito.'
-        ]);
+    if (!$is_public_quote && !WC()->cart) {
+        wp_send_json_error(array('message' => 'No se ha encontrado el carrito.'));
     }
 
-    /*
-     * CAMPOS A TENER EN CUENTA
-     * - alto_ancho_personalizado
-     * - 0e_tipo_papel
-     * - 2e_cub_ab
-     * - estampados cubierta (sin id) 4e_acabados_check
-     * - 6e_papelap_2caras
-     * - 8e_cabezadas_cinta
-     * - retractilado_ensobrado
-     * - encajado_entrega
-     */
+    /*CAMPOS A TENER EN CUENTA
+        - alto_ancho_personalizado
+        - 0e_tipo_papel
+        - 2e_cub_ab
+        - estampados cubierta (sin id) 4e_acabados_check
+        - 6e_papelap_2caras (papel aportado cliente y 2 caras de marcapaginas)
+        - 8e_cabezadas_cinta (cabezas y cinta separadora encuadernacion)
+        - retractilado_ensobrado
+        - encajado_entrega
+    */
+
     if (isset($dataToDb['yith_wapo']) && is_array($dataToDb['yith_wapo'])) {
         $yith_wapo_data = $dataToDb['yith_wapo'];
     } else {
@@ -315,73 +309,27 @@ function handle_tabla_precios_controller()
     }
 
     if (empty($yith_wapo_data)) {
-        wp_send_json_error([
-            'message' => 'No se han recibido datos de YITH WAPO.'
-        ]);
+        wp_send_json_error(array('message' => 'No se han recibido datos de YITH WAPO.'));
     }
 
-    /*
-     * Presupuesto publico sin cuenta:
-     * No hay cliente real ni direcciones guardadas.
-     * Añadimos direccion generica de Optimus para PRUEBAS.
-     */
-    if ($is_public_quote && !is_user_logged_in()) {
-        $has_dir = false;
-
-        foreach ($yith_wapo_data as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-
-            if (array_key_exists('9e_ent_00_dir', $item)) {
-                $has_dir = true;
-                break;
-            }
-        }
-
-        if (!$has_dir) {
-            $yith_wapo_data[] = [
-                '9e_ent_00_dir' => 1
-            ];
-        }
-    }
-
-    if (function_exists('mql_get_cod_optimus_for_price_request')) {
-        $codOptimus = mql_get_cod_optimus_for_price_request($dataToDb);
-    } else {
-        $current_user = wp_get_current_user();
-        $codOptimus = $current_user && !empty($current_user->api_id)
-            ? $current_user->api_id
-            : '';
-    }
-
+    $codOptimus = mql_get_cod_optimus_for_price_request($dataToDb);
     if (empty($codOptimus)) {
-        wp_send_json_error([
-            'message' => 'No se ha encontrado codigo de cliente Optimus.'
-        ]);
+        wp_send_json_error(array('message' => 'No se ha encontrado codigo de cliente Optimus.'));
     }
 
+    //[MQL] - FECHA ESTIMADA
     $fechaEstimada = getFechaEstimada();
     $dataOptimus = getDataOptimusToProcessOrder($yith_wapo_data);
     $priceRequest = getPricePresupuestoToOptimus($dataOptimus, $codOptimus, $fechaEstimada);
 
     $precio_calculado = 0;
     $first_price_line = is_array($priceRequest) ? reset($priceRequest) : null;
-
     if (is_array($first_price_line) && isset($first_price_line['price'])) {
         $precio_calculado = (float) $first_price_line['price'];
     }
 
-    /*
-     * Solo forzamos precio en carrito en el flujo normal.
-     * En presupuesto publico no debe tocar carrito ni sesion.
-     */
-    if (
-        !$is_public_quote &&
-        $precio_calculado > 0 &&
-        function_exists('WC') &&
-        WC()->session
-    ) {
+    // Solo forzamos precio en carrito en el flujo normal.
+    if (!$is_public_quote && $precio_calculado > 0 && WC()->session) {
         WC()->session->set('precio_forzado', $precio_calculado);
     }
 
@@ -1825,73 +1773,6 @@ function mql_public_quote_product_page_script()
                             })
                         );
                     }
-
-                    /*
-                     * Presupuesto publico sin cuenta:
-                     * no hay cliente real ni direcciones guardadas.
-                     * Quitamos el selector "Selecciona una dirección".
-                     */
-                    <?php if (!is_user_logged_in()) : ?>
-                    const $dirSelect = $form.find('select[name="yith_wapo[][9e_ent_00_dir]"]');
-
-                    if ($dirSelect.length) {
-                        const $addon = $dirSelect.closest('.yith-wapo-addon');
-                        const $section = $dirSelect.closest('fieldset.wapo-section');
-
-                        $dirSelect.val('1').trigger('change');
-
-                        if (!$form.find('input[name="yith_wapo[][9e_ent_00_dir]"]').length) {
-                            $form.append('<input type="hidden" name="yith_wapo[][9e_ent_00_dir]" value="1">');
-                        }
-
-                        if ($addon.length) {
-                            $addon.hide();
-                        } else {
-                            $dirSelect.hide();
-                        }
-
-                        /*
-                         * Si la seccion solo contiene el campo de direccion, se oculta entera.
-                         * Si contiene más campos, se deja visible.
-                         */
-                        if ($section.length && $section.find('.yith-wapo-addon:visible').length === 0) {
-                            $section.hide();
-                        }
-                    }
-
-                    /*
-                     * Tambien ocultamos el campo de provincia/zona si aparece para entrega.
-                     */
-                    const $zonaSelect = $form.find('select[name="yith_wapo[][9e_ent_00_zona]"]');
-
-                    if ($zonaSelect.length) {
-                        const $zonaAddon = $zonaSelect.closest('.yith-wapo-addon');
-
-                        $zonaSelect.val('').trigger('change');
-
-                        if ($zonaAddon.length) {
-                            $zonaAddon.hide();
-                        } else {
-                            $zonaSelect.hide();
-                        }
-                    }
-
-                    /*
-                     * Si existe el checkbox/opcion general de entrega, lo desactivamos visualmente.
-                     * Si Optimus necesita entrega, el controlador añadira direccion 1 por defecto.
-                     */
-                    const $entrega = $form.find('[name="yith_wapo[][9e_ent]"]');
-
-                    if ($entrega.length) {
-                        const $entregaAddon = $entrega.closest('.yith-wapo-addon');
-
-                        $entrega.prop('checked', false).trigger('change');
-
-                        if ($entregaAddon.length) {
-                            $entregaAddon.hide();
-                        }
-                    }
-                    <?php endif; ?>
                 });
             }
 
