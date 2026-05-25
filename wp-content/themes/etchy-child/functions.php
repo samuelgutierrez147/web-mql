@@ -1547,7 +1547,7 @@ function mql_render_presupuesto_publico_selector()
     ob_start();
     ?>
     <div class="mql-presupuesto-publico-selector">
-        <h2>Presupuesto sin cuenta de cliente</h2>
+        <h2>Calcula el coste de tu proyecto de forma rápida y personalizada.</h2>
         <p>Selecciona el producto para cargar su plantilla de personalización.</p>
 
         <p>
@@ -1634,6 +1634,101 @@ function mql_render_presupuesto_publico_selector()
  * - añade token a llamadas AJAX de tabla_precios_controller
  */
 add_action('wp_footer', 'mql_public_quote_product_page_script', 50);
+
+/* =========================================================
+ * MQL - Restricciones de compra para presupuesto publico
+ * Usuarios sin cuenta: solo ver plantilla YITH y calcular precio
+ * Usuarios con cuenta: flujo normal, pueden presupuestar/comprar
+ * ========================================================= */
+
+/**
+ * En productos publicos sin login:
+ * - ocultamos boton añadir al carrito
+ * - dejamos visible la plantilla YITH WAPO y botones/calculadoras propias
+ */
+add_action('wp_footer', 'mql_public_quote_hide_cart_for_guests', 80);
+
+function mql_public_quote_hide_cart_for_guests()
+{
+    if (!is_product()) {
+        return;
+    }
+
+    if (is_user_logged_in()) {
+        return;
+    }
+
+    if (!function_exists('mql_is_public_quote_request') || !mql_is_public_quote_request()) {
+        return;
+    }
+    ?>
+    <script>
+        jQuery(function ($) {
+            function mqlDisableGuestCartActions() {
+                const $form = $('form.cart');
+
+                /*
+                 * Ocultamos solo botones de compra WooCommerce.
+                 * No ocultamos toda la form.cart porque YITH WAPO normalmente vive dentro
+                 * y necesitamos que siga funcionando para calcular precio.
+                 */
+                $form.find('button.single_add_to_cart_button').hide();
+                $form.find('button[name="add-to-cart"]').hide();
+                $form.find('input[name="add-to-cart"]').remove();
+
+                /*
+                 * Si tu JS tiene algun boton propio de "calcular precio",
+                 * se mantiene. Si tuviera una clase concreta, se puede excluir aqui.
+                 */
+                $('.single_add_to_cart_button').hide();
+            }
+
+            mqlDisableGuestCartActions();
+            setTimeout(mqlDisableGuestCartActions, 300);
+            setTimeout(mqlDisableGuestCartActions, 1000);
+
+            const observer = new MutationObserver(function () {
+                mqlDisableGuestCartActions();
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        });
+    </script>
+
+    <style>
+        body.single-product .single_add_to_cart_button {
+            display: none !important;
+        }
+    </style>
+    <?php
+}
+
+/**
+ * Seguridad backend:
+ * aunque alguien fuerce el POST de add-to-cart, lo bloqueamos si no esta logueado.
+ */
+add_filter('woocommerce_add_to_cart_validation', 'mql_block_public_quote_cart_for_guests', 20, 3);
+
+function mql_block_public_quote_cart_for_guests($passed, $product_id, $quantity)
+{
+    if (is_user_logged_in()) {
+        return $passed;
+    }
+
+    if (function_exists('mql_is_public_quote_request') && mql_is_public_quote_request()) {
+        wc_add_notice(
+            __('Para comprar o añadir al carrito necesitas iniciar sesión. Sin cuenta solo puedes calcular el presupuesto.', 'woocommerce'),
+            'error'
+        );
+
+        return false;
+    }
+
+    return $passed;
+}
 
 function mql_public_quote_product_page_script()
 {
