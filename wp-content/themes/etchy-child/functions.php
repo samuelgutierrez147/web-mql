@@ -1711,6 +1711,7 @@ function redirect_non_logged_users_to_login()
         if (function_exists('mql_is_public_quote_request') && mql_is_public_quote_request()) {
             return;
         }
+
         $login_page_url = get_site_url() . '/iniciar-sesion/';
         wp_redirect($login_page_url);
         exit;
