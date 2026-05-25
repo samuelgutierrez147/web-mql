@@ -644,80 +644,26 @@ function insertar_formulario_direccion_en_checkout()
             if (mqlPublicQuoteGuest) {
                 function mqlHideDireccionClientePublica() {
                     const $dirSelect = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
-                    const $provSelect = $('select[name="yith_wapo[][9e_ent_00_zona]"]');
 
-                    // Mantener provincia visible
-                    if ($provSelect.length) {
-                        $provSelect.show();
-
-                        const $provAddon = $provSelect.closest('.yith-wapo-addon');
-                        if ($provAddon.length) {
-                            $provAddon.show();
-                        }
-
-                        const $provSection = $provSelect.closest('fieldset.wapo-section');
-                        if ($provSection.length) {
-                            $provSection.show();
-                        }
-                    }
-
-                    // Ocultar solo direccion
                     if ($dirSelect.length) {
+                        const $addon = $dirSelect.closest('.yith-wapo-addon');
+
+                        if ($addon.length) {
+                            $addon.hide();
+                        } else {
+                            $dirSelect.closest('p, div, fieldset').hide();
+                        }
+
                         $dirSelect.val('').trigger('change');
-
-                        /*
-                         * Buscamos el contenedor mas pequeño posible.
-                         * Evitamos ocultar .yith-wapo-addon completo porque puede contener provincia.
-                         */
-                        let $target = $dirSelect.closest('.yith-wapo-option');
-
-                        if (!$target.length) {
-                            $target = $dirSelect.closest('.option');
-                        }
-
-                        if (!$target.length) {
-                            $target = $dirSelect.closest('.form-row');
-                        }
-
-                        if (!$target.length) {
-                            $target = $dirSelect.closest('p');
-                        }
-
-                        if (!$target.length) {
-                            $target = $dirSelect.parent();
-                        }
-
-                        $target.hide();
-
-                        // Ocultar solo labels de direccion dentro del bloque, sin tocar provincia/zona
-                        $dirSelect
-                            .closest('.yith-wapo-addon')
-                            .find('label, .label, .addon-header, h3, h4, legend')
-                            .filter(function () {
-                                const txt = ($(this).text() || '').toLowerCase();
-                                return txt.includes('dirección') || txt.includes('direccion');
-                            })
-                            .hide();
                     }
 
                     $('#direccion-form-container').hide();
                     $('.dir-help-toggle').hide();
-
-                    // Reasegurar provincia despues de todo
-                    if ($provSelect.length) {
-                        $provSelect.show();
-
-                        const $provAddon = $provSelect.closest('.yith-wapo-addon');
-                        if ($provAddon.length) {
-                            $provAddon.show();
-                        }
-                    }
                 }
 
                 mqlHideDireccionClientePublica();
                 setTimeout(mqlHideDireccionClientePublica, 300);
                 setTimeout(mqlHideDireccionClientePublica, 1000);
-                setTimeout(mqlHideDireccionClientePublica, 2000);
 
                 const mqlDirObserver = new MutationObserver(function () {
                     mqlHideDireccionClientePublica();
