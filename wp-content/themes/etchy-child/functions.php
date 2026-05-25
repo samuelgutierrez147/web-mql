@@ -302,10 +302,19 @@ function handle_tabla_precios_controller()
         - encajado_entrega
     */
 
-    if (isset($dataToDb['yith_wapo']) && is_array($dataToDb['yith_wapo'])) {
-        $yith_wapo_data = $dataToDb['yith_wapo'];
-    } else {
-        $yith_wapo_data = [];
+    if ($is_public_quote) {
+        $has_public_dir = false;
+
+        foreach ($yith_wapo_data as $item) {
+            if (is_array($item) && array_key_exists('9e_ent_00_dir', $item)) {
+                $has_public_dir = true;
+                break;
+            }
+        }
+
+        if (!$has_public_dir) {
+            $yith_wapo_data[] = ['9e_ent_00_dir' => 1];
+        }
     }
 
     if (empty($yith_wapo_data)) {
@@ -642,12 +651,17 @@ function insertar_formulario_direccion_en_checkout()
             const mqlPublicQuoteGuest = <?php echo $mql_public_quote_guest ? 'true' : 'false'; ?>;
 
             if (mqlPublicQuoteGuest) {
-                function mqlHideDireccionClientePublica() {
+                function mqlPrepareGuestPublicQuoteFields() {
                     const $dirSelect = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
                     const $provSelect = $('select[name="yith_wapo[][9e_ent_00_zona]"]');
 
-                    // Mantener provincia visible
+                    /*
+                     * Provincia / zona:
+                     * debe mantenerse visible porque se usa para calcular portes/precio.
+                     */
                     if ($provSelect.length) {
+                        $provSelect.prop('disabled', false);
+                        $provSelect.prop('required', true);
                         $provSelect.show();
 
                         const $provAddon = $provSelect.closest('.yith-wapo-addon');
@@ -661,13 +675,25 @@ function insertar_formulario_direccion_en_checkout()
                         }
                     }
 
-                    // Ocultar solo direccion
+                    /*
+                     * Dirección:
+                     * NO la dejamos vacía.
+                     * Le damos valor 1 para que YITH no bloquee validación y Optimus use
+                     * la dirección 1 del cliente PRUEBAS.
+                     */
                     if ($dirSelect.length) {
-                        $dirSelect.val('').trigger('change');
+                        if (!$dirSelect.find('option[value="1"]').length) {
+                            $dirSelect.append('<option value="1">Dirección por defecto</option>');
+                        }
+
+                        $dirSelect.val('1');
+                        $dirSelect.prop('disabled', false);
+                        $dirSelect.prop('required', false);
+                        $dirSelect.removeAttr('required');
+                        $dirSelect.attr('aria-required', 'false');
 
                         /*
-                         * Buscamos el contenedor mas pequeño posible.
-                         * Evitamos ocultar .yith-wapo-addon completo porque puede contener provincia.
+                         * Ocultamos solo el campo de dirección, no el addon completo.
                          */
                         let $target = $dirSelect.closest('.yith-wapo-option');
 
@@ -689,10 +715,13 @@ function insertar_formulario_direccion_en_checkout()
 
                         $target.hide();
 
-                        // Ocultar solo labels de direccion dentro del bloque, sin tocar provincia/zona
+                        /*
+                         * Oculta solo textos/labels de dirección.
+                         * No toca provincia/zona.
+                         */
                         $dirSelect
                             .closest('.yith-wapo-addon')
-                            .find('label, .label, .addon-header, h3, h4, legend')
+                            .find('label, .label, .addon-header, h3, h4')
                             .filter(function () {
                                 const txt = ($(this).text() || '').toLowerCase();
                                 return txt.includes('dirección') || txt.includes('direccion');
@@ -703,9 +732,12 @@ function insertar_formulario_direccion_en_checkout()
                     $('#direccion-form-container').hide();
                     $('.dir-help-toggle').hide();
 
-                    // Reasegurar provincia despues de todo
+                    /*
+                     * Reasegurar provincia al final, porque YITH puede repintar campos.
+                     */
                     if ($provSelect.length) {
                         $provSelect.show();
+                        $provSelect.prop('disabled', false);
 
                         const $provAddon = $provSelect.closest('.yith-wapo-addon');
                         if ($provAddon.length) {
@@ -714,13 +746,13 @@ function insertar_formulario_direccion_en_checkout()
                     }
                 }
 
-                mqlHideDireccionClientePublica();
-                setTimeout(mqlHideDireccionClientePublica, 300);
-                setTimeout(mqlHideDireccionClientePublica, 1000);
-                setTimeout(mqlHideDireccionClientePublica, 2000);
+                mqlPrepareGuestPublicQuoteFields();
+                setTimeout(mqlPrepareGuestPublicQuoteFields, 300);
+                setTimeout(mqlPrepareGuestPublicQuoteFields, 1000);
+                setTimeout(mqlPrepareGuestPublicQuoteFields, 2000);
 
                 const mqlDirObserver = new MutationObserver(function () {
-                    mqlHideDireccionClientePublica();
+                    mqlPrepareGuestPublicQuoteFields();
                 });
 
                 mqlDirObserver.observe(document.body, {
@@ -3395,7 +3427,9 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
 
     $data = readOptimusXml('price-request');
     $data->customerCode = $codCliente;
-    $data->addressNumber = ($dataOptimus['productVariable']['9e_ent_00_dir']) ?? 1;
+    $data->addressNumber = !empty($dataOptimus['productVariable']['9e_ent_00_dir'])
+        ? $dataOptimus['productVariable']['9e_ent_00_dir']
+        : 1;
 
     $data->jobVariable->name = 'ep_fecha_entrega';
     $data->jobVariable->type = 'datetime';
