@@ -1279,8 +1279,9 @@ function mql_guardar_yith_en_linea_pedido($item, $cart_item_key, $values, $order
 
 /* =========================================================
  * MQL - Presupuesto publico con productos YITH WAPO
- * Shortcode para la pagina previa: [mql_presupuesto_publico]
- * Cliente Optimus forzado para este flujo: PRUEBAS
+ * Shortcode: [mql_presupuesto_publico]
+ * URL publica con parametro cifrado: ?mqlq=TOKEN
+ * Cliente Optimus forzado: PRUEBAS
  * ========================================================= */
 
 function mql_public_quote_customer_code()
@@ -1288,27 +1289,136 @@ function mql_public_quote_customer_code()
     return 'PRUEBAS';
 }
 
-function mql_is_public_quote_request($data = null)
+/**
+ * Clave interna para cifrar/firmar tokens.
+ * Usa las salts de WordPress, no expone PRUEBAS ni el product_id en la URL.
+ */
+function mql_public_quote_secret_key()
 {
-    if (is_array($data)) {
-        if (!empty($data['mql_public_quote'])) {
-            return true;
-        }
+    return hash('sha256', wp_salt('auth') . wp_salt('secure_auth') . 'mql_public_quote_secret', true);
+}
 
-        if (!empty($data['cod_optimus_forzado']) && $data['cod_optimus_forzado'] === mql_public_quote_customer_code()) {
-            return true;
-        }
+function mql_base64url_encode($data)
+{
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+
+function mql_base64url_decode($data)
+{
+    $remainder = strlen($data) % 4;
+    if ($remainder) {
+        $data .= str_repeat('=', 4 - $remainder);
     }
 
-    if (!empty($_REQUEST['mql_public_quote']) || !empty($_REQUEST['mql_presupuesto_publico'])) {
+    return base64_decode(strtr($data, '-_', '+/'));
+}
+
+/**
+ * Cifra payload para URL.
+ */
+function mql_public_quote_encrypt_payload(array $payload)
+{
+    $payload['ts'] = time();
+    $payload['exp'] = time() + DAY_IN_SECONDS;
+
+    $plain = wp_json_encode($payload);
+    $key = mql_public_quote_secret_key();
+    $iv = random_bytes(16);
+
+    $cipher = openssl_encrypt($plain, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+
+    if ($cipher === false) {
+        return '';
+    }
+
+    $mac = hash_hmac('sha256', $iv . $cipher, $key, true);
+
+    return mql_base64url_encode($iv . $mac . $cipher);
+}
+
+/**
+ * Descifra y valida token de URL.
+ */
+function mql_public_quote_decrypt_payload($token)
+{
+    $raw = mql_base64url_decode((string) $token);
+
+    if (!$raw || strlen($raw) <= 48) {
+        return false;
+    }
+
+    $iv = substr($raw, 0, 16);
+    $mac = substr($raw, 16, 32);
+    $cipher = substr($raw, 48);
+
+    $key = mql_public_quote_secret_key();
+    $calc_mac = hash_hmac('sha256', $iv . $cipher, $key, true);
+
+    if (!hash_equals($mac, $calc_mac)) {
+        return false;
+    }
+
+    $plain = openssl_decrypt($cipher, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+
+    if (!$plain) {
+        return false;
+    }
+
+    $payload = json_decode($plain, true);
+
+    if (!is_array($payload)) {
+        return false;
+    }
+
+    if (empty($payload['exp']) || time() > (int) $payload['exp']) {
+        return false;
+    }
+
+    return $payload;
+}
+
+function mql_get_public_quote_payload()
+{
+    static $payload = null;
+
+    if ($payload !== null) {
+        return $payload;
+    }
+
+    $payload = false;
+
+    if (!empty($_GET['mqlq'])) {
+        $token = sanitize_text_field(wp_unslash($_GET['mqlq']));
+        $payload = mql_public_quote_decrypt_payload($token);
+    }
+
+    return $payload;
+}
+
+function mql_is_public_quote_request($data = null)
+{
+    if (mql_get_public_quote_payload()) {
         return true;
     }
 
-    if (wp_doing_ajax() && !empty($_SERVER['HTTP_REFERER'])) {
-        $referer = esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER']));
-        if (strpos($referer, 'mql_public_quote=1') !== false || strpos($referer, 'mql_presupuesto_publico=1') !== false) {
+    if (is_array($data)) {
+        if (!empty($data['mql_public_quote_token'])) {
+            return (bool) mql_public_quote_decrypt_payload($data['mql_public_quote_token']);
+        }
+
+        if (!empty($data['mql_public_quote'])) {
             return true;
         }
+    }
+
+    if (!empty($_REQUEST['mql_public_quote_token'])) {
+        return (bool) mql_public_quote_decrypt_payload(
+            sanitize_text_field(wp_unslash($_REQUEST['mql_public_quote_token']))
+        );
+    }
+
+    if (!empty($_REQUEST['mql_public_quote'])) {
+        return true;
     }
 
     return false;
@@ -1321,13 +1431,16 @@ function mql_get_cod_optimus_for_price_request($dataToDb = [])
     }
 
     $current_user = wp_get_current_user();
+
     if ($current_user && !empty($current_user->api_id)) {
         return $current_user->api_id;
     }
 
     $user_id = get_current_user_id();
+
     if ($user_id) {
         $api_id = get_user_meta($user_id, 'api_id', true);
+
         if (!empty($api_id)) {
             return $api_id;
         }
@@ -1336,19 +1449,23 @@ function mql_get_cod_optimus_for_price_request($dataToDb = [])
     return '';
 }
 
+/**
+ * Productos que pertenecen a la plantilla/bloque YITH:
+ * "Personalización productos"
+ */
 function mql_public_quote_product_names()
 {
     return [
-        'Encuadernacion Rustica Pur' => 'Encuadernación Rústica Pur',
-        'Encuadernacion Rustica Cosida' => 'Encuadernación Rústica Cosida',
-        'Encuadernacion Tapa Dura Pur' => 'Encuadernación Tapa Dura Pur',
-        'Encuadernacion Grapado' => 'Encuadernación Grapado',
-        'Encuadernacion Espiral' => 'Encuadernación Espiral',
-        'Encuadernacion Wire-o' => 'Encuadernación Wire-o',
-        'Encuadernacion Tapa Dura Lomo Cuadrado' => 'Encuadernación Tapa Dura Lomo Cuadrado',
-        'Encuadernacion Tapa Dura Espiral' => 'Encuadernación Tapa Dura Espiral',
-        'Encuadernacion Tapa Dura Wire-o' => 'Encuadernación Tapa Dura Wire-o',
-        'Personalizado' => 'Personalizado',
+        'Encuadernación Rústica Pur',
+        'Encuadernación Rústica Cosida',
+        'Encuadernación Tapa Dura Pur',
+        'Encuadernación Grapado',
+        'Encuadernación Espiral',
+        'Encuadernación Wire-o',
+        'Encuadernación Tapa Dura Lomo Cuadrado',
+        'Encuadernación Tapa Dura Espiral',
+        'Encuadernación Tapa Dura Wire-o',
+        'Personalizado',
     ];
 }
 
@@ -1357,6 +1474,7 @@ function mql_normalize_public_quote_text($text)
     $text = remove_accents((string) $text);
     $text = strtolower($text);
     $text = preg_replace('/[^a-z0-9]+/', '', $text);
+
     return $text;
 }
 
@@ -1367,6 +1485,7 @@ function mql_find_public_quote_product_by_name($wanted_name)
     }
 
     $wanted_normalized = mql_normalize_public_quote_text($wanted_name);
+
     $products = wc_get_products([
         'status' => 'publish',
         'limit' => -1,
@@ -1390,14 +1509,20 @@ function mql_get_public_quote_products()
 {
     $result = [];
 
-    foreach (mql_public_quote_product_names() as $fallback_name => $product_name) {
+    foreach (mql_public_quote_product_names() as $product_name) {
         $product = mql_find_public_quote_product_by_name($product_name);
 
-        if (!$product && $fallback_name !== $product_name) {
-            $product = mql_find_public_quote_product_by_name($fallback_name);
+        if (!$product) {
+            continue;
         }
 
-        if (!$product) {
+        $token = mql_public_quote_encrypt_payload([
+            'product_id' => $product->get_id(),
+            'customer' => mql_public_quote_customer_code(),
+            'flow' => 'public_quote',
+        ]);
+
+        if (empty($token)) {
             continue;
         }
 
@@ -1405,8 +1530,7 @@ function mql_get_public_quote_products()
             'id' => $product->get_id(),
             'name' => $product->get_name(),
             'url' => add_query_arg([
-                'mql_public_quote' => 1,
-                'cod_optimus_forzado' => mql_public_quote_customer_code(),
+                'mqlq' => rawurlencode($token),
             ], get_permalink($product->get_id())),
         ];
     }
@@ -1415,6 +1539,7 @@ function mql_get_public_quote_products()
 }
 
 add_shortcode('mql_presupuesto_publico', 'mql_render_presupuesto_publico_selector');
+
 function mql_render_presupuesto_publico_selector()
 {
     $products = mql_get_public_quote_products();
@@ -1423,20 +1548,13 @@ function mql_render_presupuesto_publico_selector()
     ?>
     <div class="mql-presupuesto-publico-selector">
         <h2>Presupuesto sin cuenta de cliente</h2>
-        <p>Selecciona el tipo de producto. Abriremos su plantilla real de YITH WAPO para calcular el precio en Optimus con el cliente <strong>PRUEBAS</strong>.</p>
+        <p>Selecciona el producto para cargar su plantilla de personalización.</p>
 
         <p>
-            <label for="mql_tipo_producto_publico"><strong>Tipo de producto</strong></label>
-            <select id="mql_tipo_producto_publico">
-                <option value="">Selecciona un tipo de producto</option>
-                <option value="personalizacion_productos">Personalización productos</option>
-            </select>
-        </p>
-
-        <p id="mql_producto_publico_wrap" style="display:none;">
             <label for="mql_producto_publico"><strong>Producto</strong></label>
             <select id="mql_producto_publico">
                 <option value="">Selecciona un producto</option>
+
                 <?php foreach ($products as $product): ?>
                     <option value="<?php echo esc_url($product['url']); ?>">
                         <?php echo esc_html($product['name']); ?>
@@ -1445,7 +1563,9 @@ function mql_render_presupuesto_publico_selector()
             </select>
         </p>
 
-        <button type="button" id="mql_abrir_producto_publico" class="button" disabled>Continuar</button>
+        <button type="button" id="mql_abrir_producto_publico" class="button" disabled>
+            Continuar
+        </button>
 
         <?php if (empty($products)): ?>
             <div class="mql-error" style="margin-top:15px;">
@@ -1456,20 +1576,8 @@ function mql_render_presupuesto_publico_selector()
 
     <script>
         jQuery(function ($) {
-            const $tipo = $('#mql_tipo_producto_publico');
-            const $wrap = $('#mql_producto_publico_wrap');
             const $producto = $('#mql_producto_publico');
             const $btn = $('#mql_abrir_producto_publico');
-
-            $tipo.on('change', function () {
-                if ($(this).val()) {
-                    $wrap.show();
-                } else {
-                    $wrap.hide();
-                    $producto.val('');
-                    $btn.prop('disabled', true);
-                }
-            });
 
             $producto.on('change', function () {
                 $btn.prop('disabled', !$(this).val());
@@ -1477,6 +1585,7 @@ function mql_render_presupuesto_publico_selector()
 
             $btn.on('click', function () {
                 const url = $producto.val();
+
                 if (url) {
                     window.location.href = url;
                 }
@@ -1493,16 +1602,19 @@ function mql_render_presupuesto_publico_selector()
             border: 1px solid #ddd;
             border-radius: 14px;
         }
+
         .mql-presupuesto-publico-selector select {
             width: 100%;
             max-width: 100%;
             padding: 10px;
         }
+
         .mql-presupuesto-publico-selector button {
             padding: 10px 18px;
             border-radius: 8px;
             cursor: pointer;
         }
+
         .mql-error {
             padding: 14px;
             background: #fff0f0;
@@ -1515,15 +1627,38 @@ function mql_render_presupuesto_publico_selector()
     return ob_get_clean();
 }
 
+/**
+ * En ficha de producto publica:
+ * - valida token
+ * - añade campos ocultos al form
+ * - añade token a llamadas AJAX de tabla_precios_controller
+ */
 add_action('wp_footer', 'mql_public_quote_product_page_script', 50);
+
 function mql_public_quote_product_page_script()
 {
-    if (!is_product() || !mql_is_public_quote_request()) {
+    if (!is_product()) {
         return;
     }
+
+    $payload = mql_get_public_quote_payload();
+
+    if (!$payload || empty($payload['product_id'])) {
+        return;
+    }
+
+    global $product;
+
+    if (!$product || (int) $product->get_id() !== (int) $payload['product_id']) {
+        return;
+    }
+
+    $token = sanitize_text_field(wp_unslash($_GET['mqlq']));
     ?>
     <script>
         jQuery(function ($) {
+            const mqlPublicQuoteToken = <?php echo wp_json_encode($token); ?>;
+
             function mqlPreparePublicQuoteForm() {
                 const $forms = $('form.cart');
 
@@ -1534,8 +1669,14 @@ function mql_public_quote_product_page_script()
                         $form.append('<input type="hidden" name="mql_public_quote" value="1">');
                     }
 
-                    if (!$form.find('input[name="cod_optimus_forzado"]').length) {
-                        $form.append('<input type="hidden" name="cod_optimus_forzado" value="<?php echo esc_js(mql_public_quote_customer_code()); ?>">');
+                    if (!$form.find('input[name="mql_public_quote_token"]').length) {
+                        $form.append(
+                            $('<input>', {
+                                type: 'hidden',
+                                name: 'mql_public_quote_token',
+                                value: mqlPublicQuoteToken
+                            })
+                        );
                     }
                 });
             }
@@ -1545,16 +1686,17 @@ function mql_public_quote_product_page_script()
             setTimeout(mqlPreparePublicQuoteForm, 1000);
 
             $(document).ajaxSend(function (event, jqxhr, settings) {
-                if (!settings || typeof settings.data !== 'string') {
+                if (!settings || !settings.data) {
                     return;
                 }
 
-                if (settings.data.indexOf('action=tabla_precios_controller') !== -1) {
+                if (typeof settings.data === 'string' && settings.data.indexOf('action=tabla_precios_controller') !== -1) {
                     if (settings.data.indexOf('mql_public_quote=') === -1) {
                         settings.data += '&mql_public_quote=1';
                     }
-                    if (settings.data.indexOf('cod_optimus_forzado=') === -1) {
-                        settings.data += '&cod_optimus_forzado=<?php echo esc_js(rawurlencode(mql_public_quote_customer_code())); ?>';
+
+                    if (settings.data.indexOf('mql_public_quote_token=') === -1) {
+                        settings.data += '&mql_public_quote_token=' + encodeURIComponent(mqlPublicQuoteToken);
                     }
                 }
             });
