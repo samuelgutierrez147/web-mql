@@ -579,11 +579,6 @@ add_action('wp_footer', 'insertar_formulario_direccion_en_checkout');
 function insertar_formulario_direccion_en_checkout()
 {
     if (!is_product()) return;
-
-    $mql_public_quote_guest = (
-        function_exists('mql_is_public_quote_guest')
-        && mql_is_public_quote_guest()
-    );
     ?>
     <style>
         /* Botón ? en legend */
@@ -638,44 +633,6 @@ function insertar_formulario_direccion_en_checkout()
 
     <script type="text/javascript">
         jQuery(document).ready(function ($) {
-
-            const mqlPublicQuoteGuest = <?php echo $mql_public_quote_guest ? 'true' : 'false'; ?>;
-
-            if (mqlPublicQuoteGuest) {
-                function mqlHideDireccionClientePublica() {
-                    const $dirSelect = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
-
-                    if ($dirSelect.length) {
-                        const $addon = $dirSelect.closest('.yith-wapo-addon');
-
-                        if ($addon.length) {
-                            $addon.hide();
-                        } else {
-                            $dirSelect.closest('p, div, fieldset').hide();
-                        }
-
-                        $dirSelect.val('').trigger('change');
-                    }
-
-                    $('#direccion-form-container').hide();
-                    $('.dir-help-toggle').hide();
-                }
-
-                mqlHideDireccionClientePublica();
-                setTimeout(mqlHideDireccionClientePublica, 300);
-                setTimeout(mqlHideDireccionClientePublica, 1000);
-
-                const mqlDirObserver = new MutationObserver(function () {
-                    mqlHideDireccionClientePublica();
-                });
-
-                mqlDirObserver.observe(document.body, {
-                    childList: true,
-                    subtree: true
-                });
-
-                return;
-            }
 
             // ---------- helpers ----------
             function getDireccionSelect(){
@@ -852,20 +809,13 @@ function insertar_formulario_direccion_en_checkout()
                         $(window).off('resize.ajustarDireccion').on('resize.ajustarDireccion', ajustarLayoutDireccion);
 
                         // Rellenar select
-                        if (!response || !response.success || !response.data) {
-                            $select.empty().append('<option value="">No hay direcciones disponibles</option>').hide();
-                            return;
-                        }
-
-                        if (response.data.no_address) {
+                        if (response.success && response.data.no_address) {
                             $select.empty().append('<option value="">No tienes direcciones guardadas</option>').show();
                         } else {
                             $select.empty().append('<option value="">Selecciona una dirección</option>');
-
                             $.each(response.data.addresses || [], function (index, address) {
                                 $select.append('<option value="' + address.id + '">' + address.label + '</option>');
                             });
-
                             $select.trigger('change').show();
                         }
 
@@ -1333,15 +1283,6 @@ function mql_guardar_yith_en_linea_pedido($item, $cart_item_key, $values, $order
  * URL publica con parametro cifrado: ?mqlq=TOKEN
  * Cliente Optimus forzado: PRUEBAS
  * ========================================================= */
-
-function mql_is_public_quote_guest()
-{
-    return (
-        !is_user_logged_in()
-        && function_exists('mql_is_public_quote_request')
-        && mql_is_public_quote_request()
-    );
-}
 
 function mql_public_quote_customer_code()
 {
