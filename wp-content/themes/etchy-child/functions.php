@@ -655,42 +655,52 @@ function insertar_formulario_direccion_en_checkout()
 
             const MQL_PUBLIC_QUOTE_GUEST = <?php echo $mql_public_quote_guest ? 'true' : 'false'; ?>;
 
+            if (MQL_PUBLIC_QUOTE_GUEST) {
+                function mqlOcultarDireccionPublicaSinEventos() {
+                    const $dirSelect = $('select[name="yith_wapo[][9e_ent_00_dir]"]');
+
+                    if (!$dirSelect.length) {
+                        return;
+                    }
+
+                    const $addon = $dirSelect.closest('.yith-wapo-addon');
+
+                    /*
+                     * Importante:
+                     * NO usar .trigger('change')
+                     * NO usar .val('') si ya está vacío
+                     * NO crear MutationObserver
+                     *
+                     * Solo evitamos que el campo viaje en el POST/AJAX.
+                     */
+                    $dirSelect.prop('disabled', true);
+                    $dirSelect.removeAttr('required');
+                    $dirSelect.removeClass('required');
+
+                    if ($addon.length) {
+                        $addon.hide();
+                    } else {
+                        $dirSelect.hide();
+                    }
+
+                    $('#direccion-form-container').remove();
+                    $('.dir-help-toggle').remove();
+                }
+
+                mqlOcultarDireccionPublicaSinEventos();
+
+                /*
+                 * Un único repaso corto por si YITH pinta tarde.
+                 * No se repite cada segundo y no dispara change.
+                 */
+                setTimeout(mqlOcultarDireccionPublicaSinEventos, 300);
+
+                return;
+            }
+
             // ---------- helpers ----------
             function getDireccionSelect(){
                 return $('select[name="yith_wapo[][9e_ent_00_dir]"]');
-            }
-
-            function ocultarDireccionParaPresupuestoPublico() {
-                if (!MQL_PUBLIC_QUOTE_GUEST) return;
-
-                const $select = getDireccionSelect();
-                if (!$select.length) return;
-
-                const $addon = $select.closest('.yith-wapo-addon');
-
-                /*
-                 * No queremos que viaje direccion al XML.
-                 * Provincia/zona se mantiene visible y activa.
-                 */
-                $select.val('');
-                $select.prop('disabled', true);
-                $select.removeAttr('required');
-                $select.trigger('change');
-
-                if ($addon.length) {
-                    $addon.attr('data-mql-hidden-public-address', '1');
-                    $addon.css({
-                        display: 'none',
-                        visibility: 'hidden',
-                        height: '0',
-                        overflow: 'hidden',
-                        margin: '0',
-                        padding: '0'
-                    });
-                }
-
-                $('#direccion-form-container').remove();
-                $('.dir-help-toggle').remove();
             }
 
             // ✅ UI: botón en legend + mini-form (NO rompe si YITH re-renderiza)
@@ -812,11 +822,6 @@ function insertar_formulario_direccion_en_checkout()
 
                 const node = document.querySelector('#yith-wapo-container') || document.body;
                 window.__dirHelpObserver = new MutationObserver(function(){
-                    if (MQL_PUBLIC_QUOTE_GUEST) {
-                        ocultarDireccionParaPresupuestoPublico();
-                        return;
-                    }
-
                     ensureDireccionMiniFormUI();
                 });
                 window.__dirHelpObserver.observe(node, { childList: true, subtree: true });
@@ -860,13 +865,6 @@ function insertar_formulario_direccion_en_checkout()
             }
 
             function cargarDirecciones() {
-                if (MQL_PUBLIC_QUOTE_GUEST) {
-                    ocultarDireccionParaPresupuestoPublico();
-                    setTimeout(ocultarDireccionParaPresupuestoPublico, 50);
-                    setTimeout(ocultarDireccionParaPresupuestoPublico, 300);
-                    setTimeout(ocultarDireccionParaPresupuestoPublico, 1000);
-                    return;
-                }
                 $.ajax({
                     url: '<?php echo admin_url('admin-ajax.php'); ?>',
                     type: 'POST',
