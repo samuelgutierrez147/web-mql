@@ -579,6 +579,12 @@ add_action('wp_footer', 'insertar_formulario_direccion_en_checkout');
 function insertar_formulario_direccion_en_checkout()
 {
     if (!is_product()) return;
+
+    $mql_public_quote_guest = (
+        !is_user_logged_in()
+        && function_exists('mql_is_public_quote_request')
+        && mql_is_public_quote_request()
+    );
     ?>
     <style>
         /* Botón ? en legend */
@@ -634,13 +640,44 @@ function insertar_formulario_direccion_en_checkout()
     <script type="text/javascript">
         jQuery(document).ready(function ($) {
 
+            const MQL_PUBLIC_QUOTE_GUEST = <?php echo $mql_public_quote_guest ? 'true' : 'false'; ?>;
+
             // ---------- helpers ----------
             function getDireccionSelect(){
                 return $('select[name="yith_wapo[][9e_ent_00_dir]"]');
             }
 
+            function ocultarDireccionParaPresupuestoPublico() {
+                if (!MQL_PUBLIC_QUOTE_GUEST) return;
+
+                const $select = getDireccionSelect();
+                if (!$select.length) return;
+
+                const $addon = $select.closest('.yith-wapo-addon');
+
+                /*
+                 * Ocultamos solo el campo "Seleccione una dirección".
+                 * No tocamos provincia: yith_wapo[][9e_ent_00_zona] debe seguir visible
+                 * para que viaje al XML.
+                 */
+                $select.prop('disabled', true);
+                $select.val('');
+                $select.trigger('change');
+
+                if ($addon.length) {
+                    $addon.hide();
+                }
+
+                $('#direccion-form-container').hide().attr('aria-hidden', 'true');
+            }
+
             // ✅ UI: botón en legend + mini-form (NO rompe si YITH re-renderiza)
             function ensureDireccionMiniFormUI() {
+                if (MQL_PUBLIC_QUOTE_GUEST) {
+                    ocultarDireccionParaPresupuestoPublico();
+                    return;
+                }
+
                 const $select = getDireccionSelect();
                 if (!$select.length) return;
 
@@ -753,7 +790,11 @@ function insertar_formulario_direccion_en_checkout()
 
                 const node = document.querySelector('#yith-wapo-container') || document.body;
                 window.__dirHelpObserver = new MutationObserver(function(){
-                    ensureDireccionMiniFormUI();
+                    if (MQL_PUBLIC_QUOTE_GUEST) {
+                        ocultarDireccionParaPresupuestoPublico();
+                    } else {
+                        ensureDireccionMiniFormUI();
+                    }
                 });
                 window.__dirHelpObserver.observe(node, { childList: true, subtree: true });
             })();
@@ -796,6 +837,12 @@ function insertar_formulario_direccion_en_checkout()
             }
 
             function cargarDirecciones() {
+                if (MQL_PUBLIC_QUOTE_GUEST) {
+                    ocultarDireccionParaPresupuestoPublico();
+                    setTimeout(ocultarDireccionParaPresupuestoPublico, 300);
+                    setTimeout(ocultarDireccionParaPresupuestoPublico, 1000);
+                    return;
+                }
                 $.ajax({
                     url: '<?php echo admin_url('admin-ajax.php'); ?>',
                     type: 'POST',
