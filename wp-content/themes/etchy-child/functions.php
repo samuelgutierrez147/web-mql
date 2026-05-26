@@ -1472,21 +1472,83 @@ function mql_get_current_user_optimus_code()
 
     $user_id = get_current_user_id();
 
-    if ($user_id) {
-        $api_id = get_user_meta($user_id, 'api_id', true);
-
-        if (!empty($api_id)) {
-            return sanitize_text_field($api_id);
-        }
+    if (!$user_id) {
+        return '';
     }
 
+    // 1) Primero intentamos desde user_meta
+    $api_id = get_user_meta($user_id, 'api_id', true);
+
+    if (!empty($api_id)) {
+        return sanitize_text_field($api_id);
+    }
+
+    // 2) Después intentamos desde objeto usuario
     $current_user = wp_get_current_user();
 
     if ($current_user && !empty($current_user->api_id)) {
         return sanitize_text_field($current_user->api_id);
     }
 
+    // 3) Tu código también guarda api_id en wp_users, así que lo buscamos ahí
+    global $wpdb;
+
+    $column_exists = $wpdb->get_var(
+        $wpdb->prepare(
+            "SHOW COLUMNS FROM {$wpdb->users} LIKE %s",
+            'api_id'
+        )
+    );
+
+    if ($column_exists) {
+        $api_id_db = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT api_id FROM {$wpdb->users} WHERE ID = %d",
+                $user_id
+            )
+        );
+
+        if (!empty($api_id_db)) {
+            return sanitize_text_field($api_id_db);
+        }
+    }
+
     return '';
+}
+
+function mql_logged_customer_quote_token($customer_code)
+{
+    if (empty($customer_code)) {
+        return '';
+    }
+
+    return mql_public_quote_encrypt_payload([
+        'flow' => 'logged_customer_quote',
+        'customer' => sanitize_text_field($customer_code),
+        'user_id' => get_current_user_id(),
+    ]);
+}
+
+function mql_get_customer_code_from_logged_token($token)
+{
+    if (empty($token)) {
+        return '';
+    }
+
+    $payload = mql_public_quote_decrypt_payload(
+        sanitize_text_field(wp_unslash($token))
+    );
+
+    if (
+        !is_array($payload)
+        || empty($payload['flow'])
+        || $payload['flow'] !== 'logged_customer_quote'
+        || empty($payload['customer'])
+    ) {
+        return '';
+    }
+
+    return sanitize_text_field($payload['customer']);
 }
 
 function mql_is_public_quote_request($data = null)
@@ -1532,14 +1594,37 @@ function mql_is_public_quote_request($data = null)
 function mql_get_cod_optimus_for_price_request($dataToDb = [])
 {
     /*
-     * Prioridad absoluta: usuario logueado = su codigo Optimus real.
-     * Esto evita que un cliente logueado que venga desde una URL publica use PRUEBAS.
+     * 1) Prioridad absoluta: usuario logueado reconocido por WordPress.
      */
     $logged_customer_code = mql_get_current_user_optimus_code();
+
     if (!empty($logged_customer_code)) {
         return $logged_customer_code;
     }
 
+    /*
+     * 2) Si el AJAX no conserva la cookie de login, usamos token firmado
+     * generado en la ficha de producto cuando el cliente sí estaba logueado.
+     */
+    if (is_array($dataToDb) && !empty($dataToDb['mql_logged_customer_token'])) {
+        $token_customer_code = mql_get_customer_code_from_logged_token($dataToDb['mql_logged_customer_token']);
+
+        if (!empty($token_customer_code)) {
+            return $token_customer_code;
+        }
+    }
+
+    if (!empty($_REQUEST['mql_logged_customer_token'])) {
+        $token_customer_code = mql_get_customer_code_from_logged_token($_REQUEST['mql_logged_customer_token']);
+
+        if (!empty($token_customer_code)) {
+            return $token_customer_code;
+        }
+    }
+
+    /*
+     * 3) Solo si no hay cliente real, permitimos PRUEBAS para flujo público.
+     */
     if (mql_is_public_quote_request($dataToDb)) {
         return mql_public_quote_customer_code();
     }
@@ -1898,6 +1983,89 @@ function mql_public_quote_product_page_script()
 
                     if (settings.data.indexOf('mql_public_quote_token=') === -1) {
                         settings.data += '&mql_public_quote_token=' + encodeURIComponent(mqlPublicQuoteToken);
+                    }
+                }
+            });
+        });
+    </script>
+    <?php
+}
+
+add_action('wp_footer', 'mql_logged_customer_quote_product_page_script', 45);
+
+function mql_logged_customer_quote_product_page_script()
+{
+    if (!is_product()) {
+        return;
+    }
+
+    if (!is_user_logged_in()) {
+        return;
+    }
+
+    $customer_code = mql_get_current_user_optimus_code();
+
+    if (empty($customer_code)) {
+        return;
+    }
+
+    $token = mql_logged_customer_quote_token($customer_code);
+
+    if (empty($token)) {
+        return;
+    }
+    ?>
+    <script>
+        jQuery(function ($) {
+            const mqlLoggedCustomerToken = <?php echo wp_json_encode($token); ?>;
+
+            function mqlPrepareLoggedCustomerQuoteForm() {
+                $('form.cart').each(function () {
+                    const $form = $(this);
+
+                    /*
+                     * Quitamos cualquier marca pública antigua que haya quedado
+                     * por caché o por venir desde ?mqlq=...
+                     */
+                    $form.find('input[name="mql_public_quote"]').remove();
+                    $form.find('input[name="mql_public_quote_token"]').remove();
+                    $form.find('input[name="cod_optimus_forzado"]').remove();
+
+                    if (!$form.find('input[name="mql_logged_customer_token"]').length) {
+                        $form.append(
+                            $('<input>', {
+                                type: 'hidden',
+                                name: 'mql_logged_customer_token',
+                                value: mqlLoggedCustomerToken
+                            })
+                        );
+                    }
+                });
+            }
+
+            mqlPrepareLoggedCustomerQuoteForm();
+            setTimeout(mqlPrepareLoggedCustomerQuoteForm, 300);
+            setTimeout(mqlPrepareLoggedCustomerQuoteForm, 1000);
+
+            $(document).ajaxSend(function (event, jqxhr, settings) {
+                if (!settings || !settings.data) {
+                    return;
+                }
+
+                if (
+                    typeof settings.data === 'string'
+                    && settings.data.indexOf('action=tabla_precios_controller') !== -1
+                ) {
+                    /*
+                     * Quitamos flags públicos si vienen de caché o de otro script.
+                     */
+                    settings.data = settings.data
+                        .replace(/&?mql_public_quote=1/g, '')
+                        .replace(/&?cod_optimus_forzado=[^&]*/g, '')
+                        .replace(/&?mql_public_quote_token=[^&]*/g, '');
+
+                    if (settings.data.indexOf('mql_logged_customer_token=') === -1) {
+                        settings.data += '&mql_logged_customer_token=' + encodeURIComponent(mqlLoggedCustomerToken);
                     }
                 }
             });
