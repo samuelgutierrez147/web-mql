@@ -1578,41 +1578,53 @@ function mql_get_customer_code_from_logged_token($token)
     return sanitize_text_field($payload['customer']);
 }
 
+function mql_is_valid_public_quote_payload($payload)
+{
+    return (
+        is_array($payload)
+        && !empty($payload['flow'])
+        && $payload['flow'] === 'public_quote'
+        && !empty($payload['product_id'])
+    );
+}
+
+function mql_is_valid_public_quote_token($token)
+{
+    if (empty($token)) {
+        return false;
+    }
+
+    $payload = mql_public_quote_decrypt_payload(
+        sanitize_text_field(wp_unslash($token))
+    );
+
+    return mql_is_valid_public_quote_payload($payload);
+}
+
 function mql_is_public_quote_request($data = null)
 {
     /*
-     * MUY IMPORTANTE:
-     * Si el usuario esta logueado, NUNCA tratamos la peticion como publica,
-     * aunque la URL mantenga ?mqlq=... o el JS envie mql_public_quote_token.
+     * Si WordPress reconoce el login, nunca es flujo publico.
      */
     if (is_user_logged_in()) {
         return false;
     }
 
-    if (mql_get_public_quote_payload()) {
+    /*
+     * En producto publico solo aceptamos el token real generado por /presupuesto-publico.
+     * No basta con recibir mql_public_quote=1, porque ese flag puede quedar cacheado
+     * o viajar por error desde una ficha normal.
+     */
+    if (mql_is_valid_public_quote_payload(mql_get_public_quote_payload())) {
         return true;
     }
 
-    if (is_array($data)) {
-        if (!empty($data['mql_public_quote_token'])) {
-            return (bool) mql_public_quote_decrypt_payload(
-                sanitize_text_field(wp_unslash($data['mql_public_quote_token']))
-            );
-        }
-
-        if (!empty($data['mql_public_quote'])) {
-            return true;
-        }
+    if (is_array($data) && !empty($data['mql_public_quote_token'])) {
+        return mql_is_valid_public_quote_token($data['mql_public_quote_token']);
     }
 
     if (!empty($_REQUEST['mql_public_quote_token'])) {
-        return (bool) mql_public_quote_decrypt_payload(
-            sanitize_text_field(wp_unslash($_REQUEST['mql_public_quote_token']))
-        );
-    }
-
-    if (!empty($_REQUEST['mql_public_quote'])) {
-        return true;
+        return mql_is_valid_public_quote_token($_REQUEST['mql_public_quote_token']);
     }
 
     return false;
