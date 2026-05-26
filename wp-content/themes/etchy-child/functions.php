@@ -1464,12 +1464,37 @@ function mql_get_public_quote_payload()
     return $payload;
 }
 
+function mql_get_current_user_optimus_code()
+{
+    if (!is_user_logged_in()) {
+        return '';
+    }
+
+    $user_id = get_current_user_id();
+
+    if ($user_id) {
+        $api_id = get_user_meta($user_id, 'api_id', true);
+
+        if (!empty($api_id)) {
+            return sanitize_text_field($api_id);
+        }
+    }
+
+    $current_user = wp_get_current_user();
+
+    if ($current_user && !empty($current_user->api_id)) {
+        return sanitize_text_field($current_user->api_id);
+    }
+
+    return '';
+}
+
 function mql_is_public_quote_request($data = null)
 {
     /*
-     * El presupuesto publico SOLO aplica a visitantes sin cuenta.
-     * Si el cliente esta logueado, aunque venga desde una URL con mqlq
-     * o aunque el JS envie mql_public_quote_token, debe usar su api_id real.
+     * MUY IMPORTANTE:
+     * Si el usuario esta logueado, NUNCA tratamos la peticion como publica,
+     * aunque la URL mantenga ?mqlq=... o el JS envie mql_public_quote_token.
      */
     if (is_user_logged_in()) {
         return false;
@@ -1481,7 +1506,9 @@ function mql_is_public_quote_request($data = null)
 
     if (is_array($data)) {
         if (!empty($data['mql_public_quote_token'])) {
-            return (bool) mql_public_quote_decrypt_payload($data['mql_public_quote_token']);
+            return (bool) mql_public_quote_decrypt_payload(
+                sanitize_text_field(wp_unslash($data['mql_public_quote_token']))
+            );
         }
 
         if (!empty($data['mql_public_quote'])) {
@@ -1505,29 +1532,12 @@ function mql_is_public_quote_request($data = null)
 function mql_get_cod_optimus_for_price_request($dataToDb = [])
 {
     /*
-     * Prioridad:
-     * 1) Usuario logueado => codigo Optimus del cliente real.
-     * 2) Visitante en presupuesto publico => PRUEBAS.
-     * 3) Si no hay ninguno, error controlado.
+     * Prioridad absoluta: usuario logueado = su codigo Optimus real.
+     * Esto evita que un cliente logueado que venga desde una URL publica use PRUEBAS.
      */
-    if (is_user_logged_in()) {
-        $current_user = wp_get_current_user();
-
-        if ($current_user && !empty($current_user->api_id)) {
-            return $current_user->api_id;
-        }
-
-        $user_id = get_current_user_id();
-
-        if ($user_id) {
-            $api_id = get_user_meta($user_id, 'api_id', true);
-
-            if (!empty($api_id)) {
-                return $api_id;
-            }
-        }
-
-        return '';
+    $logged_customer_code = mql_get_current_user_optimus_code();
+    if (!empty($logged_customer_code)) {
+        return $logged_customer_code;
     }
 
     if (mql_is_public_quote_request($dataToDb)) {
@@ -1825,9 +1835,8 @@ function mql_public_quote_product_page_script()
     }
 
     /*
-     * Si el cliente ya esta logueado, no inyectamos campos ni tokens
-     * de presupuesto publico. Asi las llamadas AJAX no se marcan como publicas
-     * y el controlador usara el api_id del usuario.
+     * Si hay cuenta iniciada, no inyectamos nada del flujo publico.
+     * El producto debe funcionar como presupuesto normal de cliente.
      */
     if (is_user_logged_in()) {
         return;
