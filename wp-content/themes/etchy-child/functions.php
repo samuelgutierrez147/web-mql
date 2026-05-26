@@ -587,6 +587,19 @@ function insertar_formulario_direccion_en_checkout()
     );
     ?>
     <style>
+        <?php if ($mql_public_quote_guest): ?>
+        body.single-product select[name="yith_wapo[][9e_ent_00_dir]"] {
+            display: none !important;
+        }
+
+        body.single-product select[name="yith_wapo[][9e_ent_00_dir]"] {
+            visibility: hidden !important;
+        }
+
+        body.single-product select[name="yith_wapo[][9e_ent_00_dir]"] {
+            pointer-events: none !important;
+        }
+        <?php endif; ?>
         /* Botón ? en legend */
         fieldset.wapo-section > legend{
             display: inline-flex;
@@ -656,19 +669,28 @@ function insertar_formulario_direccion_en_checkout()
                 const $addon = $select.closest('.yith-wapo-addon');
 
                 /*
-                 * Ocultamos solo el campo "Seleccione una dirección".
-                 * No tocamos provincia: yith_wapo[][9e_ent_00_zona] debe seguir visible
-                 * para que viaje al XML.
+                 * No queremos que viaje direccion al XML.
+                 * Provincia/zona se mantiene visible y activa.
                  */
-                $select.prop('disabled', true);
                 $select.val('');
+                $select.prop('disabled', true);
+                $select.removeAttr('required');
                 $select.trigger('change');
 
                 if ($addon.length) {
-                    $addon.hide();
+                    $addon.attr('data-mql-hidden-public-address', '1');
+                    $addon.css({
+                        display: 'none',
+                        visibility: 'hidden',
+                        height: '0',
+                        overflow: 'hidden',
+                        margin: '0',
+                        padding: '0'
+                    });
                 }
 
-                $('#direccion-form-container').hide().attr('aria-hidden', 'true');
+                $('#direccion-form-container').remove();
+                $('.dir-help-toggle').remove();
             }
 
             // ✅ UI: botón en legend + mini-form (NO rompe si YITH re-renderiza)
@@ -792,9 +814,10 @@ function insertar_formulario_direccion_en_checkout()
                 window.__dirHelpObserver = new MutationObserver(function(){
                     if (MQL_PUBLIC_QUOTE_GUEST) {
                         ocultarDireccionParaPresupuestoPublico();
-                    } else {
-                        ensureDireccionMiniFormUI();
+                        return;
                     }
+
+                    ensureDireccionMiniFormUI();
                 });
                 window.__dirHelpObserver.observe(node, { childList: true, subtree: true });
             })();
@@ -839,6 +862,7 @@ function insertar_formulario_direccion_en_checkout()
             function cargarDirecciones() {
                 if (MQL_PUBLIC_QUOTE_GUEST) {
                     ocultarDireccionParaPresupuestoPublico();
+                    setTimeout(ocultarDireccionParaPresupuestoPublico, 50);
                     setTimeout(ocultarDireccionParaPresupuestoPublico, 300);
                     setTimeout(ocultarDireccionParaPresupuestoPublico, 1000);
                     return;
@@ -2639,6 +2663,10 @@ function dataFormatted($yith_wapo_data)
             $key = array_key_first($item);
             $value = trim(str_replace(' ', '', $item[$key]));
 
+            if ($key === '9e_ent_00_dir' && empty($value)) {
+                return $carry;
+            }
+
             if (str_ends_with($key, '_tipo') || ($key == 'formato' && $value == 'Personalizado'))
                 return $carry;
 
@@ -3329,7 +3357,22 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
 
     $data = readOptimusXml('price-request');
     $data->customerCode = $codCliente;
-    $data->addressNumber = ($dataOptimus['productVariable']['9e_ent_00_dir']) ?? 1;
+
+    /*
+     * En presupuesto publico sin cuenta NO enviamos addressNumber.
+     * Optimus debe calcular solo con provincia: e_ent_00_zona.
+     */
+    $is_public_quote_guest = (
+        !is_user_logged_in()
+        && function_exists('mql_is_public_quote_request')
+        && mql_is_public_quote_request()
+    );
+
+    if (!$is_public_quote_guest && !empty($dataOptimus['productVariable']['9e_ent_00_dir'])) {
+        $data->addressNumber = $dataOptimus['productVariable']['9e_ent_00_dir'];
+    } else {
+        unset($data->addressNumber);
+    }
 
     $data->jobVariable->name = 'ep_fecha_entrega';
     $data->jobVariable->type = 'datetime';
@@ -3370,6 +3413,14 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
         : 0;
 
     $dataOptimus['productVariable']['e_ent_00_cnt_01'] = floatval($cantidad);
+
+    /*
+     * En presupuesto publico sin cuenta eliminamos direccion concreta.
+     * Dejamos provincia/zona si viene informada: 9e_ent_00_zona.
+     */
+    if ($is_public_quote_guest && isset($dataOptimus['productVariable']['9e_ent_00_dir'])) {
+        unset($dataOptimus['productVariable']['9e_ent_00_dir']);
+    }
 
     foreach ($dataOptimus as $keyType => $valueData) {
         foreach ($valueData as $key => $value) {
