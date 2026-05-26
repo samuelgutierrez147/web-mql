@@ -992,20 +992,37 @@ function guardar_nueva_direccion()
 
     $user_id = get_current_user_id();
     $user_info = get_userdata($user_id);
-    $direccion = sanitize_text_field($_POST['direccion']);
-    $ciudad = sanitize_text_field($_POST['ciudad']);
-    $codigo_postal = sanitize_text_field($_POST['codigo_postal']);
+    $cod_optimus_cliente = mql_get_user_optimus_code($user_id);
+
+    if (empty($cod_optimus_cliente)) {
+        wp_send_json_error(['message' => 'No se ha encontrado el código de cliente Optimus del usuario.']);
+        wp_die();
+    }
+
+    $direccion = sanitize_text_field($_POST['direccion'] ?? '');
+    $ciudad = sanitize_text_field($_POST['ciudad'] ?? '');
+    $codigo_postal = sanitize_text_field($_POST['codigo_postal'] ?? '');
+
+    if (empty($direccion) || empty($ciudad) || empty($codigo_postal)) {
+        wp_send_json_error(['message' => 'Faltan datos.']);
+        wp_die();
+    }
+
+    $telefono = get_user_meta($user_id, 'phone_number', true);
+    if (empty($telefono)) {
+        $telefono = get_user_meta($user_id, 'billing_phone', true);
+    }
 
     $data = readOptimusXml('addCustomerAddress');
     $data->name = $user_info->user_nicename;
-    $data->customerCode = $user_info->api_id;
+    $data->customerCode = $cod_optimus_cliente;
     $data->addressLine1 = $direccion;
     $data->addressLine2 = '';
     $data->addressLine3 = $ciudad;
     $data->postcode = $codigo_postal;
     $data->contact = $user_info->user_nicename;
     $data->email = $user_info->user_email;
-    $data->phone = $user_info->phone_number;
+    $data->phone = sanitize_text_field($telefono);
 
     $data->isInvoice = 1;
     $data->isDelivery = 1;
@@ -1015,11 +1032,6 @@ function guardar_nueva_direccion()
     $curlResult = sendXmlOptimus($data->asXML(), 'customer/addCustomerAddress');
     if (filter_var($curlResult->success, FILTER_VALIDATE_BOOLEAN)) {
         $optimusCodeDir = $curlResult->addressNumber;
-        if (empty($direccion) || empty($ciudad) || empty($codigo_postal)) {
-            wp_send_json_error(['message' => 'Faltan datos.']);
-            wp_die();
-        }
-
         // Crear un identificador único basado en timestamp
         $direccion_id = 'shipping_' . time();
 
@@ -1247,7 +1259,13 @@ function mql_procesar_pedido_optimus_tras_pago($order_id)
     }
 
     $user_id = $order->get_user_id();
-    $codOptimusUser = $user_id ? get_user_meta($user_id, 'api_id', true) : null;
+    $codOptimusUser = $user_id ? mql_get_user_optimus_code($user_id) : '';
+
+    if (empty($codOptimusUser)) {
+        $order->update_status('failed', __('No se encontró el código de cliente Optimus del usuario.', 'woocommerce'));
+        $order->add_order_note(__('No se encontró el código de cliente Optimus del usuario para enviar el pedido a Optimus.', 'woocommerce'));
+        return;
+    }
 
     // Leer configuración desde el pedido, no desde el carrito
     $yith_wapo_data = mql_obtener_yith_desde_pedido($order);
@@ -1269,8 +1287,12 @@ function mql_procesar_pedido_optimus_tras_pago($order_id)
     $fechaEstimada = getFechaEstimada();
     $total = $order->get_total();
 
-    // Crear oferta/pedido en Optimus SOLO tras pago exitoso
-    $datosPedidoOptimus = addPresupuestoToOptimus($dataDb, $fechaEstimada, $total);
+    // Crear oferta/pedido en Optimus SOLO tras pago exitoso.
+    // Pasamos el cliente del pedido porque en callbacks de pago wp_get_current_user() puede no ser el comprador.
+    $datosPedidoOptimus = addPresupuestoToOptimus($dataDb, $fechaEstimada, $total, [
+        'customer_code' => $codOptimusUser,
+        'email' => $order->get_billing_email(),
+    ]);
 
     if (empty($datosPedidoOptimus['success'])) {
         $error_message = !empty($datosPedidoOptimus['error_message']) ? $datosPedidoOptimus['error_message'] : 'Error desconocido al crear el pedido en Optimus.';
@@ -1464,33 +1486,29 @@ function mql_get_public_quote_payload()
     return $payload;
 }
 
-function mql_get_current_user_optimus_code()
+function mql_get_user_optimus_code($user_id)
 {
-    if (!is_user_logged_in()) {
-        return '';
-    }
-
-    $user_id = get_current_user_id();
+    $user_id = absint($user_id);
 
     if (!$user_id) {
         return '';
     }
 
-    // 1) Primero intentamos desde user_meta
+    // 1) Primero intentamos desde user_meta, que es donde lo guardas al registrar.
     $api_id = get_user_meta($user_id, 'api_id', true);
 
     if (!empty($api_id)) {
         return sanitize_text_field($api_id);
     }
 
-    // 2) Después intentamos desde objeto usuario
-    $current_user = wp_get_current_user();
+    // 2) Después intentamos desde objeto usuario.
+    $user = get_userdata($user_id);
 
-    if ($current_user && !empty($current_user->api_id)) {
-        return sanitize_text_field($current_user->api_id);
+    if ($user && !empty($user->api_id)) {
+        return sanitize_text_field($user->api_id);
     }
 
-    // 3) Tu código también guarda api_id en wp_users, así que lo buscamos ahí
+    // 3) Tu código también guarda api_id en wp_users, así que lo buscamos ahí.
     global $wpdb;
 
     $column_exists = $wpdb->get_var(
@@ -1514,6 +1532,15 @@ function mql_get_current_user_optimus_code()
     }
 
     return '';
+}
+
+function mql_get_current_user_optimus_code()
+{
+    if (!is_user_logged_in()) {
+        return '';
+    }
+
+    return mql_get_user_optimus_code(get_current_user_id());
 }
 
 function mql_logged_customer_quote_token($customer_code)
@@ -2353,12 +2380,31 @@ function getTintasByCode($tinta)
     return $codigoTinta;
 }
 
-function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
+function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice, $context = [])
 {
-    if (!isset($dataPresupuesto['productVariable']))
-        return false;
+    if (!isset($dataPresupuesto['productVariable'])) {
+        return ['success' => false, 'type' => 'datos', 'error_message' => 'No se encontraron productVariable para enviar a Optimus.'];
+    }
 
     $userData = wp_get_current_user();
+    $customerCode = !empty($context['customer_code'])
+        ? sanitize_text_field($context['customer_code'])
+        : mql_get_current_user_optimus_code();
+
+    $emailAddress = !empty($context['email'])
+        ? sanitize_email($context['email'])
+        : sanitize_email($userData->user_email);
+
+    if (empty($customerCode)) {
+        return ['success' => false, 'type' => 'cliente', 'error_message' => 'No se encontró el código de cliente Optimus.'];
+    }
+
+    $addressNumber = $dataPresupuesto['productVariable']['9e_ent_00_dir'] ?? '';
+
+    if (empty($addressNumber)) {
+        return ['success' => false, 'type' => 'direccion', 'error_message' => 'No se encontró la dirección Optimus seleccionada.'];
+    }
+
     $data = readOptimusXml('enqbuilder-request');
     $cantidadFinal = 0;
 
@@ -2372,9 +2418,9 @@ function addPresupuestoToOptimus($dataPresupuesto, $fechaEstimada, $settedPrice)
     }
 
 
-    $data->emailAddress = $userData->user_email;
-    $data->customerCode = $userData->api_id;
-    $data->addressNumber = ($dataPresupuesto['productVariable']['9e_ent_00_dir']) ?? 1;
+    $data->emailAddress = $emailAddress;
+    $data->customerCode = $customerCode;
+    $data->addressNumber = $addressNumber;
 
     $data->jobVariable->name = 'ep_fecha_entrega';
     $data->jobVariable->type = 'datetime';
@@ -3571,10 +3617,14 @@ function getPricePresupuestoToOptimus($dataOptimus, $codCliente, $fechaEstimada 
         && mql_is_public_quote_request()
     );
 
-    if (!$is_public_quote_guest && !empty($dataOptimus['productVariable']['9e_ent_00_dir'])) {
+    if ($is_public_quote_guest) {
+        unset($data->addressNumber);
+    } elseif (!empty($dataOptimus['productVariable']['9e_ent_00_dir'])) {
         $data->addressNumber = $dataOptimus['productVariable']['9e_ent_00_dir'];
     } else {
-        unset($data->addressNumber);
+        return [[
+            'error_message' => 'Selecciona una dirección de entrega para calcular el presupuesto con tu cliente Optimus.',
+        ]];
     }
 
     $data->jobVariable->name = 'ep_fecha_entrega';
