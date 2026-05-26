@@ -1466,6 +1466,15 @@ function mql_get_public_quote_payload()
 
 function mql_is_public_quote_request($data = null)
 {
+    /*
+     * El presupuesto publico SOLO aplica a visitantes sin cuenta.
+     * Si el cliente esta logueado, aunque venga desde una URL con mqlq
+     * o aunque el JS envie mql_public_quote_token, debe usar su api_id real.
+     */
+    if (is_user_logged_in()) {
+        return false;
+    }
+
     if (mql_get_public_quote_payload()) {
         return true;
     }
@@ -1495,24 +1504,34 @@ function mql_is_public_quote_request($data = null)
 
 function mql_get_cod_optimus_for_price_request($dataToDb = [])
 {
+    /*
+     * Prioridad:
+     * 1) Usuario logueado => codigo Optimus del cliente real.
+     * 2) Visitante en presupuesto publico => PRUEBAS.
+     * 3) Si no hay ninguno, error controlado.
+     */
+    if (is_user_logged_in()) {
+        $current_user = wp_get_current_user();
+
+        if ($current_user && !empty($current_user->api_id)) {
+            return $current_user->api_id;
+        }
+
+        $user_id = get_current_user_id();
+
+        if ($user_id) {
+            $api_id = get_user_meta($user_id, 'api_id', true);
+
+            if (!empty($api_id)) {
+                return $api_id;
+            }
+        }
+
+        return '';
+    }
+
     if (mql_is_public_quote_request($dataToDb)) {
         return mql_public_quote_customer_code();
-    }
-
-    $current_user = wp_get_current_user();
-
-    if ($current_user && !empty($current_user->api_id)) {
-        return $current_user->api_id;
-    }
-
-    $user_id = get_current_user_id();
-
-    if ($user_id) {
-        $api_id = get_user_meta($user_id, 'api_id', true);
-
-        if (!empty($api_id)) {
-            return $api_id;
-        }
     }
 
     return '';
@@ -1802,6 +1821,15 @@ function mql_block_public_quote_cart_for_guests($passed, $product_id, $quantity)
 function mql_public_quote_product_page_script()
 {
     if (!is_product()) {
+        return;
+    }
+
+    /*
+     * Si el cliente ya esta logueado, no inyectamos campos ni tokens
+     * de presupuesto publico. Asi las llamadas AJAX no se marcan como publicas
+     * y el controlador usara el api_id del usuario.
+     */
+    if (is_user_logged_in()) {
         return;
     }
 
