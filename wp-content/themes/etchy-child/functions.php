@@ -1748,9 +1748,19 @@ function mql_get_public_quote_products()
             continue;
         }
 
+        $image_id = $product->get_image_id();
+        $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'woocommerce_thumbnail') : wc_placeholder_img_src('woocommerce_thumbnail');
+
+        $description = $product->get_short_description();
+        if (empty($description)) {
+            $description = $product->get_description();
+        }
+
         $result[] = [
             'id' => $product->get_id(),
             'name' => $product->get_name(),
+            'description' => wp_trim_words(wp_strip_all_tags($description), 22, '...'),
+            'image_url' => $image_url,
             'url' => add_query_arg([
                 'mqlq' => rawurlencode($token),
             ], get_permalink($product->get_id())),
@@ -1769,72 +1779,153 @@ function mql_render_presupuesto_publico_selector()
     ob_start();
     ?>
     <div class="mql-presupuesto-publico-selector">
-        <h2>Calcula el coste de tu proyecto de forma rápida y personalizada.</h2>
-        <p>Selecciona el producto para cargar su plantilla de personalización.</p>
+        <div class="mql-presupuesto-publico-header">
+            <h2>Calcula el coste de tu proyecto de forma rápida y personalizada.</h2>
+            <p>Selecciona el producto para cargar su plantilla de personalización.</p>
+        </div>
 
-        <p>
-            <label for="mql_producto_publico"><strong>Producto</strong></label>
-            <select id="mql_producto_publico">
-                <option value="">Selecciona un producto</option>
-
+        <?php if (!empty($products)): ?>
+            <div class="mql-productos-grid">
                 <?php foreach ($products as $product): ?>
-                    <option value="<?php echo esc_url($product['url']); ?>">
-                        <?php echo esc_html($product['name']); ?>
-                    </option>
+                    <a class="mql-producto-card" href="<?php echo esc_url($product['url']); ?>" aria-label="Abrir <?php echo esc_attr($product['name']); ?>">
+                        <span class="mql-producto-img-wrap">
+                            <img
+                                    src="<?php echo esc_url($product['image_url']); ?>"
+                                    alt="<?php echo esc_attr($product['name']); ?>"
+                                    loading="lazy"
+                            >
+                        </span>
+
+                        <span class="mql-producto-content">
+                            <span class="mql-producto-title"><?php echo esc_html($product['name']); ?></span>
+
+                            <?php if (!empty($product['description'])): ?>
+                                <span class="mql-producto-description">
+                                    <?php echo esc_html($product['description']); ?>
+                                </span>
+                            <?php endif; ?>
+
+                            <span class="mql-producto-cta">Configurar presupuesto</span>
+                        </span>
+                    </a>
                 <?php endforeach; ?>
-            </select>
-        </p>
-
-        <button type="button" id="mql_abrir_producto_publico" class="button" disabled>
-            Continuar
-        </button>
-
-        <?php if (empty($products)): ?>
+            </div>
+        <?php else: ?>
             <div class="mql-error" style="margin-top:15px;">
                 No se han encontrado productos publicados con los nombres configurados.
             </div>
         <?php endif; ?>
     </div>
 
-    <script>
-        jQuery(function ($) {
-            const $producto = $('#mql_producto_publico');
-            const $btn = $('#mql_abrir_producto_publico');
-
-            $producto.on('change', function () {
-                $btn.prop('disabled', !$(this).val());
-            });
-
-            $btn.on('click', function () {
-                const url = $producto.val();
-
-                if (url) {
-                    window.location.href = url;
-                }
-            });
-        });
-    </script>
-
     <style>
         .mql-presupuesto-publico-selector {
-            max-width: 760px;
+            max-width: 1180px;
             margin: 0 auto;
             padding: 24px;
+        }
+
+        .mql-presupuesto-publico-header {
+            max-width: 760px;
+            margin: 0 auto 28px;
+            text-align: center;
+        }
+
+        .mql-presupuesto-publico-header h2 {
+            margin: 0 0 10px;
+            font-size: clamp(26px, 3vw, 40px);
+            line-height: 1.15;
+        }
+
+        .mql-presupuesto-publico-header p {
+            margin: 0;
+            color: #555;
+            font-size: 17px;
+        }
+
+        .mql-productos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .mql-producto-card {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 100%;
             background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 14px;
+            border: 1px solid #e4e4e4;
+            border-radius: 18px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+            color: inherit;
+            text-decoration: none !important;
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
         }
 
-        .mql-presupuesto-publico-selector select {
+        .mql-producto-card:hover,
+        .mql-producto-card:focus {
+            transform: translateY(-4px);
+            border-color: #111;
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.11);
+            color: inherit;
+            text-decoration: none !important;
+        }
+
+        .mql-producto-img-wrap {
+            display: block;
             width: 100%;
-            max-width: 100%;
-            padding: 10px;
+            aspect-ratio: 4 / 3;
+            background: #f6f6f6;
+            overflow: hidden;
         }
 
-        .mql-presupuesto-publico-selector button {
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
+        .mql-producto-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform .22s ease;
+        }
+
+        .mql-producto-card:hover .mql-producto-img-wrap img,
+        .mql-producto-card:focus .mql-producto-img-wrap img {
+            transform: scale(1.04);
+        }
+
+        .mql-producto-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            padding: 18px;
+        }
+
+        .mql-producto-title {
+            display: block;
+            font-weight: 700;
+            font-size: 18px;
+            line-height: 1.25;
+        }
+
+        .mql-producto-description {
+            display: block;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .mql-producto-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: fit-content;
+            margin-top: auto;
+            padding: 9px 13px;
+            border-radius: 999px;
+            background: #111;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
         }
 
         .mql-error {
@@ -1842,6 +1933,23 @@ function mql_render_presupuesto_publico_selector()
             background: #fff0f0;
             border: 1px solid #f0b7b7;
             border-radius: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .mql-productos-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .mql-presupuesto-publico-selector {
+                padding: 18px 12px;
+            }
+
+            .mql-productos-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
         }
     </style>
     <?php
